@@ -14,12 +14,11 @@ from PIL import Image
 # Import classes
 import Book, Cart as c
 from users import GuestDB, Guest, Customer, Admin
-from forms import SignUpForm, LoginForm, ChangePasswordForm, \
-                  ResetPasswordForm, ForgetPasswordForm, \
-                  AccountPageForm, CreateUserForm, DeleteUserForm, \
-                  Enquiry, UserEnquiry, Faq, FaqEntry, AddBookForm, \
-                  Coupon, CreateCoupon, OrderForm, RequestCoupon, ReplyEnquiry, \
-                  UpdateCoupon
+from forms import (
+    SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
+    AccountPageForm, CreateUserForm, DeleteUserForm,Enquiry, UserEnquiry, Faq, FaqEntry,
+    AddBookForm, Coupon, CreateCoupon, OrderForm, RequestCoupon, ReplyEnquiry, UpdateCoupon
+)
 from Cart import Discount
 
 # CONSTANTS
