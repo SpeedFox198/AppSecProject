@@ -13,10 +13,10 @@
 
 
 **Team members:**
-- [211973E]  Jabriel Seah **-(Leader)-**
-- [210162M]  Clarence Koh
-- [214242Q]  Royston Loo
-- [214299H]  Fong Chung Wai
+- 211973E - Jabriel Seah **-(Leader)-**
+- 210162M - Clarence Koh
+- 214242Q - Royston Loo
+- 214299H - Fong Chung Wai
 
 ## Project Description
 
