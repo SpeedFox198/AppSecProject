@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block stylesheets %}
+
+<link rel="stylesheet" href="/static/css/home.css">
+
+{% endblock %}
+
+{% block content %}
+    <h2 class="padding-15px">Highlights of the Week</h2>
+    <!-- image carousel -->
+
+    <h2 class="booklang">English Books</h2>
+    <div class="row justify-content-center">
+      <div class="col-12">
+        <div class="row row-cols-2 row-cols-md-4 g-4">
+          <div class="col">
+            <a href="/book_info"><div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div></a>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="booklang">Chinese Books</h2>
+    <div class="row justify-content-center book-info">
+      <div class="col-12">
+        <div class="row row-cols-2 row-cols-md-4 g-4">
+          <div class="col">
+            <a href="cart"><div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div></a>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <img src="/static/img/The_Chronicles_of_Narnia.png" class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">Book Title</h5>
+                <p class="card-text">$99.99</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home_quote">
+      <h3>Some quotes about reading</h3>
+      <h3>blah blah</h3>
+      <a href="#"><p>Browse more ></p></a>
+    </div>
+{% endblock %}

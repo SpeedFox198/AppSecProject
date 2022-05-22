@@ -1,0 +1,47 @@
+.grid-form-spacer { /* Jabriel did some edits */
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.submitcenter {
+    margin:0 auto;
+    display:block;
+}
+
+.padding-top {
+    padding-top: 15px;
+}
+
+.padding-bottom {
+    padding-bottom: 15px;
+}
+
+.submitpadding {
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+details {
+  user-select: none;
+}
+
+details>summary span.icon {
+  transition: all 0.3s;
+}
+
+summary {
+  display: flex;
+  cursor: pointer;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.card {
+    width: 1250px;
+}
+
+.card-header, .card-footer {
+    padding: 1rem 2rem;
+}

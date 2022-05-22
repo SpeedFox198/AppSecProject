@@ -1,0 +1,60 @@
+/* To test if CSS works */
+
+
+/*
+  Welcome to the adm_dashboard CSS used for Bras Basah Books Web Application
+  Here will be every CSS used for all Bras Basah Books Web Application
+  I. Structure of Footer and Navbar.css
+  |
+  ├─ 1.Body
+  | Colour Palette for web pages (for us to self reference the colour choices)
+  ├─ #FCEEE0, #4b8282 , #FFF
+*/
+
+/* --------------------------------------------------------------------------
+    1. Body Styling
+-------------------------------------------------------------------------- */
+.main-header {
+    font-family:"Playfair Display", "Times New Roman", serif;
+}
+
+.container-padding-50 {
+    padding-top:50px;
+}
+
+.container-padding-20 {
+    padding-top:20px;
+}
+
+.hide-bp{
+    list-style:none;
+}
+
+.list-padding{
+    padding-bottom:10px;
+}
+
+a.dashboard-links{
+    text-decoration:none !important;
+    color:#0065d1;
+}
+
+.margin-top-100{
+    margin-top:100px;
+}
+
+.margin-top-50{
+    margin-top:50px;
+}
+
+
+/* Edit by Jabriel */
+/* Style Enquiry Dashboard */
+#nav-home-tab, #nav-home-tab,
+#nav-profile-tab, #nav-profile-tab {
+    color: #588B8B;
+}
+#nav-home-tab:focus, #nav-home-tab:hover,
+#nav-profile-tab:focus, #nav-profile-tab:hover {
+    color: #4b8282;
+}

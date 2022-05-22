@@ -1,0 +1,108 @@
+/* Cart */
+table{
+  background: white;
+}
+
+table img{
+  width: 100%;
+  float: left;
+}
+
+table td, table i{
+  color: #4b8282 !important;
+}
+
+.buying-cart a, .renting-cart a{
+    text-decoration: none;
+    color: #4b8282;
+}
+
+.buying-cart a:hover, .renting-cart a:hover{
+    opacity: 0.9;
+    text-decoration: underline;
+}
+
+.fa-times:hover{
+  opacity: 0.8;
+}
+
+td .quantity-selector, .update-btn{
+  width: 60%;
+  color: #4b8282;
+}
+
+.book_id{
+    color: #4b8282;
+    border: none;
+    background:none;
+}
+
+.update-btn{
+  text-decoration: underline;
+  font-weight: bold !important;
+}
+
+.update-btn:hover{
+  color: #4b8282;
+  opacity: 0.8;
+}
+
+.order-summary{
+    margin-bottom: 30px;
+}
+
+.order-summary .card, .order-summary .card-header{
+  border: none;
+  width: 100%;
+}
+
+.card-header{
+  background: #d3e6e6;
+}
+
+.card-header span{
+    font-size: 0.7em;
+    float: right;
+    margin: 5px;
+}
+
+.card-body span{
+    float: right;
+}
+
+.bolder{
+    font-size: 1.3em;
+}
+
+.order-summary .card-header p{
+  font-size: 1.3em;
+  margin: 5px;
+}
+
+.check-out-button{
+  background: #4b8282;
+  color: white;
+  font-size: 1.3em;
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+}
+
+.check-out-button:hover{
+  color: white;
+  opacity: 0.9;
+}
+
+.show-payment p{
+  margin-top: 20px;
+  margin-bottom: 2px;
+}
+
+.show-payment i{
+  font-size: 30px;
+  margin-right: 8px;
+}
+
+.show-payment i:hover{
+    color: #4b8282;
+}

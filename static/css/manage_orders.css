@@ -1,0 +1,142 @@
+
+/* nav tab */
+#myTab button{
+    color: #4b8282;
+    font-weight: normal;
+}
+
+#myTab .active{
+    background: #4b8282;
+    color: white;
+}
+
+/* order card */
+.order-card{
+    background: #FFF9F3;
+    margin-top: 10px;
+    padding: 15px;
+    border-radius: 10px;
+    min-height: 300px;
+    border: #d3e6e6 solid 1px;
+}
+
+.order-date{
+    font-weight: normal;
+    margin: 0px;
+}
+
+.order-id{
+    font-size: 1.9em;
+}
+
+.order-card form{
+    padding: 25px;
+    font-size: 1em;
+    font-weight: normal;
+}
+
+.ship{
+    font-size:0.9em;
+}
+
+.order-card form input[type=submit]{
+    background: #4b8282;
+    color: white;
+    margin-bottom: 5px;
+    float: right;
+}
+
+.order-card form input[type=submit]:hover{
+    opacity: 0.9;
+}
+
+.user-info h6{
+    font-size: 1.3em;
+}
+
+.user-info p{
+    font-weight: normal;
+    font-size: 1.1em;
+}
+
+
+/* Order Summary #4b8282 */
+.order_summary{
+    overflow-y: auto;
+    height: 400px;
+    margin-top: 10px;
+}
+
+.order_summary table td{
+    background: #FFF9F3;
+}
+
+.order_summary thead th{
+    position: sticky;
+    top: 0;
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
+    padding: 12px;
+}
+
+.order_summary thead th a{
+    font-size: 0.7em;
+    float: right;
+    padding-top: 4px;
+}
+
+.order_summary .bottom-sticky td{
+    position: sticky;
+    bottom: 0;
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    padding: 12px;
+    background:#d3e6e6;
+}
+
+.float_right{
+    float: right;
+}
+
+.order_summary img{
+    width: 100%;
+    padding:0 !important;
+    margin: 0 !important;
+}
+
+table{
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td{
+    padding: 2px;
+    background: white;
+    border-bottom: #d3e6e6 1px solid;
+}
+
+.label td{
+    text-align: left;
+    padding-top: 6px;
+    padding-left: 10px;
+}
+
+.float-right{
+    float: right;
+    font-size: 1em;
+    text-decoration: underline;
+}
+
+th{
+    background: #d3e6e6;
+}
+
+.products td{
+    width: 50px;
+    text-align: center;
+}
+
+.bottom-right-padding{
+    padding-right: 20px;
+    padding-bottom: 10px;
+}

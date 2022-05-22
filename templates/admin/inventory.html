@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+
+{% block stylesheets %}
+
+<link rel="stylesheet" href="/static/css/user.css">
+
+{% endblock %}
+
+{% block content %}
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{% from "includes/_admin_sidebar.html" import admin_sidebar %}
+
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+  "Home": url_for("home"),
+  "Inventory": "#"
+}) }}
+
+{# Container to contain display for user related things #}
+<div class="container user-container">
+  <div class="row">
+    {# Render sidebar #}
+    {{ admin_sidebar("Inventory") }}
+    <div class="d-flex flex-column col-lg-10 py-3 px-5">
+      <h2>Inventory</h2>
+      <hr>
+      <div> {# Display number of books #}
+        {% if count == 0 %}
+        <p>There are no books.</p>
+        {% elif count == 1 %}
+        <p>There is 1 book.</p>
+        {% else %}
+        <p>There are {{ count }} books.</p>
+        {% endif %}
+      </div>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cover</th>
+              <th>Language</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Price($)</th>
+              <th>Quantity</th>
+              <th>Rented</th>
+              <th>Action</th>
+              <th></th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+          {% for book in books_list %}
+            <tr>
+              <td>{{ book.get_book_id() }}</td>
+              <td>
+                <img src="{{ book.get_img() }}" alt="{{ book.get_title() }}" style="width:40px;height:60px;">
+              </td>
+              <td>{{ book.get_language() }}</td>
+              <td>{{ book.get_title() }}</td>
+              <td>{{ book.get_author() }}</td>
+              <td>{{ book.get_price() }}</td>
+              <td>{{ book.get_qty() }}</td>
+              <td>{{ book.get_rented() }}</td>
+              <td>{{ book.get_action() }}</td>
+              <td><a href="/book/{{book.get_book_id()}}" data-bs-toggle="tooltip" title="View"><i class="actions-button fa fa-eye"></i></a></td>
+              <td><a href="{{ url_for('update_book', id=book.get_book_id())}}" data-bs-toggle="tooltip" title="Update"><i class="actions-button fa fa-pen"></i></a></td>
+              <td>
+                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="document.getElementById('toggleModal_{{book.get_book_id()}}').click()">
+                  <i class="actions-button fa fa-trash"></i>
+                </button>
+                <button type="button" class="d-none" id="toggleModal_{{book.get_book_id()}}" data-bs-toggle="modal" data-bs-target="#myModal_{{book.get_book_id()}}"></button>
+                <form class="" action="{{url_for('delete_book', id=book.get_book_id())}}" method="POST">
+                  <!-- The Modal -->
+                  <div class="modal fade" id="myModal_{{book.get_book_id()}}">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+
+                        <!-- Modal Header -->
+                        <div class="modal-header">
+                          <h4 class="modal-title">Delete Confirmation</h4>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <!-- Modal body -->
+                        <div class="modal-body">
+                          Are you sure you want to delete {{book.get_title()}} by {{book.get_author()}} priced at ${{book.get_price()}}?
+                        </div>
+
+                        <!-- Modal footer -->
+                        <div class="modal-footer">
+                          <input type="submit" value="Delete" class="btn btn-danger">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-auto">
+        <a href="{{ url_for('add_book') }}" class="btn defaultbtn">Add Book</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

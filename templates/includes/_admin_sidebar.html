@@ -1,0 +1,16 @@
+{% from "includes/_render_sidebar.html" import render_sidebar %}
+{% macro admin_sidebar(active) %}
+  {% set links_dict = {
+    "Inventory": url_for("inventory"),
+    "Add Book": url_for("add_book"),
+    "Manage Orders": url_for("manage_orders"),
+    "Manage Accounts": url_for("manage_accounts"),
+    "Enquiry Dashboard": url_for("enquiry_retrieve_adm"),
+    "Create FAQ": url_for("create_faq"),
+    "FAQ Dashboard": url_for("faq_dashboard"),
+    "Create Coupons": url_for("coupon_adm"),
+    "Coupon Dashboard": url_for("retrieve_coupons")
+  } %}
+  {% do links_dict.update({active: "#"}) %}
+  {{ render_sidebar(links_dict) }}
+{% endmacro %}

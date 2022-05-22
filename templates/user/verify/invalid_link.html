@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Invalid Link{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/css/login.css">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'includes/_login_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<h1 class="display-4">Invalid Link</h1>
+<div>This link is either expired or invalid.</div>
+{% endblock %}

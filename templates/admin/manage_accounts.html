@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Accounts{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/css/user.css">
+{% endblock %}
+
+{% block content %}
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{% from "includes/_admin_sidebar.html" import admin_sidebar %}
+{% set display_word = "User" if is_master else "Customer" %}
+{% macro generate_link(page_num) %}
+  {{ url_for("manage_accounts") }}?page={{ page_num }}
+{% endmacro %}
+
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+  "Home": url_for("home"),
+  "Manage Account": "#"
+}) }}
+
+{# Container to contain display for user related things #}
+<div class="container user-container">
+  <div class="row">
+    {# Render sidebar #}
+    {{ admin_sidebar("Manage Accounts") }}
+    <div class="d-flex flex-column col-lg-10 py-3 px-5">
+      <div class="d-flex">
+        <h2 class="me-auto">User account overview</h2>
+        <button type="button" class="btn btn-primary" id="addUserButton" data-bs-toggle="modal" data-bs-target="#addUser">
+          Add New {{ display_word }}
+        </button>
+      </div>
+      <hr>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Username</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              {% if is_master %}
+              <th scope="col">Type</th>
+              {% endif %}
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in display_users %}
+            {% if user.__class__.__name__ != "Admin" or not user.is_master() %} {# Don't display master #}
+            {% if user.__class__.__name__ == "Admin" %}
+              {% set name = "-" %}
+              {% set gender = "-" %}
+            {% else %}
+              {% set name = user.get_name() if user.get_name() else "-" %}
+              {% set gender = user.get_gender() if user.get_gender() else "-" %}
+            {% endif %}
+            <tr class="account-row">
+              <td>{{ user.get_username() }}</td>
+              <td>{{ name }}</td>
+              <td>{{ user.get_email() }}</td>
+              {% if is_master %}
+              <td>{{ user.__class__.__name__ }}</td>
+              {% endif %}
+              <td class="account-actions d-flex">
+                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="View" onclick="viewUser('{{ user.__class__.__name__ if is_master }}', '{{ user.get_username() }}', '{{ name }}', '{{ user.get_email() }}', '{{ gender }}', '{{ user.get_profile_pic() }}');">
+                  <i class="fa fa-eye"></i>
+                </button>
+                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="selectAccount('{{ user.get_user_id() }}', '{{ user.get_username() }}', 'deleteUserButton');">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="account-footer clearfix mt-auto">
+        <div class="hint-text">Showing <b>{{ entries_range[0] }}-{{ entries_range[1] }}</b> out of <b>{{ total_entries }}</b> users</div>
+        <ul class="pagination mb-0">
+          <li class="page-item {{ 'disabled' if first_page == active_page }}">
+            <a class="page-link" href="{{ generate_link(first_page) }}" data-bs-toggle="tooltip" title="Start"><span>&laquo;</span></a>
+          </li>
+          <li class="page-item {{ 'disabled' if prev_page == active_page }}">
+            <a class="page-link" href="{{ generate_link(prev_page) }}" data-bs-toggle="tooltip" title="Previous"><span>&lsaquo;</span></a>
+          </li>
+          {% for page_num in page_list %}
+          <li class="page-item {{ 'active disabled' if page_num == active_page }}">
+            <a class="page-link" href="{{ generate_link(page_num) }}">{{ page_num }}</a>
+          </li>
+          {% endfor %}
+          <li class="page-item {{ 'disabled' if next_page == active_page }}">
+            <a class="page-link" href="{{ generate_link(next_page) }}" data-bs-toggle="tooltip" title="Next"><span>&rsaquo;</span></a>
+          </li>
+          <li class="page-item {{ 'disabled' if last_page == active_page }}">
+            <a class="page-link" href="{{ generate_link(last_page) }}" data-bs-toggle="tooltip" title="End"><span>&raquo;</span></a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% from "includes/_login_render_field.html" import render_field %}
+{# Displays flash sign up error #}
+{% macro display_flash_error(category) %}
+  {% with messages = get_flashed_messages(category_filter=(category)) %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="invalid-feedback display-feedback">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+{% endmacro %}
+{% macro display_error_span(session_name) %}
+  {% if session.pop(session_name, False) %}
+    <span class="d-none display-invalid"></span>
+  {% endif %}
+{% endmacro %}
+{% set display_word = "User" if is_master else "Customer" %}
+
+{# Add User Modal #}
+<div class="modal fade" id="addUser" tabindex="-1" aria-labelledby="addUserLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addUserLabel">Add New {{ display_word }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form class="needs-validation" method="POST" action="" novalidate>
+          {% if is_master %}
+          <div class="mb-4">
+            {{ render_field(create_user_form.user_type, "Please select a user type", class="form-select") }}
+          </div>
+          {% endif %}
+          <div class="mb-4">
+            {{ display_error_span("CreateUserUsernameError") }}
+            {{ render_field(create_user_form.username, "Username should be 3-20 characters long", class="form-control", placeholder="Username") }}
+            {{ display_flash_error("create-user-username-error") }}
+          </div>
+          <div class="mb-4">
+            {{ display_error_span("CreateUserEmailError") }}
+            {{ render_field(create_user_form.email, "Please enter a valid email like example@email.com", class="form-control", placeholder="Email") }}
+            {{ display_flash_error("create-user-email-error") }}
+          </div>
+          <div class="mb-4">
+            {{ render_field(create_user_form.password, "Password should be at least 8 characters long", class="form-control", placeholder="Password") }}
+          </div>
+          <div class="mb-4">
+            {{ render_field(create_user_form.confirm, "Please confirm your password", class="form-control", placeholder="Confirm Password") }}
+          </div>
+          <input type="reset" class="d-none" id="addUserReset"/>
+          <input type="submit" value="SIGN UP" class="d-none" id="addUserSubmit"/>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="addUser();">Create {{ display_word }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# View User Modal #}
+<button type="button" class="d-none" id="viewUserButton" data-bs-toggle="modal" data-bs-target="#viewUser"></button>
+<div class="modal fade" id="viewUser" tabindex="-1" aria-labelledby="viewUserLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewUserLabel">View {{ display_word }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="row">
+          <dt class="col-sm-3 mb-2 mt-auto">Picture</dt>
+          <dd class="col-sm-9">
+            <div class="view-user-profile-pic">
+              <div class="img-wrapper img-1-1">
+                <img src="" alt="" id="viewUserProfilePic">
+              </div>
+            </div>
+          </dd>
+          {% if is_master %}
+          <dt class="col-sm-3">Type</dt>
+          <dd class="col-sm-9" id="viewUserUserType"></dd>
+          {% endif %}
+          <dt class="col-sm-3">Username</dt>
+          <dd class="col-sm-9" id="viewUserUsername"></dd>
+          <dt class="col-sm-3">Name</dt>
+          <dd class="col-sm-9" id="viewUserName"></dd>
+          <dt class="col-sm-3">Email</dt>
+          <dd class="col-sm-9" id="viewUserEmail"></dd>
+          <dt class="col-sm-3">Gender</dt>
+          <dd class="col-sm-9" id="viewUserGender"></dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Delete User Modal #}
+<button type="button" class="d-none" id="deleteUserButton" data-bs-toggle="modal" data-bs-target="#deleteUser"></button>
+<form method="POST" action="" class="d-none">
+  {{ delete_user_form.user_id(id="deleteUserField")|safe }}
+  <input type="reset" class="d-none" id="deleteUserReset"/>
+  <input type="submit" value="SIGN UP" class="d-none" id="deleteUserSubmit"/>
+</form>
+<div class="modal fade" id="deleteUser" tabindex="-1" aria-labelledby="deleteUserLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteUserLabel">Delete {{ display_word }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <b class="display-username"></b>?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="deleteUser();">Delete {{ display_word }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/manage_accounts.js"></script>
+{% if form_trigger %}
+<script>document.body.onload = () => document.getElementById("{{ form_trigger }}").click();</script>
+{% endif %}
+{% endblock %}

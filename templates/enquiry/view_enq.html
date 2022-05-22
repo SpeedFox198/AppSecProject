@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}ADMIN Query Dashboard{% endblock %}
+
+{% block stylesheets %}
+
+<link rel="stylesheet" href="/static/css/adm_dashboard.css">
+<link rel="stylesheet" href="/static/css/user.css">
+
+{% endblock %}
+{% block content %}
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{% from "includes/_user_sidebar.html" import user_sidebar %}
+{% from "includes/_login_render_field.html" import render_field %}
+
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+  "Home": url_for("home"),
+  "My Enquiry": "#"
+}) }}
+<div class="container user-container">
+    <div class="row">
+      {# Render sidebar #}
+      {{ user_sidebar("My Enquiry") }}
+      <div class="col-lg-10 py-3 px-5">
+        <h2>View My Enquiry</h2>
+        <hr>
+
+        <div class="row">
+            <div class="col-sm-12">
+            <table class="table table-light" >
+                <thead>
+                    <tr>
+                      <th>
+                        Total Enquiries:
+                      </th>
+                      {% if count == 0 %}
+                      <th colspan="7">0</th>
+                      {% elif count == 1 %}
+                      <th colspan="7"> 1 </th>
+                      {% else %}
+                      <th colspan="7">{{ count }} </th>
+                      {% endif %}
+
+                    </tr>
+                    <tr>
+                        <th> Enquiry ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Enquiry Type</th>
+                        <th>Comments</th>
+                        <th>Reply</th>
+
+
+                    </tr>
+                </thead>
+                <tbody>
+                {% for enquiry in enquiry_list %}
+                    <tr>
+                        <td>{{enquiry.get_count()}}</td>
+                        <td>{{enquiry.get_name()}}</td>
+                        <td>{{enquiry.get_email()}}</td>
+
+                        {% if enquiry.get_enquiry_type() == "B" %}
+                        <td>Question about Books</td>
+                        {% elif enquiry.get_enquiry_type() == "F" %}
+                        <td>Feedback</td>
+                        {% elif enquiry.get_enquiry_type() == "R" %}
+                        <td>Report Vulnerability</td>
+
+                        {% endif %}
+                        <td>{{enquiry.get_comments()}}</td>
+                        <td>{{enquiry.get_reply()}}</td>
+                        
+                    </tr>
+                {% endfor %}
+                </tbody>
+
+                </table>
+            </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+
+
+<div class="container-padding-50"></div>
+{% endblock %}

@@ -1,0 +1,8 @@
+# Directories
+__pycache__/
+*/__pycache__/
+.venv/
+.vscode/
+
+# Database
+database.*

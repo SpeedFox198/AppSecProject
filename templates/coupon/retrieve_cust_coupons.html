@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}ADMIN coupon Dashboard{% endblock %}
+
+{% block stylesheets %}
+
+<link rel="stylesheet" href="/static/css/adm_dashboard.css">
+
+{% endblock %}
+
+{% block content %}
+{% from "includes/_form.html" import render_field %}
+<div class="container-fluid container-padding-50">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1 class="display-4, main-header">Your Coupons</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                <table class="table table-light" >
+                    <thead>
+                        <tr>
+                          <th>
+                            Total Coupons Active:
+                          </th>
+                          {% if count == 0 %}
+                          <th colspan="7">0</th>
+                          {% elif count == 1 %}
+                          <th colspan="7"> 1 </th>
+                          {% else %}
+                          <th colspan="7">{{ count }} </th>
+                          {% endif %}
+
+                        </tr>
+                        <tr>
+                            <th> Coupon No</th>
+                            <th>Name</th>
+                            <th>Discount</th>
+                            <th>Coupon Code</th>
+                            <th>start date</th>
+                            <th>end date</th>
+                            <th colspan = "2" style="text-align:center;"> Actions</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for coupon in coupon_list %}
+                        <tr>
+                            <td>{{loop.index}}</td> <!-- loop index, so 1 , 2 , 3, 4-->
+                            <td>{{coupon.get_name()}}</td>
+                            <td>{{coupon.get_discount()}}</td>
+                            <td>{{coupon.get_coupon_code_id()}}</td>
+                            <td>{{coupon.get_start_date()}}</td>
+                            <td>{{coupon.get_end_date()}}</td>
+                            <td>
+                                <a href ="/update-coupon/{{coupon.get_count()}}" class="btn btn-warning">Update</a>
+                            </td>
+                            <td>
+                                <form action="{{url_for('delete_coupons',id=coupon.get_count())}}" method="POST">
+                                    <input type="submit" value="Delete" class="btn btn-danger">
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-padding-50"></div>
+{% endblock %}

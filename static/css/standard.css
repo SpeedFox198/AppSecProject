@@ -1,0 +1,477 @@
+/* To test if CSS works */
+
+
+/*
+  Welcome to the Standard CSS used for Bras Basah Books Web Application
+  Here will be every CSS used for all Bras Basah Books Web Application
+  I. Structure of Footer and Navbar.css
+  |
+  ├─ 1.Global
+  ├─ 2.NavBar
+  ├─ 3.Footer
+  ├─ 4.Misc
+  ├─ 5.Fonts
+  | Colour Palette for web pages (for us to self reference the colour choices)
+  ├─ #FCEEE0, #4b8282, #FFF, #dc3545
+*/
+
+
+/* --------------------------------------------------------------------------
+    Body
+-------------------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+}
+
+body{
+  background-color: #FCEEE0;
+  font-family: Rubik, Tahoma, sans-serif;
+  color: #4b8282;
+  overflow-x: hidden;
+}
+
+main {
+  min-height: 620px;
+}
+
+
+/* --------------------------------------------------------------------------
+    Clearing & Setting Default Styles
+-------------------------------------------------------------------------- */
+ul{
+  list-style-type: none;
+}
+
+
+/* --------------------------------------------------------------------------
+    Font
+-------------------------------------------------------------------------- */
+@font-face{
+  font-family:Rubik;
+  src: url('../fonts/Rubik-Light.ttf');
+  font-weight:normal;
+  font-style:normal;
+}
+
+@font-face{
+  font-family:Rubik;
+  src: url('../fonts/Rubik-Bold.ttf');
+  font-weight:bold;
+  font-style:normal;
+}
+
+.rubik{
+  font-family:rubik;
+}
+
+
+/* --------------------------------------------------------------------------
+    Table
+-------------------------------------------------------------------------- */
+.table {
+  --bs-table-hover-bg: #f2f7f7;
+  --bs-table-striped-bg: #fcfcfc;
+}
+
+
+/* --------------------------------------------------------------------------
+    Nav Bar
+-------------------------------------------------------------------------- */
+.brand-nav{
+  padding-bottom: 0px;
+}
+
+.navbar{
+  background-color: #4b8282;
+}
+
+#logo{
+  width: 45px;
+  height: 45px;
+  margin-left: 5%;
+}
+
+#store_name{
+  color: white;
+  font-size: 1.2em;
+  font-family: Rubik, Verdana, Tahoma, sans-serif;
+  margin-left: 10px;
+}
+
+.navbar-expand-lg{
+  padding-top: 0;
+}
+
+#first-nav-item{
+  margin-left: 60px;
+}
+
+header .nav-link, footer .nav-link {
+  font-size: 1.1em;
+  color: white;
+  transition: none;
+}
+
+header .nav-link:focus, header .nav-link:hover,
+footer a:focus, footer a:hover {
+  opacity: 0.9;
+  color: white;
+}
+
+#search-field{
+  margin-top: 8px;
+}
+
+.fa-search{
+  background: white;
+  color: #4b8282;
+  border-radius: 3px;
+  padding: 8px 10px 8px 10px;
+}
+
+.fa-search:hover{
+  color: #4b8282 !important;
+}
+
+.nav-icon{
+  font-size: 1.2em;
+  margin-top: 8px;
+}
+
+/* Dropdown Button */
+.dropbtn {
+  background-color: #4b8282;
+  color: white;
+  padding: 0px;
+  font-size: 1.1em;
+  border: none;
+  margin-top:8px;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 3; /* I set it to 3 cause flash message needs to be below it*/
+  padding: 0px;
+}
+/* Account link's dropdown */
+.dropdown-content.account-link-display {
+  right: 0;
+  min-width: 120px;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: #4b8282;
+  padding: 5px 15px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {
+  background-color: #4b8282;
+  color: white;
+}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Change the background color of the dropdown button when the dropdown content is shown */
+.dropdown:hover .dropbtn {
+  background-color: #4b8282;
+}
+
+/* Mobile Nav Bar */
+.mobile-nav .btn{
+    background: #4b8282;
+    width: 99%;
+    max-height: 70px;
+}
+
+.mobile-nav i{
+    float: right;
+    color: white;
+    font-size: 2em;
+    line-height: 55px;
+}
+
+#mobile-logo{
+    max-width: 7%;
+    float: left;
+}
+
+.offcanvas{
+    background-color: #FCEEE0;
+}
+
+.mobile-nav ul li i{
+    color: #4b8282;
+    float: left;
+}
+
+.mobile-nav table{
+    width: 100%;
+}
+
+.mobile-nav ul table tr td h5{
+    padding: 10px;
+    margin-left: 25px;
+}
+
+.mobile-nav .nav-item .nav-link, .mobile-nav .nav-item .mobile-dropbtn{
+    color: #4b8282;
+    background: none;
+}
+
+.mobile-nav hr{
+    color: #4b8282;
+    opacity: 0.8;
+    padding: 0;
+    margin: 0;
+}
+
+/* breadcrumb */
+.breadcrumb {
+  margin-bottom: 0.5rem;
+  margin-left: 0.2rem;
+  font-size: 0.9rem;
+}
+.breadcrumb-item a{
+  color:#4b8282;
+  text-decoration: none;
+}
+.breadcrumb-item a:hover{
+  color:#588B8B;
+  text-decoration: underline;
+}
+
+
+/* --------------------------------------------------------------------------
+    Footer
+-------------------------------------------------------------------------- */
+footer{
+  background: #4b8282;
+}
+
+.fa-facebook, .fa-twitter, .fa-instagram{
+  text-decoration: none;
+  float: left;
+  padding: 8px;
+  font-size: 30px !important;
+  width: 50px;
+  text-align: center;
+  margin-top: 15px;
+  margin-left: 40px !important;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  color: white;
+  border: 2px solid white;
+  margin-left: 65px;
+}
+
+footer .fa-brands:hover, .footer-link:hover, .footer-link2:hover{
+  opacity: 0.8;
+  text-decoration: none;
+  color: white;
+}
+
+#copyright{
+  text-align: right;
+  margin-right: 20px;
+}
+
+#copyright, .footer-link2{
+  color: darkgray;
+}
+
+.footer-link{
+  color: white;
+  text-decoration: none;
+  margin-left: 35px;
+}
+
+.footer-link2{
+  margin-right: 28px;
+  text-decoration: none;
+}
+
+/* Page Name */
+.page-name{
+  width: 100%;
+  text-align: center;
+  border-bottom: 2px solid #4b8282;;
+  line-height: 0.1em;
+  margin: 30px 0 20px;
+  color:#4b8282;
+}
+
+.page-name span{
+  background-color: #FCEEE0;
+  padding:0 50px;
+}
+
+
+/* --------------------------------------------------------------------------
+    Images
+-------------------------------------------------------------------------- */
+.img-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.img-wrapper img {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  right: 0px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-2-3{
+  padding-top: 150%; /* 2:3 Aspect Ratio */
+}
+.img-1-1 {
+  padding-top: 100%; /* 1:1 Aspect Ratio */
+}
+.img-8-5 {
+  padding-top: 62.5%; /* 8:5 Aspect Ratio */
+}
+.img-16-9 {
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+}
+
+
+/* --------------------------------------------------------------------------
+    Buttons
+-------------------------------------------------------------------------- */
+.btn-warning:hover {
+  background-color: #588B8B;
+}
+
+.defaultbtn {
+  background-color: #4b8282;
+  color: #fff;
+  border: 0;
+}
+.defaultbtn:hover {
+  background-color: #588B8B;
+  color: #fff;
+}
+
+button:focus, .btn:focus {
+  border-color: #97bdbd !important;
+  box-shadow: 0 0 0 0.25rem rgba(72, 161, 161, 0.25) !important;
+}
+button.nav-link:focus {
+  border-color: #e9ecef #e9ecef #dee2e6 !important;
+  box-shadow: none !important;
+}
+
+.btn.btn-warning {
+  background-color: #4b8282;
+  color: #ffffff;
+}
+
+.btn.btn-primary {
+  background-color: #4b8282;
+  color: #ffffff;
+}
+
+.btn.btn-secondary:focus {
+  border-color: #565e64 !important;
+  box-shadow: 0 0 0 0.25rem rgb(130, 138, 145, 0.5) !important;
+}
+
+.btn.btn-danger:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+    Flash Messages
+-------------------------------------------------------------------------- */
+.flash-message {
+  color: #4b8282;
+  background-color: #d9ebeb;
+  border-color: #97bdbd;
+}
+.flash-warning {
+  color: #664d03;
+  background-color: #ffeeb7;
+  border-color: #ffdc74;
+}
+.flash-error {
+  color: #842029;
+  background-color: #f8d7da;
+  border-color: #eba0a7;
+}
+
+
+/* --------------------------------------------------------------------------
+    Form Validations
+-------------------------------------------------------------------------- */
+.form-control:focus,
+.form-select:focus {
+  border-color: #97bdbd;
+  box-shadow: 0 0 0 0.25rem rgba(72, 161, 161, 0.25);
+}
+
+.form-control.is-invalid, .was-validated .form-control:invalid {
+  background-image: none;
+}
+.form-select.is-invalid, .was-validated .form-select:invalid {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+.form-control.is-valid, .was-validated .form-control:valid,
+.form-select.is-valid, .was-validated .form-select:valid {
+  border-color: #ced4da !important;
+  background-image: none !important;
+}
+.form-control.is-valid:focus, .was-validated .form-control:valid:focus,
+.form-select.is-valid:focus, .was-validated .form-select:valid:focus {
+  border-color: #97bdbd !important;
+  box-shadow: 0 0 0 0.25rem rgba(72, 161, 161, 0.25) !important;
+}
+
+.display-invalid + .form-control,
+.display-invalid + .form-select {
+  border-color: #dc3545;
+}
+.display-invalid + .form-control:focus,
+.display-invalid + .form-select:focus {
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+.display-invalid ~ .display-feedback {
+  display: block;
+}
+.form-control.is-valid ~ .display-feedback, .was-validated .form-control:valid ~ .display-feedback,
+.form-select.is-valid ~ .display-feedback, .was-validated .form-select:valid ~ .display-feedback {
+  display: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+    Misc
+-------------------------------------------------------------------------- */
+.twentypx {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}

@@ -1,0 +1,45 @@
+/* Book Info Page */
+.book-info img{
+  width: 100%;
+  width: 259px;
+  height=371.56px;
+}
+
+.book-info{
+  margin-bottom: 25px;
+}
+
+.book-info h2, .book-info h4{
+  font-weight: bolder;
+}
+
+.quantity-selector{
+  width: 10%;
+  padding: 5px;
+  color: #4b8282;
+}
+
+.add-cart-button{
+  background: #4b8282;
+  color: white;
+  width: 50%;
+  font-size: 1.1em;
+}
+
+.add-cart-button:hover{
+    color: white;
+    opacity: 0.9;
+}
+
+.book-info p a{
+  color: #4b8282;
+}
+
+.book-info p a:hover{
+  opacity: 0.8;
+}
+
+a .card .card-body{
+    color: #4b8282;
+    text-decoration: none;
+}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/css/login.css">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'includes/_login_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+{% from "includes/_login_render_field.html" import render_field %}
+<div class="d-flex justify-content-center align-items-center h-100">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="m-0">Log In</h2>
+    </div>
+    <div class="card-body">
+      <form class="needs-validation" method="POST" action="" novalidate>
+        {# Flash login error message #}
+        {% with messages = get_flashed_messages(category_filter=("form-error")) %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash-error alert p-2 mb-4" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <div class="mb-4">
+          {{ render_field(form.username, "Please enter your usename/email", class="form-control", placeholder="Username / Email") }}
+        </div>
+        <div class="mb-4">
+          {{ render_field(form.password, "Please enter your password", class="form-control", placeholder="Password") }}
+        </div>
+        <input type="submit" value="LOG IN" class="input-group btn"/>
+      </form>
+    </div>
+    <div class="card-footer">
+      <div class="d-flex justify-content-center links">
+        Don't have an account?&nbsp<a href="{{ url_for('sign_up') }}">Sign Up</a>
+      </div>
+      <div class="d-flex justify-content-center">
+        <a href="{{ url_for('password_forget') }}">Forgot your password?</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
