@@ -1,9 +1,18 @@
-# Japanese French Toast IT2555 Application Security Project
+# IT2555 Application Security Project
 
-**PEM Group:** SF2102
+![Japanese French Toast](https://user-images.githubusercontent.com/65378401/169692179-96d98787-600f-40b6-9917-d773e11ccb44.jpg)
 
-### Team members:
+## Group Details
 
+### Japanese French Toast
+
+**PEM Group:** SF2102  
+**Group Name:** Japanese French Toast  
+**Why the name:** I dunno?  
+**Where did you get the image:** I found them [here](https://iamafoodblog.com/extra-fluffy-super-soft-and-custard-y-japanese-style-tamagoyaki-french-toast/) and made some edits.
+
+
+**Team members:**
 - [211973E]  Jabriel Seah **-(Leader)-**
 - [210162M]  Clarence Koh
 - [214242Q]  Royston Loo
