@@ -41,12 +41,12 @@ You may install all using: `pip3 install -r requirements.txt`
 ## Task Allocation
 
 **Clarence Koh**
-- (A5) Broken Access Control
 - (A3) Sensitive Data Exposure
+- (A5) Broken Access Control
 
 **Royston Loo**
-- (API4) Lack of Resources & Rate Limiting
 - (A2) Broken Authentication
+- (API4) Lack of Resources & Rate Limiting
 
 **Fong Chung Wai**
 - (A1) Injection
