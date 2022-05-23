@@ -2,6 +2,8 @@
 
 ![Japanese French Toast](https://user-images.githubusercontent.com/65378401/169692179-96d98787-600f-40b6-9917-d773e11ccb44.jpg)
 
+> Providing quality services since 2022, better than Coffee & Waffles Co.
+
 ## Group Details
 
 ### Japanese French Toast
@@ -10,7 +12,6 @@
 **Group Name:** Japanese French Toast  
 **Why the name:** I dunno?  
 **Where did you get the image:** I found them [here](https://iamafoodblog.com/extra-fluffy-super-soft-and-custard-y-japanese-style-tamagoyaki-french-toast/) and made some edits.
-
 
 **Team members:**
 - [211973E]  Jabriel Seah **(Leader)**
@@ -35,7 +36,7 @@ Our web application is an online bookstore. It provides the service of purchasin
 **7. stripe** | `pip install stripe`  
 **8. Pillow** | `pip install pillow`  
 
-You may install using: `pip3 install -r requirements.txt`
+You may install all using: `pip3 install -r requirements.txt`
 
 ## Task Allocation
 
