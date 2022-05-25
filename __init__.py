@@ -10,6 +10,7 @@ import os
 import stripe
 import datetime
 from PIL import Image
+print("Hello i am clarence")
 
 # Import classes
 import Book, Cart as c
