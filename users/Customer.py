@@ -74,6 +74,7 @@ class Customer(User):
     def get_gender(self):
         return self.__gender
 
+    ################################################################### TODO: REMOVing coupon func
     def set_coupons(self, coupons):
         self.__coupons = coupons
     def get_coupons(self):
@@ -84,6 +85,7 @@ class Customer(User):
     def get_orders(self):
         return self.__orders
 
+    ###################################################################### TODO: IDK
     # Verify account and return verify
     def verify(self):
         self.__verified = True

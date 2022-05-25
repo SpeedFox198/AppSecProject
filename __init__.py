@@ -65,6 +65,7 @@ mail = Mail(app)
 
 """    General Funtions    """
 
+######################################################################### TODO: remove cuz will be using SQL
 # Added type hintings as I needed my editor to recognise the type
 def retrieve_db(key, db, value=None) -> Union[
     Dict[str, Customer], Dict[str, Admin], GuestDB[str, Guest], Dict[str, Book.Book]]:
@@ -80,6 +81,7 @@ def retrieve_db(key, db, value=None) -> Union[
     return value
 
 
+######################################################################### TODO: change to SQL
 def get_user() -> Union[Customer, Admin, Guest]:
     """ Returns user by checking session key """
 
@@ -105,6 +107,7 @@ def get_user() -> Union[Customer, Admin, Guest]:
     return create_guest()
 
 
+######################################################################### TODO: change to SQL
 def create_guest():
     """ Create and return new guest account """
     guest = Guest()
@@ -130,6 +133,7 @@ def create_guest():
 
 """    Before Request    """
 
+######################################################################### TODO: change to SQL
 # Before first request
 @app.before_first_request
 def before_first_request():
@@ -515,6 +519,7 @@ def verify_send():
     return redirect(url_for("account"))
 
 
+########################################################### TODO: incomplete! (verified email does nothing much rn)
 # Verify email page
 @app.route("/user/verify/<token>")
 def verify(token):
@@ -558,6 +563,7 @@ def invalid_link():
 
 """    User Pages    """
 
+######################################################################### TODO: cater to admin acc
 # View account page
 @app.route("/user/account", methods=["GET", "POST"])
 def account():
@@ -1028,6 +1034,7 @@ def add_to_buy(id):
 #
 # add to renting cart
 #
+######################################################################### TODO: REMOVE RENT FUNCTIONALITY
 @app.route("/addtorent/<int:id>", methods=['GET', 'POST'])
 def add_to_rent(id):
     user_id = get_user().get_user_id()
@@ -1542,6 +1549,7 @@ def edit_return(order_id):
 #
 # Create Enquiry/Contact Us (customer/guest)
 #
+################################################## TODO: enquiry is to be kept for injection of code vuln
 @app.route("/user/enquiry", methods=['GET', 'POST'])
 def enquiry_cust():
     create_enquiry_form = Enquiry(request.form) #create enquiry form
@@ -1896,6 +1904,7 @@ def helpful_faq(id):
 
     return redirect(url_for('faq'))
 
+######################################################################### TODO: REMOVing coupon func
 # Create coupon
 @app.route('/coupon', methods =['GET','POST'])
 def coupon_adm():
@@ -2594,6 +2603,7 @@ def confirm_delivery(order_id):
     db.close()
     return redirect(request.referrer)
 
+######################################################################### TODO: REMOVing this func
 # Re-order cancelled order
 @app.route("/reorder", methods=['GET', 'POST'])
 def reorder():
@@ -2656,6 +2666,7 @@ def pp():
 #
 
 
+######################################################################### TODO: REMOVing these
 # Only during production. To be removed when published.
 # temp home page
 @app.route("/temp-home")
