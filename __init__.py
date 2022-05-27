@@ -4,12 +4,13 @@ from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, BadData
 from werkzeug.utils import secure_filename
 from typing import Union, Dict
+from PIL import Image
 import math
 import shelve
 import os
 import stripe
 import datetime
-from PIL import Image
+import sqlite3
 
 # Import classes
 import Book, Cart as c
