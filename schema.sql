@@ -17,11 +17,11 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Customers (
+    user_id TEXT NOT NULL,
     name TEXT,
     credit_card_no TEXT,
     address TEXT,
     phone_no INTEGER,
-    user_id TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
@@ -40,9 +40,9 @@ CREATE TABLE Books (
 
 CREATE TABLE OrderDetails (
     order_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
     order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     shipping_option TEXT NOT NULL,
-    user_id TEXT NOT NULL,
     PRIMARY KEY (order_id),
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
