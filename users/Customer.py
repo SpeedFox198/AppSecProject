@@ -29,70 +29,70 @@ class Customer(User):
 
     def __init__(self, username, email, password):
         super().__init__()
-        self.__username = username
-        self.__email = email
+        self.username = username
+        self.email = email
         self.set_password(password)
-        self.__name = ""
-        self.__verified = False
-        self.__profile_pic = _UPLOAD_FOLDER + _DEFAULT_PIC_NAME
-        self.__gender = ""
-        self.__coupons = []
-        self.__orders = []
-        self.__enquiry = []
+        self.name = ""
+        self.verified = False
+        self.profile_pic = _UPLOAD_FOLDER + _DEFAULT_PIC_NAME
+        self.gender = ""
+        self.coupons = []
+        self.orders = []
+        self.enquiry = []
 
     def __repr__(self):
-        return super().__repr__(username=self.__username, email=self.__email)
+        return super().__repr__(username=self.username, email=self.email)
 
 
     # Mutator and accessor methods
     def set_username(self, username):
-        self.__username = username
+        self.username = username
     def get_username(self):
-        return self.__username
+        return self.username
 
     def set_name(self, name):
-        self.__name = name
+        self.name = name
     def get_name(self):
-        return self.__name
+        return self.name
     
     def get_display_name(self):
         """ Returns name for displaying, displays username if name not provided """
-        return self.__name or self.__username
+        return self.name or self.username
 
     def set_email(self, email):
-        self.__email = email
+        self.email = email
     def get_email(self):
-        return self.__email
+        return self.email
 
     def set_profile_pic(self):
-        self.__profile_pic = f"{_UPLOAD_FOLDER}{self.get_user_id()}.png"
+        self.profile_pic = f"{_UPLOAD_FOLDER}{self.get_user_id()}.png"
     def get_profile_pic(self):
-        return self.__profile_pic
+        return self.profile_pic
 
     def set_gender(self, gender):
-        self.__gender = gender
+        self.gender = gender
     def get_gender(self):
-        return self.__gender
+        return self.gender
 
     ################################################################### TODO: REMOVing coupon func
     def set_coupons(self, coupons):
-        self.__coupons = coupons
+        self.coupons = coupons
     def get_coupons(self):
-        return self.__coupons
+        return self.coupons
 
     def set_orders(self, orders):
-        self.__orders = orders
+        self.orders = orders
     def get_orders(self):
-        return self.__orders
+        return self.orders
 
     ###################################################################### TODO: IDK
     # Verify account and return verify
     def verify(self):
-        self.__verified = True
+        self.verified = True
     def unverify(self):
-        self.__verified = False
+        self.verified = False
     def is_verified(self):
-        return self.__verified
+        return self.verified
 
     # Set password, and check password
     def set_password(self, password):
@@ -111,13 +111,13 @@ class Customer(User):
 
     # Eden integration
     def add_coupons(self,coupon_code):
-        self.__coupons.append(coupon_code)
+        self.coupons.append(coupon_code)
 
     def add_enquiry(self,enquiry):
-        self.__enquiry.append(enquiry)
+        self.enquiry.append(enquiry)
     
     def get_enquiry(self):
-        return self.__enquiry
+        return self.enquiry
     
     def set_enquiry(self,enquiry):
-        self.__enquiry = enquiry
+        self.enquiry = enquiry
