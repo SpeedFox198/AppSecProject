@@ -11,6 +11,11 @@ def fetch_db(sql: str, parameters):
             data = cur.execute(sql, parameters).fetchall()
             return data
 
+# def create_user(user):
+#     fetch_db(
+#         """INSERT INTO Users VALUES (?, ?, ?, ?, NULL, ?)""",
+#         (user.id, user.username, user.email, user.password, user.is_admin)
+#     )
 
 def create_user(user):
     con = sqlite3.connect(DATABASE)
