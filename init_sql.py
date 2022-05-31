@@ -3,8 +3,8 @@ import sqlite3
 con = sqlite3.connect("database.db")
 
 # Very scary code, resets your database
-# with open("schema.sql") as f:
-#     con.executescript(f.read())
+with open("schema.sql") as f:
+    con.executescript(f.read())
 
 # cur = con.cursor()
 
