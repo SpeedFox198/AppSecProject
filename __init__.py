@@ -11,6 +11,7 @@ import os
 import stripe
 import datetime
 import db_fetch as dbf
+from somefunc import generate_id
 
 # Import classes
 import Book, Cart as c
@@ -22,6 +23,7 @@ from forms import (
     AddBookForm, Coupon, CreateCoupon, OrderForm, RequestCoupon, ReplyEnquiry, UpdateCoupon
 )
 from Cart import Discount
+
 
 # CONSTANTS
 DEBUG = True            # Debug flag (True when debugging)
@@ -74,7 +76,7 @@ def retrieve_db(key, db, value=None):
 
 
 ######################################################################### TODO: change to SQL
-def get_user():
+def get_user() -> Union[Customer, Admin, Guest]:
     pass
 
 
@@ -89,11 +91,17 @@ def create_guest():
 # Before first request
 @app.before_first_request
 def before_first_request():
+
+    # Create admin if not in database
     if not dbf.admin_exists():
-        admin_id = User().get_user_id()
+
+        # Admin details
+        admin_id = generate_id()
         username = "admin"
         email = "admin@vsecurebookstore.com"
         password = "PASS{uNh@5h3d}"
+
+        # Create admin
         dbf.create_admin(admin_id, username, email, password)
 
 
@@ -108,12 +116,6 @@ def before_request():
 # Sign up page
 @app.route("/user/sign-up", methods=["GET", "POST"])
 def sign_up():
-    # Get current (guest) user
-    user = get_user()
-
-    # If user is already logged in
-    if session["UserType"] != "Guest":
-        return redirect(url_for("account"))
 
     # Get sign up form
     sign_up_form = SignUpForm(request.form)
@@ -131,51 +133,15 @@ def sign_up():
         password = sign_up_form.password.data
 
         # Create new user
-        with shelve.open("database") as db:
 
-            # Get Customers, UsernameToUserID, EmailToUserID, Guests
-            customers_db = retrieve_db("Customers", db)
-            username_to_user_id = retrieve_db("UsernameToUserID", db)
-            email_to_user_id = retrieve_db("EmailToUserID", db)
-            guests_db = retrieve_db("Guests", db)
+        # Ensure that email and username are not registered yet
+        
 
+        # Create customer TODO:???????????????????????????????????????????????
 
-            # Ensure that email and username are not registered yet
-            if username.lower() in username_to_user_id:
-                if DEBUG: print("Sign-up: username already exists")
-                session["DisplayFieldError"] = session["SignUpUsernameError"] = True
-                flash("Username taken", "sign-up-username-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
-            elif email in email_to_user_id:
-                if DEBUG: print("Sign-up: email already exists")
-                session["DisplayFieldError"] = session["SignUpEmailError"] = True
-                flash("Email already registered", "sign-up-email-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
+        # Store customer into database
 
-            # Create customer
-            customer = Customer(username, email, password)
-            if DEBUG: print(f"Created: {customer}")
-
-            # Delete guest account
-            guests_db.remove(user.get_user_id())
-            if DEBUG: print(f"Deleted: {user}")
-
-            # Store customer into database
-            user_id = customer.get_user_id()
-            customers_db[user_id] = customer
-            username_to_user_id[username.lower()] = user_id
-            email_to_user_id[email] = user_id
-
-            # Create session to login
-            session["UserID"] = user_id
-            session["UserType"] = "Customer"
-            if DEBUG: print(f"Logged in: {customer}")
-
-            # Save changes to database
-            db["UsernameToUserID"] = username_to_user_id
-            db["EmailToUserID"] = email_to_user_id
-            db["Customers"] = customers_db
-            db["Guests"] = guests_db
+        # Create session to login
 
         return redirect(url_for("verify_send"))
 
