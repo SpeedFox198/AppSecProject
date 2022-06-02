@@ -89,7 +89,7 @@ def create_guest():
 # Before first request
 @app.before_first_request
 def before_first_request():
-    if dbf.admin_exists():
+    if not dbf.admin_exists():
         admin_id = User().get_user_id()
         username = "admin"
         email = "admin@vsecurebookstore.com"
