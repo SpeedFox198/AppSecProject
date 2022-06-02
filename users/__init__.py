@@ -12,5 +12,6 @@ from .Guest import Guest as Guest
 from .Customer import Customer as Customer
 from .Admin import Admin as Admin
 from .GuestDB import GuestDB as GuestDB
+from .User import User as User
 # Please don't mark us down for "unclean code"
 # Just treat this as an easter egg

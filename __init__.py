@@ -10,11 +10,12 @@ import shelve
 import os
 import stripe
 import datetime
-import db_fetch
+import db_fetch as dbf
 
 # Import classes
 import Book, Cart as c
-from users import GuestDB, Guest, Customer, Admin
+from users import GuestDB, Guest, Customer, Admin, User
+from users.Customer import _ph
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, Enquiry, UserEnquiry, Faq, FaqEntry,
@@ -88,35 +89,12 @@ def create_guest():
 # Before first request
 @app.before_first_request
 def before_first_request():
-    # Check if Master admin exists
-    with shelve.open("database") as db:
-        admins_db = retrieve_db("Admins", db)
-        username_to_user_id = retrieve_db("UsernameToUserID", db)
-        email_to_user_id = retrieve_db("EmailToUserID", db)
-
-        # Goes through admin accounts
-        has_master_account = False
-        for admin in admins_db.values():
-            if admin.is_master():
-                has_master_account = True
-                break
-
-        # Create master account
-        if not has_master_account:
-            # I stored the password in config file cause I didn't want it to appear in python file
-            master = Admin("admin", "211973e@mymail.nyp.edu.sg", app.config["MASTER_PASS"], _master=True)
-            if DEBUG: print(f"Created: {master}")
-
-            # Store customer into database
-            user_id = master.get_user_id()
-            admins_db[user_id] = master
-            username_to_user_id[master.get_username().lower()] = user_id
-            email_to_user_id[master.get_email()] = user_id
-
-            # Save changes to database
-            db["UsernameToUserID"] = username_to_user_id
-            db["EmailToUserID"] = email_to_user_id
-            db["Admins"] = admins_db
+    if dbf.admin_exists():
+        admin_id = User().get_user_id()
+        username = "admin"
+        email = "admin@vsecurebookstore.com"
+        password = "PASS{uNh@5h3d}"
+        dbf.create_admin(admin_id, username, email, password)
 
 
 # Before request
