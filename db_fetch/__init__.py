@@ -48,7 +48,7 @@ def admin_exists():
 def create_admin(admin_id, username, email, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""INSERT INTO Users VALUES({admin_id}, {username}, {email}, {password}, NULL, 1)"""
+    query = f"""INSERT INTO Users VALUES({admin_id}, {username}, {email}, {password}, NULL, 1);"""
     cur.execute(query)
     con.commit()
     con.close()
