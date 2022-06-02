@@ -4,7 +4,7 @@ import sqlite3
 DATABASE = r"database.db"
 
 
-def fetch_db(sql: str, parameters):
+def execute_db(sql: str, parameters):
     with closing(sqlite3.connect(DATABASE)) as con:
         with con:
             cur = con.cursor()
@@ -13,7 +13,7 @@ def fetch_db(sql: str, parameters):
 
 
 # def create_user(user):
-#     fetch_db(
+#     execute_db(
 #         """INSERT INTO Users VALUES (?, ?, ?, ?, NULL, ?)""",
 #         (user.id, user.username, user.email, user.password, user.is_admin)
 #     )
@@ -33,10 +33,19 @@ def check_user(username="", email=""):
     query = f"""SELECT * FROM Users WHERE username = '{username}' or email = '{email}';"""
 
 
-def get_user(form):
+def user_auth(username, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE username = '{form.username.data}' and password = '{form.username.data}';"""
+    query = f"""SELECT * FROM Users WHERE username = '{username}' and password = '{password}';"""
+    user_data = cur.execute(query).fetchone()
+    con.close()
+    return user_data
+
+
+def get_user(user_id):
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = f"""SELECT * FROM Users WHERE user_id = '{user_id}';"""
     user_data = cur.execute(query).fetchone()
     con.close()
     return user_data
