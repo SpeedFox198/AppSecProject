@@ -68,68 +68,18 @@ mail = Mail(app)
 
 ######################################################################### TODO: remove cuz will be using SQL
 # Added type hintings as I needed my editor to recognise the type
-def retrieve_db(key, db, value=None) -> Union[
-    Dict[str, Customer], Dict[str, Admin], GuestDB[str, Guest], Dict[str, Book.Book]]:
-    """ Retrieves object from database using key """
-    try:
-        value = db[key]  # Retrieve object
-        if DEBUG:
-            print(f"retrieved db['{key}'] = {value}")
-    except KeyError as err:
-        if value is None: value = {}
-        db[key] = value  # Assign value to key
-        if DEBUG: print(f"retrieve_db(): {repr(err)} | create: db['{key}'] = {value}")
-    return value
+def retrieve_db(key, db, value=None):
+    pass
 
 
 ######################################################################### TODO: change to SQL
-def get_user() -> Union[Customer, Admin, Guest]:
-    """ Returns user by checking session key """
-
-    # If session contains user_id
-    if "UserID" in session:
-
-        # Set database key according to user
-        key = session["UserType"] + "s"
-
-        # Retrieve user
-        try:
-            # Doesn't use retrieve_db() as default value is different for different db
-            with shelve.open("database") as db:
-                user = db[key][session["UserID"]]
-        except KeyError as err:  # If unexpected error (might occur when changes are made)
-            if DEBUG: print("get_user():", repr(err), "creating guest...")
-            # Move on to create guest account
-        else:
-            if DEBUG: print("get user:", user)
-            return user
-
-    # If not UserID in session, create and return guest account
-    return create_guest()
+def get_user():
+    pass
 
 
 ######################################################################### TODO: change to SQL
 def create_guest():
-    """ Create and return new guest account """
-    guest = Guest()
-    user_id = guest.get_user_id()
-
-    # Create sessions
-    session["UserType"] = "Guest"
-    session["UserID"] = user_id
-
-    with shelve.open("database") as db:
-        # Get Guests
-        guests_db = retrieve_db("Guests", db, GuestDB())
-
-        # Add guest and clean guest database
-        guests_db.add(user_id, guest)
-        guests_db.clean()
-
-        # Save changes to database
-        db["Guests"] = guests_db
-    if DEBUG: print("Guest created:", guest)
-    return guest
+    pass
 
 
 """    Before Request    """
