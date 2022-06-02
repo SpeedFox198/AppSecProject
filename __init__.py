@@ -10,11 +10,12 @@ import shelve
 import os
 import stripe
 import datetime
-import db_fetch
+import db_fetch as dbf
 
 # Import classes
 import Book, Cart as c
-from users import GuestDB, Guest, Customer, Admin
+from users import GuestDB, Guest, Customer, Admin, User
+from users.Customer import _ph
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, Enquiry, UserEnquiry, Faq, FaqEntry,
@@ -68,68 +69,18 @@ mail = Mail(app)
 
 ######################################################################### TODO: remove cuz will be using SQL
 # Added type hintings as I needed my editor to recognise the type
-def retrieve_db(key, db, value=None) -> Union[
-    Dict[str, Customer], Dict[str, Admin], GuestDB[str, Guest], Dict[str, Book.Book]]:
-    """ Retrieves object from database using key """
-    try:
-        value = db[key]  # Retrieve object
-        if DEBUG:
-            print(f"retrieved db['{key}'] = {value}")
-    except KeyError as err:
-        if value is None: value = {}
-        db[key] = value  # Assign value to key
-        if DEBUG: print(f"retrieve_db(): {repr(err)} | create: db['{key}'] = {value}")
-    return value
+def retrieve_db(key, db, value=None):
+    pass
 
 
 ######################################################################### TODO: change to SQL
-def get_user() -> Union[Customer, Admin, Guest]:
-    """ Returns user by checking session key """
-
-    # If session contains user_id
-    if "UserID" in session:
-
-        # Set database key according to user
-        key = session["UserType"] + "s"
-
-        # Retrieve user
-        try:
-            # Doesn't use retrieve_db() as default value is different for different db
-            with shelve.open("database") as db:
-                user = db[key][session["UserID"]]
-        except KeyError as err:  # If unexpected error (might occur when changes are made)
-            if DEBUG: print("get_user():", repr(err), "creating guest...")
-            # Move on to create guest account
-        else:
-            if DEBUG: print("get user:", user)
-            return user
-
-    # If not UserID in session, create and return guest account
-    return create_guest()
+def get_user():
+    pass
 
 
 ######################################################################### TODO: change to SQL
 def create_guest():
-    """ Create and return new guest account """
-    guest = Guest()
-    user_id = guest.get_user_id()
-
-    # Create sessions
-    session["UserType"] = "Guest"
-    session["UserID"] = user_id
-
-    with shelve.open("database") as db:
-        # Get Guests
-        guests_db = retrieve_db("Guests", db, GuestDB())
-
-        # Add guest and clean guest database
-        guests_db.add(user_id, guest)
-        guests_db.clean()
-
-        # Save changes to database
-        db["Guests"] = guests_db
-    if DEBUG: print("Guest created:", guest)
-    return guest
+    pass
 
 
 """    Before Request    """
@@ -138,35 +89,12 @@ def create_guest():
 # Before first request
 @app.before_first_request
 def before_first_request():
-    # Check if Master admin exists
-    with shelve.open("database") as db:
-        admins_db = retrieve_db("Admins", db)
-        username_to_user_id = retrieve_db("UsernameToUserID", db)
-        email_to_user_id = retrieve_db("EmailToUserID", db)
-
-        # Goes through admin accounts
-        has_master_account = False
-        for admin in admins_db.values():
-            if admin.is_master():
-                has_master_account = True
-                break
-
-        # Create master account
-        if not has_master_account:
-            # I stored the password in config file cause I didn't want it to appear in python file
-            master = Admin("admin", "211973e@mymail.nyp.edu.sg", app.config["MASTER_PASS"], _master=True)
-            if DEBUG: print(f"Created: {master}")
-
-            # Store customer into database
-            user_id = master.get_user_id()
-            admins_db[user_id] = master
-            username_to_user_id[master.get_username().lower()] = user_id
-            email_to_user_id[master.get_email()] = user_id
-
-            # Save changes to database
-            db["UsernameToUserID"] = username_to_user_id
-            db["EmailToUserID"] = email_to_user_id
-            db["Admins"] = admins_db
+    if not dbf.admin_exists():
+        admin_id = User().get_user_id()
+        username = "admin"
+        email = "admin@vsecurebookstore.com"
+        password = "PASS{uNh@5h3d}"
+        dbf.create_admin(admin_id, username, email, password)
 
 
 # Before request
