@@ -27,7 +27,7 @@ def create_user(user):
     con.close()
 
 
-def check_user(username, email):
+def check_user(username="", email=""):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
     query = f"""SELECT * FROM Users WHERE username = '{username}' or email = '{email}';"""
@@ -43,18 +43,13 @@ def get_user(form):
 
 
 def admin_exists():
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE username = 'admin';"""
-    exist = cur.execute(query).fetchone()
-    con.close()
-    return bool(exist)
+    return check_user(username="admin")
 
 
 def create_admin(admin_id, username, email, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""INSERT INTO Users VALUES('{admin_id}', '{username}', '{email}', {password}, NULL, 1);"""
+    query = f"""INSERT INTO Users VALUES('{admin_id}', '{username}', '{email}', '{password}', NULL, 1);"""
     cur.execute(query)
     con.commit()
     con.close()
