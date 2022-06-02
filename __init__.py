@@ -100,13 +100,7 @@ def before_first_request():
 # Before request
 @app.before_request
 def before_request():
-    # Make session permanent and set session lifetime
-    session.permanent = True
-    app.permanent_session_lifetime = Guest.MAX_DAYS
-
-    # Run get user if user_id not in session
-    if "UserID" not in session:
-        create_guest()
+    pass            ######################## TODO: might use this (idk?)
 
 
 """    Login/Sign-up Pages    """
