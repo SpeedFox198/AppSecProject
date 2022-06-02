@@ -31,6 +31,8 @@ def check_user(username="", email=""):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
     query = f"""SELECT * FROM Users WHERE username = '{username}' or email = '{email}';"""
+    result = cur.execute(query).fetchone()
+    return bool(result)
 
 
 def user_auth(username, password):
