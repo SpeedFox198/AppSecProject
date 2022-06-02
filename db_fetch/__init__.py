@@ -29,35 +29,43 @@ def create_customer(user_id, username, email, password):
 
 
 def _exists(table, **kwargs):
+    """ Checks if attribute value pair exists in the table """
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
 
     # Can't check if exists if there's no attribute
     assert not kwargs, "Must check at least 1 attribute"
 
+    # Selection statements
     selection = []
 
+    # Loop through attribute and value pairs and format there
     for attribute, value in kwargs:
         selection.append(f"""{attribute} = {repr(value)}""")
 
+    # Join statements with "OR" if more than one
     selection = " OR ".join(selection)
 
+    # Create query
     query = f"""SELECT * FROM {table} WHERE {selection};"""
 
+    # Fetch the results of the query
     result = cur.execute(query).fetchone()
 
+    # Returns True if it exists
     return bool(result)
 
 
 def email_exists(email):
     return _exists("Users", email=email)
 
+
 def username_exists(username):
     return _exists("Users", username=username)
 
+
 def admin_exists():
     return username_exists("admin")
-
 
 
 def user_auth(username, password):

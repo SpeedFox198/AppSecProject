@@ -135,20 +135,18 @@ def sign_up():
         # Create new user
 
         # Ensure that email and username are not registered yet
-        if not dbf.check_user(username, email):
-            if username.lower() in username_to_user_id:
-                if DEBUG: print("Sign-up: username already exists")
-                session["DisplayFieldError"] = session["SignUpUsernameError"] = True
-                flash("Username taken", "sign-up-username-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
-            elif email in email_to_user_id:
-                if DEBUG: print("Sign-up: email already exists")
-                session["DisplayFieldError"] = session["SignUpEmailError"] = True
-                flash("Email already registered", "sign-up-email-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
+        if dbf.username_exists(username):
+            session["DisplayFieldError"] = session["SignUpUsernameError"] = True
+            flash("Username taken", "sign-up-username-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
+
+        elif dbf.email_exists(email):
+            session["DisplayFieldError"] = session["SignUpEmailError"] = True
+            flash("Email already registered", "sign-up-email-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
-        dbf.create_customer()
+        dbf.create_customer(generate_id(), username, email, password)
 
         # Create session to login
 
