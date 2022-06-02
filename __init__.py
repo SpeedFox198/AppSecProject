@@ -10,7 +10,7 @@ import shelve
 import os
 import stripe
 import datetime
-import sqlite3
+import db_fetch
 
 # Import classes
 import Book, Cart as c
