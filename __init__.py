@@ -1,5 +1,5 @@
 # Import modules
-from flask import Flask, render_template, request, redirect, url_for, session, flash 
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, BadData
 from werkzeug.utils import secure_filename
@@ -146,11 +146,15 @@ def sign_up():
             return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
-        dbf.create_customer(generate_id(), username, email, password)
+        user_id = generate_id()  # Generate new unique user id for customer
+        dbf.create_customer(user_id, username, email, password)
 
         # Create session to login
+        response = make_response(redirect(url_for("verify_send")))
+        response.set_cookie("session", user_id)
 
-        return redirect(url_for("verify_send"))
+        # Return redirect with session cookie
+        return response
 
     # Render page
     return render_template("user/sign_up.html", form=sign_up_form)

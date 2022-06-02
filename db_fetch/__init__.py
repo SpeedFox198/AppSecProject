@@ -34,13 +34,13 @@ def _exists(table, **kwargs):
     cur = con.cursor()
 
     # Can't check if exists if there's no attribute
-    assert not kwargs, "Must check at least 1 attribute"
+    assert kwargs, "Must check at least 1 attribute"
 
     # Selection statements
     selection = []
 
     # Loop through attribute and value pairs and format there
-    for attribute, value in kwargs:
+    for attribute, value in kwargs.items():
         selection.append(f"""{attribute} = {repr(value)}""")
 
     # Join statements with "OR" if more than one
