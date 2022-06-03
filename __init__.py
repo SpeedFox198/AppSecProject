@@ -889,45 +889,47 @@ def price_high_to_low(books_dict):
     return sort_dict
 
 """ Adding to cart """
-@app.route("/addtocart/<int:id>", methods=['GET', 'POST'])
-def add_to_buy(id):
-    user_id = get_user().get_user_id()
-    buy_quantity = int(request.form['quantity'])
-    cart_dict = {}
-    cart_db = shelve.open('database', 'c')
-    msg = ""
-    try:
-        cart_dict = cart_db['Cart']
-        print(cart_dict, "original database")
-    except:
-        print("Error while retrieving data from cart.db")
+@app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
+def add_to_cart(user_id, book_id, quantity):
+    pass
+# def add_to_buy(id):
+#     user_id = get_user().get_user_id()
+#     buy_quantity = int(request.form['quantity'])
+#     cart_dict = {}
+#     cart_db = shelve.open('database', 'c')
+#     msg = ""
+#     try:
+#         cart_dict = cart_db['Cart']
+#         print(cart_dict, "original database")
+#     except:
+#         print("Error while retrieving data from cart.db")
 
-    book = c.AddtoBuy(id, buy_quantity)
-    if user_id in cart_dict:
-        book_dict = cart_dict[user_id]
-        print(book_dict)
-        book_dict = book_dict[0]
-        if book_dict == '':
-            print("This user does not has anything in buying cart")
-            cart_dict[user_id].pop(0)
-            cart_dict[user_id].insert(0, {id:buy_quantity})
-        else:
-            if book.get_book_id() in book_dict:
-                book_dict[book.get_book_id()] += buy_quantity
-                print("This user has the book in cart")
-                cart_dict[user_id][0] = book_dict
-                msg = "Added to cart"
-            else:
-                print('This user does not has this book in cart')
-                book_dict[id] = buy_quantity
-                cart_dict[user_id][0] = book_dict
-    else:
-        print("This user has nothing in cart")
-        cart_dict[user_id] = [{id:buy_quantity}]
-    flash("Book has been added to your cart for you to buy.")
-    cart_db['Cart'] = cart_dict
-    print(cart_dict, "final database")
-    return redirect(request.referrer)
+#     book = c.AddtoBuy(id, buy_quantity)
+#     if user_id in cart_dict:
+#         book_dict = cart_dict[user_id]
+#         print(book_dict)
+#         book_dict = book_dict[0]
+#         if book_dict == '':
+#             print("This user does not has anything in buying cart")
+#             cart_dict[user_id].pop(0)
+#             cart_dict[user_id].insert(0, {id:buy_quantity})
+#         else:
+#             if book.get_book_id() in book_dict:
+#                 book_dict[book.get_book_id()] += buy_quantity
+#                 print("This user has the book in cart")
+#                 cart_dict[user_id][0] = book_dict
+#                 msg = "Added to cart"
+#             else:
+#                 print('This user does not has this book in cart')
+#                 book_dict[id] = buy_quantity
+#                 cart_dict[user_id][0] = book_dict
+#     else:
+#         print("This user has nothing in cart")
+#         cart_dict[user_id] = [{id:buy_quantity}]
+#     flash("Book has been added to your cart for you to buy.")
+#     cart_db['Cart'] = cart_dict
+#     print(cart_dict, "final database")
+#     return redirect(request.referrer)
 
 
 """ View Shopping Cart"""
@@ -1372,6 +1374,12 @@ def edit_return(order_id):
 # End of Chee Qing's Codes
 #
 
+##############################################################################################
+
+
+
+
+################################################
 
 #
 # Eden Pages
@@ -2065,6 +2073,9 @@ def book_info2(id):
 
     return render_template('book_info2.html', currentbook=currentbook)
 
+@app.route('/book/<int:id>/reviews/page_<int:reviewPageNumber>')
+def book_reviews(id, reviewPageNumber):
+    pass
 
 # My Orders for customer
 @app.route("/my-orders")
