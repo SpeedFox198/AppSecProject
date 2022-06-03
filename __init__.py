@@ -13,11 +13,11 @@ import datetime
 import db_fetch as dbf
 from somefunc import generate_id
 from session import UserSession
+from users import User
 
 # Import classes
 import Book, Cart as c
-from users import GuestDB, Guest, Customer, Admin, User
-from users.Customer import _ph
+from users_old import GuestDB, Guest, Customer, Admin
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, Enquiry, UserEnquiry, Faq, FaqEntry,
@@ -77,8 +77,29 @@ def retrieve_db(key, db, value=None):
 
 
 ######################################################################### TODO: change to SQL
-def get_user() -> Union[Customer, Admin, Guest]:
+def get_user() -> User:
+    """ Returns user if cookie is correct, else returns None """
+
+    # Get session cookie from request
+    user_session = request.cookies.get("session")
+
+    # Check integrity of cookie
     pass
+
+    # Retrieve user id from session
+    user_id = user_session
+
+    # Retrieve user data from database
+    user_data = dbf.retrieve_user(user_id)
+
+    # If user is retrieved create user object
+    if user_data:
+        user = User(*user_data)
+    else:
+        user = None
+
+    # Return user if found
+    return user
 
 
 ######################################################################### TODO: change to SQL

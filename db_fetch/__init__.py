@@ -77,12 +77,15 @@ def user_auth(username, password):
     return user_data
 
 
-def get_user(user_id):
+def retrieve_user(user_id):
+    """ Returns user_data using user_id """
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
     query = f"""SELECT * FROM Users WHERE user_id = '{user_id}';"""
     user_data = cur.execute(query).fetchone()
     con.close()
+
+    # Returns a tuple if found else None
     return user_data
 
 
