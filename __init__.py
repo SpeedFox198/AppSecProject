@@ -98,6 +98,7 @@ def get_user() -> User:
     # Return user if found
     return user
 
+
 @app.route("/tempp")
 def tempp():
     x = get_user()
