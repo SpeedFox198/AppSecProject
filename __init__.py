@@ -100,14 +100,8 @@ def get_user():
     return User(*user_data)
 
 
-######################################################################### TODO: change to SQL
-def create_guest():
-    pass
-
-
 """    Before Request    """
 
-######################################################################### TODO: change to SQL
 # Before first request
 @app.before_first_request
 def before_first_request():
@@ -231,7 +225,6 @@ def login():
 def logout():
     if session["UserType"] != "Guest":
         if DEBUG: print("Logout:", get_user())
-        create_guest()
     return redirect(url_for("home"))
 
 
