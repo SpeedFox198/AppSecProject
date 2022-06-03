@@ -100,14 +100,8 @@ def get_user():
     return User(*user_data)
 
 
-######################################################################### TODO: change to SQL
-def create_guest():
-    pass
-
-
 """    Before Request    """
 
-######################################################################### TODO: change to SQL
 # Before first request
 @app.before_first_request
 def before_first_request():
@@ -202,43 +196,25 @@ def login():
             username = login_form.username.data.lower()
             password = login_form.password.data
 
-            # Get key for retrieving from database
-            key = "EmailToUserID" if "@" in username else "UsernameToUserID"
-
             # Check username/email
-            with shelve.open("database") as db:
+            user_data = dbf.user_auth(username, password)
 
-                # Retrieve user id
-                try:
-                    user_id = retrieve_db(key, db)[username]
-                except KeyError:
-                    # Flash login error message
-                    flash("Your account and/or password is incorrect, please try again", "form-error")
-                    return render_template("user/login.html", form=login_form)
-
-                # Retrieve user
-                try:
-                    user = retrieve_db("Customers", db)[user_id]
-                    user_type = "Customer"
-                except KeyError:  # If user_id not in Customers, try admin
-                    try:
-                        user = retrieve_db("Admins", db)[user_id]
-                        user_type = "Admin"
-                    except KeyError:  # Unexpected error
-                        if DEBUG: print(f"UserID {user_id} not in database")
-                        # Flash login error message
-                        flash("Your account and/or password is incorrect, please try again", "form-error")
-                        return render_template("user/login.html", form=login_form)
-
-            # Check password
-            if user.verify_password(password):
-                session["UserID"] = user_id
-                session["UserType"] = user_type
-                if DEBUG: print("Logged in:", user)
-                return redirect(url_for("home"))
-            else:
+            # If user_data is not succesfully retrieved (username/email/password is/are wrong)
+            if user_data is None:
                 # Flash login error message
                 flash("Your account and/or password is incorrect, please try again", "form-error")
+                return render_template("user/login.html", form=login_form)
+
+            # If login credentials are correct
+            else:
+                # Get user id
+                user = User(*user_data)
+                user_id = user.user_id
+
+                # Create session to login
+                new_session = create_user_session(user_id)
+                response = make_response(redirect(url_for("home")))
+                response.set_cookie("session", new_session)
 
     # Render page
     return render_template("user/login.html", form=login_form)
@@ -249,7 +225,6 @@ def login():
 def logout():
     if session["UserType"] != "Guest":
         if DEBUG: print("Logout:", get_user())
-        create_guest()
     return redirect(url_for("home"))
 
 

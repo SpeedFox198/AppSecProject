@@ -74,7 +74,7 @@ def _exists(table, **kwargs):
     # Can't check if exists if there's no attribute
     assert kwargs, "Must check at least 1 attribute"
 
-    # Return True non-empty tuple is return, else False 
+    # Return True non-empty tuple is return
     return bool(retrieve_db(table, **kwargs))
 
 
@@ -90,10 +90,10 @@ def admin_exists():
     return username_exists("admin")
 
 
-def user_auth(username, email, password):
+def user_auth(username, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE username = '{username}' AND password = '{password}';"""
+    query = f"""SELECT * FROM Users WHERE (username = '{username}' OR email = '{username}') AND password = '{password}';"""
     user_data = cur.execute(query).fetchone()
     con.close()
     return user_data

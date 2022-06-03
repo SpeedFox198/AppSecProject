@@ -7,13 +7,13 @@ from Crypto.Protocol.KDF import scrypt
 
 """
 Some parameters in GCM mode is:
-- key (bytes) – the cryptographic key
+- key (bytes) - the cryptographic key
 
-- mode – the constant Crypto.Cipher.<algorithm>.MODE_GCM
+- mode - the constant Crypto.Cipher.<algorithm>.MODE_GCM
 
-- nonce (bytes) – the value of the fixed nonce. It must be unique for the combination message/key. If not present, the library creates a random nonce (16 bytes long for AES).
+- nonce (bytes) - the value of the fixed nonce. It must be unique for the combination message/key. If not present, the library creates a random nonce (16 bytes long for AES).
 
-- mac_len (integer) – the desired length of the MAC tag, from 4 to 16 bytes (default: 16).
+- mac_len (integer) - the desired length of the MAC tag, from 4 to 16 bytes (default: 16).
 """
 
 def encrypt_info(string):
