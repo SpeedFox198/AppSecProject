@@ -23,7 +23,6 @@ from forms import (
     AccountPageForm, CreateUserForm, DeleteUserForm, Enquiry, UserEnquiry, Faq, FaqEntry,
     AddBookForm, Coupon, CreateCoupon, OrderForm, RequestCoupon, ReplyEnquiry, UpdateCoupon
 )
-from Cart import Discount
 
 
 # CONSTANTS
@@ -896,9 +895,7 @@ def price_high_to_low(books_dict):
                 sort_dict.update({id: books_dict[id]})
     return sort_dict
 
-#
-# add to buying cart
-#
+""" Adding to cart """
 @app.route("/addtocart/<int:id>", methods=['GET', 'POST'])
 def add_to_buy(id):
     user_id = get_user().get_user_id()
@@ -939,54 +936,8 @@ def add_to_buy(id):
     print(cart_dict, "final database")
     return redirect(request.referrer)
 
-#
-# add to renting cart
-#
-######################################################################### TODO: REMOVE RENT FUNCTIONALITY
-@app.route("/addtorent/<int:id>", methods=['GET', 'POST'])
-def add_to_rent(id):
-    user_id = get_user().get_user_id()
-    cart_dict = {}
-    cart_db = shelve.open('database', 'c')
-    book_dict = {}
-    try:
-        cart_dict = cart_db['Cart']
-        print(cart_dict, "original database")
-    except:
-        print("Error while retrieving data from cart.db")
 
-    book = c.AddtoRent(id)
-    if user_id in cart_dict:
-        book_dict = cart_dict[user_id]
-        print(book_dict)
-        # user has nothing in his renting cart
-        if len(book_dict) == 1:
-            print('user has nothing in his renting cart')
-            book_dict.append([id])
-            print(book_dict)
-            cart_dict[user_id] = book_dict
-            flash("Book has been added to your cart for rental.")
-        else:
-            print("user has other books in his renting cart")
-            if id in book_dict[1]:
-                print("This user already has the book in renting cart")
-                flash("Oops... You cannot rent more than 1 same book at a time.", "warning")
-            else:
-                print("This user does not has the book in renting cart")
-                book_dict[1].append(id)
-                cart_dict[user_id] = book_dict
-                flash("Book has been added to your cart for rental.")
-    else:
-        print("This user has nothing in both cart")
-        cart_dict[user_id] = ['', [id]]
-        flash("Book has been added to your cart for rental.")
-    cart_db['Cart'] = cart_dict
-    print(cart_dict, 'updated database')
-    return redirect(request.referrer)
-
-#
-# view shopping cart
-#
+""" View Shopping Cart"""
 @app.route('/shopping_cart')
 def cart():
     user_id = get_user().get_user_id()
@@ -1076,26 +1027,6 @@ def delete_buying_cart(id):
         cart_dict[user_id][0] = buy_cart
     cart_db['Cart'] = cart_dict
     print(cart_dict, 'updated database')
-    cart_db.close()
-    return redirect(request.referrer)
-
-#
-# delete item in renting cart
-#
-@app.route("/delete_renting_cart/<int:id>", methods=['GET', 'POST'])
-def delete_renting_cart(id):
-    user_id = get_user().get_user_id()
-    cart_db = shelve.open('database')
-    cart_dict = cart_db['Cart']
-    rent_cart = cart_dict[user_id][1]
-    rent_cart.remove(id)
-    cart_dict[user_id][1] = rent_cart
-    if len(rent_cart) == 0:
-        cart_dict[user_id].pop(1)
-        if cart_dict[user_id][0] == '':
-            del cart_dict[user_id]
-    print(cart_dict, 'updated database')
-    cart_db['Cart'] = cart_dict
     cart_db.close()
     return redirect(request.referrer)
 
@@ -1812,304 +1743,7 @@ def helpful_faq(id):
 
     return redirect(url_for('faq'))
 
-######################################################################### TODO: REMOVing coupon func
-# Create coupon
-@app.route('/coupon', methods =['GET','POST'])
-def coupon_adm():
-    create_coupon = CreateCoupon(request.form)   # import the coupon class first
-    if request.method == 'POST' and create_coupon.validate():
-        db = shelve.open('database', 'c')
-        coupon_dict = retrieve_db('Coupon',db)
 
-        dict_list = list(coupon_dict.keys())
-        if coupon_dict:
-            empty = "Y"
-        else:
-            empty ="N"
-
-        is_exist = False
-        if empty == "Y": # if dictionary has items
-            print("dictionary has items")
-            for key in dict_list:
-    
-                # checks if there is already a coupon with the same coupon code
-                if  key == create_coupon.coupon_code.data:
-                    flash("Coupon code already exists" , "error")
-                    #session["CodeExist"] = "exist"
-                    is_exist =True
-                    break
-                
-            
-        if not is_exist: # assuming if the dictionary does not exist with items in it (working!)
-            print('Coupons dict empty, making new dictionary')
-            coupon = Coupon(create_coupon.name.data,create_coupon.discount.data,create_coupon.coupon_code.data,\
-                create_coupon.startdate.data,create_coupon.enddate.data)
-            coupon_dict[coupon.get_coupon_code_id()] = coupon
-            db['Coupon'] = coupon_dict
-            flash ("coupon created successfully")
-             
-            
-        # print('Coupons dict empty, making new dictionary')
-        # coupon = Coupon(create_coupon.name.data,create_coupon.discount.data,create_coupon.coupon_code.data,\
-        #     create_coupon.startdate.data,create_coupon.enddate.data)
-        # coupon_dict[coupon.get_coupon_code_id()] = coupon
-        # db['Coupon'] = coupon_dict
-        # db.close()
-        db.close()
-    return render_template("coupon/create_coupons.html", form=create_coupon)
-
-    
-
-# retrieve coupons as an admin
-@app.route('/retrieve-coupons')
-def retrieve_coupons():
-    coupon_dict = {}
-    db = shelve.open('database','c')
-    coupon_dict = retrieve_db('Coupon',db)
-    
-
-    coupon_list=[]
-    date = datetime.datetime.now() #get current date
-    #today = datetime.datetime.strptime(date,'%Y/%m/%d') #format date
-
-    #updates which coupons have become expired
-    for key in coupon_dict:
-        coupon = coupon_dict.get(key)
-        enddate = coupon.get_end_date()
-        enddate = datetime.datetime.strptime(enddate,'%Y/%m/%d')
-        print(enddate)
-        if enddate < date:
-            coupon.set_expired(0)
-            print(coupon.get_expired())
-        coupon_dict[coupon.get_coupon_code_id()] = coupon   #updates the dictionary with the new values
-        db['Coupon'] = coupon_dict #updates the database
-        coupon_list.append(coupon) #append the coupon to the list
-
-    # for key in coupon_dict:
-    #     coupon = coupon_dict.get(key)
-    #     coupon_list.append(coupon) #append the coupon to the list
-    db.close()
-    return render_template('coupon/retrieve_coupons.html', count=len(coupon_list), coupon_list=coupon_list)
-
-# update coupons (redo needed)
-@app.route('/update-coupon/<id>/',methods=['GET','POST'])
-def update_coupons(id):
-    coupon_form = UpdateCoupon(request.form)
-    if request.method == 'POST' and coupon_form.validate():
-        coupon_dict = {}
-        db = shelve.open('database','c')
-        coupon_dict = db['Coupon']
-
-        coupon = coupon_dict.get(id)# error is the id, you need to redo this
-        coupon.set_name(coupon_form.name.data)
-        coupon.set_discount(coupon_form.discount.data)
-        coupon.set_start_date(coupon_form.startdate.data)
-        coupon.set_end_date(coupon_form.enddate.data)
-        db['Coupon'] = coupon_dict
-        db.close()
-
-        return redirect(url_for('retrieve_coupons'))
-
-    else:
-        coupon_dict={}
-        db =shelve.open('database','c')
-        coupon_dict = db['Coupon']
-        db.close()
-
-        coupon = coupon_dict.get(id)
-        coupon_form.name.data = coupon.get_name()
-        coupon_form.discount.data = coupon.get_discount()
-        coupon_form.startdate.data = coupon.get_start_date()
-        coupon_form.enddate.data = coupon.get_end_date()
-
-        return render_template('coupon/update_coupons.html', form=coupon_form, coupon=coupon)
-
-#delete the coupons
-@app.route('/delete-coupon/<id>',methods=['GET', 'POST'])
-def delete_coupons(id):
-    coupon_dict = {}
-    db = shelve.open('database','c')
-    coupon_dict = db['Coupon']
-    for key in coupon_dict:
-        coupon = coupon_dict.get(key)
-        print(coupon.get_coupon_code_id())
-        if coupon.get_coupon_code_id() == id:
-            coupon_dict.pop(key)
-            db['Coupon'] = coupon_dict
-            db.close()
-            return redirect(url_for('retrieve_coupons'))
-    
-
-#customer retrieve coupons
-@app.route('/request-coupon', methods=['GET', 'POST'])
-def request_coupons():
-    request_coupons = RequestCoupon(request.form)
-    if request.method == 'POST' and request_coupons.validate():
-        db = shelve.open('database','c')
-        coupon_dict = retrieve_db('Coupon',db)
-
-        coupon_list = []
-        for key in coupon_dict:
-            coupon = coupon_dict.get(key)
-            print('coupon_code',coupon.get_coupon_code_id())
-            if coupon.get_coupon_code_id() == request_coupons.coupon_code.data:
-                coupon_list.append(coupon.get_coupon_code_id())
-                print('coupon_list',coupon_list)
-                print('Found coupon')
-                if session["UserType"] == "Customer":
-                    customer_dict = retrieve_db('Customers',db)
-                    customer = customer_dict.get(session["UserID"])
-                    customer.add_coupons(coupon.get_coupon_code_id())
-                    customer_dict[session["UserID"]] = customer
-                    db['Customers'] = customer_dict
-                    db.close()
-                    return redirect(url_for('retrieve_cu_coupons'))
-            else:
-                print('no match for coupon')
-
-    return render_template('coupon/customer_coupons.html', form=request_coupons)
-
-# retrieve coupons as a customer
-@app.route('/retrieve-customer-coupons', methods=['GET', 'POST'])
-def retrieve_cu_coupons():
-    customer_dict = {}
-    db = shelve.open('database','c')
-    customer_dict = retrieve_db('Customers',db)
-    db.close()
-
-
-    customer = customer_dict.get(session["UserID"])
-    coupon_list = customer.get_coupons()
-
-    coupon_dict = {}
-    db = shelve.open('database','c')
-    coupon_dict = retrieve_db('Coupon',db)
-    db.close()
-
-    coupon_list_final = []
-    for coupon in coupon_list:
-        for key in coupon_dict:
-            if coupon == coupon_dict.get(key).get_coupon_code_id():
-                coupon_list_final.append(coupon_dict.get(key))
-
-    return render_template('coupon/retrieve_cust_coupons.html', count=len(coupon_list_final), coupon_list=coupon_list_final)
-
-#apply coupon
-@app.route('/apply-coupon', methods=['GET', 'POST'])
-def apply_coupons():
-    
-    
-
-    #Kelly & Luqman cart function
-    user_id = get_user().get_user_id()
-    cart_dict = {}
-    db = shelve.open('database', 'c')
-    buy_count = 0
-    rent_count = 0
-    total_price = 0
-    discount_applied = 0
-    buy_cart = {}
-    rent_cart = []
-    try:
-        books_dict = db['Books']
-        db = shelve.open('database', 'c')
-        db_pending = db['Pending_Order']
-        del db_pending[user_id]
-        db['Pending_Order'] = db_pending
-        db.close()
-    except:
-        pass
-
-    try:
-        cart_dict = db['Cart']
-        print(cart_dict)
-    except:
-        print("Error while retrieving data from database")
-
-    if user_id in cart_dict:
-        user_cart = cart_dict[user_id]
-        if user_cart[0] == '':
-            print('This user has nothing in the buying cart')
-        else:
-            buy_cart = user_cart[0]
-            for key in buy_cart:
-                buy_count += buy_cart[key]
-                total_price = float(total_price)
-                total_price += float(buy_cart[key]*books_dict[key].get_price())
-                total_price = float(("%.2f" % round(total_price, 2)))
-        if len(user_cart) == 1:
-            print('This user has nothing in the renting cart')
-        else:
-            rent_cart = user_cart[1]
-            rent_count = len(user_cart[1])
-            for book in rent_cart:
-                total_price += float(books_dict[book].get_price()) * 0.1
-                total_price = float(("%.2f" % round(total_price, 2)))
-    
-    # apply the coupons
-    apply_coupon = RequestCoupon(request.form)
-    if request.method == 'POST' and apply_coupon.validate():
-        db = shelve.open('database','c')
-        coupon_dict = retrieve_db('Coupon',db)
-
-        coupon_applied = None
-        for key in coupon_dict:
-            coupon = coupon_dict.get(key)
-            print('coupon_code',coupon.get_coupon_code_id())
-            if coupon.get_coupon_code_id() == apply_coupon.coupon_code.data:
-                coupon_applied = coupon.get_coupon_code_id()
-                print('coupon applied',coupon_applied)
-                discount = coupon.get_discount()
-                discount_applied = total_price * ( discount/100)
-                total_price = total_price - total_price * (discount / 100)
-                print('total price',total_price)
-                flash('success')
-                db = shelve.open('database','c')
-                discount_dict = retrieve_db('Discount',db)
-                if discount_dict:
-                    for key in discount_dict: #create the discount
-                        if key == user_id:
-                            user = discount_dict.get(key)
-                            user.set_discount(discount)
-                            db['Discount'] = discount_dict
-                            db.close()
-                            print("success")
-                            return render_template("coupon/apply_coupon.html",form=apply_coupon, total_price=total_price,\
-                                 buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart, rent_cart=rent_cart,\
-                                books_dict=books_dict, discount_applied = discount_applied)
-                        else:
-                            user_discount = Discount(discount)
-                            print("no error 1")
-                            discount_dict[user_id] = user_discount
-                            print("no error 2")
-                            db['Discount'] = discount_dict
-                            print("no error 3")
-                            db.close()
-                            print("succcess")
-                            return render_template("coupon/apply_coupon.html",form=apply_coupon, total_price=total_price,\
-                                 buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart, rent_cart=rent_cart,\
-                                books_dict=books_dict, discount_applied = discount_applied)
-                else:
-                    user_discount = Discount(discount)
-                    print("no error 4")
-                    discount_dict[user_id] = user_discount
-                    print("no error 5")
-                    db['Discount'] = discount_dict
-                    print("no error 6")
-                    db.close()
-                    print("succcess")
-                    return render_template("coupon/apply_coupon.html",form=apply_coupon, total_price=total_price,\
-                                 buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart, rent_cart=rent_cart,\
-                                books_dict=books_dict, discount_applied = discount_applied)
-
-        print('no match for coupon')
-        flash('Invalid coupon code','error')
-            
-
-
-    return render_template("coupon/apply_coupon.html",form=apply_coupon, total_price=total_price, buy_count=buy_count,\
-                           rent_count=rent_count, buy_cart=buy_cart, rent_cart=rent_cart,\
-                                books_dict=books_dict, discount_applied = discount_applied)
 #
 # about page static
 #
@@ -2132,7 +1766,6 @@ def sitemap():
 #
 #End of eden codes
 #
-
 
 #
 # luqman's codes
@@ -2511,48 +2144,6 @@ def confirm_delivery(order_id):
     db.close()
     return redirect(request.referrer)
 
-######################################################################### TODO: REMOVing this func
-# Re-order cancelled order
-@app.route("/reorder", methods=['GET', 'POST'])
-def reorder():
-    db_order = []
-    reorder_cart = []
-    books_dict = {}
-    try:
-        db = shelve.open('database')
-        books_dict = db['Books']
-        db_order = db['Order']
-        print(db_order, "orders in database")
-        db.close()
-
-    except:
-        print("There might not have any orders as of now.")
-
-    for order in db_order:
-        if order.get_order_status() == 'Canceled':
-            reorder_cart.append(order)
-        else:
-            print(order, "Wrong order status")
-
-    cart_dict = {}
-
-    for order in reorder_cart:
-        user_id = get_user().get_user_id()
-        cart_db = shelve.open('database', 'c')
-        try:
-            cart_dict = cart_db['Cart']
-            print(cart_dict, "original database")
-
-        except:
-            print("Error while retrieving data from cart.db")
-
-        orderlist = []
-        orderlist.append(order.get_buy_item())
-        orderlist.append(order.get_rent_item())
-        cart_dict[user_id] = orderlist
-        cart_db['Cart'] = cart_dict
-
-    return redirect(url_for("cart"))
 
 # User Sitemap
 @app.route('/user-sitemap',methods=["GET", "POST"])
