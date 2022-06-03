@@ -186,8 +186,11 @@ def sign_up():
 @app.route("/user/login", methods=["GET", "POST"])
 def login():
 
+    # Get user
     user = get_user()
-    if user is None:
+
+    # If user is already logged in
+    if user is not None:
         return redirect(url_for("account"))
 
     login_form = LoginForm(request.form)
