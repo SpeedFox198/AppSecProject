@@ -11,7 +11,7 @@ import os
 import stripe
 import datetime
 import db_fetch as dbf
-from somefunc import generate_id
+from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 
 # Import classes
 import Book, Cart as c
