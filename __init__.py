@@ -1374,6 +1374,12 @@ def edit_return(order_id):
 # End of Chee Qing's Codes
 #
 
+##############################################################################################
+
+
+
+
+################################################
 
 #
 # Eden Pages
@@ -2067,6 +2073,9 @@ def book_info2(id):
 
     return render_template('book_info2.html', currentbook=currentbook)
 
+@app.route('/book/<int:id>/reviews/page_<int:reviewPageNumber>')
+def book_reviews(id, reviewPageNumber):
+    pass
 
 # My Orders for customer
 @app.route("/my-orders")
