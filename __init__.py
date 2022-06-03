@@ -76,12 +76,16 @@ def retrieve_db(key, db, value=None):
     pass
 
 
-def get_user() -> User:
+def get_user():
     """ Returns user if cookie is correct, else returns None """
 
     # Get session cookie from request
     session_cookie = request.cookies.get("session")
     user_session = retrieve_user_session(session_cookie)
+
+    # Return None
+    if user_session is None:
+        return
 
     # Retrieve user id from session
     user_id = user_session.user_id
@@ -89,20 +93,12 @@ def get_user() -> User:
     # Retrieve user data from database
     user_data = dbf.retrieve_user(user_id)
 
-    # If user is retrieved create user object
-    if user_data:
-        user = User(*user_data)
-    else:
-        user = None
+    # If user is not found
+    if user_data is None:
+        return
 
-    # Return user if found
-    return user
-
-
-@app.route("/tempp")
-def tempp():
-    x = get_user()
-    return str(x)
+    # Create and return user object
+    return User(*user_data)
 
 
 ######################################################################### TODO: change to SQL
@@ -189,8 +185,9 @@ def sign_up():
 # Login page
 @app.route("/user/login", methods=["GET", "POST"])
 def login():
-    # If user is already logged in
-    if session["UserType"] != "Guest":
+
+    user = get_user()
+    if user is None:
         return redirect(url_for("account"))
 
     login_form = LoginForm(request.form)
