@@ -1,17 +1,40 @@
-"""
-User objects
+"e59c9e15-e875-4393-8f19-55682e2c2041"
 
-Provides all user type classes
-Guest (guest account)
-Customer (logged in account)
-Admin (admin account)
-GuestDB (dictionary for storing Guest objects)
-"""
-# Why did I do this? I dunno, thought it was interesting HAHAHA
-from .Guest import Guest as Guest
-from .Customer import Customer as Customer
-from .Admin import Admin as Admin
-from .GuestDB import GuestDB as GuestDB
-from .User import User as User
-# Please don't mark us down for "unclean code"
-# Just treat this as an easter egg
+from typing import NamedTuple
+
+class User(NamedTuple):
+    user_id: str
+    username: str
+    email: str
+    password: str
+    profile_pic: str
+    is_admin: int
+
+
+# Profile pic path
+_UPLOAD_FOLDER = r"/static/img/profile-pic/"
+_DEFAULT_PIC_NAME = r"default.png"
+
+# class User:
+
+#     def __init__(self, user_id, username, email, password, profile_pic, is_admin):
+#         self.user_id = user_id
+#         self.username = username
+#         self.email = email
+#         self.password = password
+#         self.profile_pic = profile_pic
+#         self.is_admin = is_admin
+
+#     def set_profile_pic(self):
+#         self.profile_pic = f"{_UPLOAD_FOLDER}{self.get_user_id()}.png"
+
+#     def get_profile_pic(self):
+#         return _UPLOAD_FOLDER + (self.profile_pic or _DEFAULT_PIC_NAME)
+
+
+class Customer(User):
+    name: str
+    credit_card_no: int
+    address: str
+    phone_no: int
+

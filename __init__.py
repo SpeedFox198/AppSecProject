@@ -1,5 +1,5 @@
 # Import modules
-from flask import Flask, render_template, request, redirect, url_for, session, flash 
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, BadData
 from werkzeug.utils import secure_filename
@@ -12,11 +12,12 @@ import stripe
 import datetime
 import db_fetch as dbf
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
+from session_handler import create_user_session, retrieve_user_session
+from users import User
 
 # Import classes
 import Book, Cart as c
-from users import GuestDB, Guest, Customer, Admin, User
-from users.Customer import _ph
+from users_old import GuestDB, Guest, Customer, Admin
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, Enquiry, UserEnquiry, Faq, FaqEntry,
@@ -75,9 +76,33 @@ def retrieve_db(key, db, value=None):
     pass
 
 
-######################################################################### TODO: change to SQL
-def get_user() -> Union[Customer, Admin, Guest]:
-    pass
+def get_user() -> User:
+    """ Returns user if cookie is correct, else returns None """
+
+    # Get session cookie from request
+    session_cookie = request.cookies.get("session")
+    user_session = retrieve_user_session(session_cookie)
+
+    # Retrieve user id from session
+    user_id = user_session.user_id
+
+    # Retrieve user data from database
+    user_data = dbf.retrieve_user(user_id)
+
+    # If user is retrieved create user object
+    if user_data:
+        user = User(*user_data)
+    else:
+        user = None
+
+    # Return user if found
+    return user
+
+
+@app.route("/tempp")
+def tempp():
+    x = get_user()
+    return str(x)
 
 
 ######################################################################### TODO: change to SQL
@@ -135,15 +160,27 @@ def sign_up():
         # Create new user
 
         # Ensure that email and username are not registered yet
-        
+        if dbf.username_exists(username):
+            session["DisplayFieldError"] = session["SignUpUsernameError"] = True
+            flash("Username taken", "sign-up-username-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
 
-        # Create customer TODO:???????????????????????????????????????????????
+        elif dbf.email_exists(email):
+            session["DisplayFieldError"] = session["SignUpEmailError"] = True
+            flash("Email already registered", "sign-up-email-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
 
-        # Store customer into database
+        # Create new customer
+        user_id = generate_id()  # Generate new unique user id for customer
+        dbf.create_customer(user_id, username, email, password)
 
         # Create session to login
+        new_session = create_user_session(user_id)
+        response = make_response(redirect(url_for("verify_send")))
+        response.set_cookie("session", new_session)
 
-        return redirect(url_for("verify_send"))
+        # Return redirect with session cookie
+        return response
 
     # Render page
     return render_template("user/sign_up.html", form=sign_up_form)
