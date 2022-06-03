@@ -8,7 +8,7 @@ from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm
 )
- 
+
 # CONSTANTS
 DEBUG = True            # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
