@@ -4,6 +4,46 @@ import sqlite3
 DATABASE = r"database.db"
 
 
+def retrieve_db(table, *columns, or_and=0, **attributes):
+    """ Retrieve rows from table """
+
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+
+    if columns:  # If columns were specified
+
+        # Construct projection statement
+        projection = ", ".join(columns)
+
+    else:  # If no columns were specified
+
+        # Project all columns
+        projection = "*"
+
+    if attributes:  # If attributes were specified
+
+        # Selection statements
+        selection = []
+
+        # Loop through attribute and value pairs and format there
+        for attribute, value in attributes.items():
+            selection.append(f"""{attribute} = {repr(value)}""")
+
+        # Join statements with "OR"/"AND" if more than one
+        selection = " WHERE " + (" OR ", " AND ")[or_and].join(selection)
+
+    else:  # If no attributes were specified
+
+        # No selection options
+        selection = ""
+
+    # Create query
+    query = f"""SELECT {projection} FROM {table}{selection};"""
+
+    # Fetch and return results of the query
+    return cur.execute(query).fetchall()
+
+
 def execute_db(sql: str, parameters):
     with closing(sqlite3.connect(DATABASE)) as con:
         with con:
@@ -30,30 +70,12 @@ def create_customer(user_id, username, email, password):
 
 def _exists(table, **kwargs):
     """ Checks if attribute value pair exists in the table """
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
 
     # Can't check if exists if there's no attribute
     assert kwargs, "Must check at least 1 attribute"
 
-    # Selection statements
-    selection = []
-
-    # Loop through attribute and value pairs and format there
-    for attribute, value in kwargs.items():
-        selection.append(f"""{attribute} = {repr(value)}""")
-
-    # Join statements with "OR" if more than one
-    selection = " OR ".join(selection)
-
-    # Create query
-    query = f"""SELECT * FROM {table} WHERE {selection};"""
-
-    # Fetch the results of the query
-    result = cur.execute(query).fetchone()
-
-    # Returns True if it exists
-    return bool(result)
+    # Return True non-empty tuple is return, else False 
+    return bool(retrieve_db(table, **kwargs))
 
 
 def email_exists(email):
