@@ -2,10 +2,7 @@
 {% macro user_sidebar(active) %}
   {% set links_dict = {
     "My Account": url_for("account"),
-    "My Orders": url_for("my_orders"),
-    "Apply Coupon":url_for("request_coupons"),
-    "My Coupons": url_for("retrieve_cu_coupons"),
-    "My Enquiry": url_for("view_enq")
+    "My Orders": url_for("my_orders")
   } %}
   {% do links_dict.update({active: "#"}) %}
   {{ render_sidebar(links_dict) }}

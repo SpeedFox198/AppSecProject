@@ -27,27 +27,6 @@
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('manage_accounts') }}">Manage Accounts</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('enquiry_retrieve_adm') }}">Enquiry Dashboard</a>
-        </li>
-        <li class="nav-item me-3">
-          <div class="dropdown">
-            <button class="dropbtn dropdown-toggle">FAQ</button>
-            <div class="dropdown-content">
-              <a href="{{ url_for('create_faq') }}">Create FAQ</a>
-              <a href="{{url_for('faq_dashboard') }}">FAQ Dashboard</a>
-            </div>
-          </div>
-        </li>
-        <li class="nav-item me-3">
-          <div class="dropdown">
-            <button class="dropbtn dropdown-toggle">Coupon</button>
-            <div class="dropdown-content">
-              <a href="{{ url_for('coupon_adm') }}">Create Coupon</a>
-              <a href="{{ url_for('retrieve_coupons') }}">Coupon Dashboard</a>
-            </div>
-          </div>
-        </li>
       {% else %}
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('home') }}" id="first-nav-item">Home</a>
@@ -92,9 +71,6 @@
               <a href="{{ url_for('account') }}">Account</a>
               {% if not is_admin %}
               <a href="{{ url_for('my_orders') }}">Orders</a>
-              <a href="#">Wishlist</a>
-              <a href="{{url_for('request_coupons')}}">Apply Coupons</a>
-              <a href="{{url_for('retrieve_cu_coupons')}}">Retrieve Coupons</a>
               {% endif %}
               <a href="{{ url_for('logout') }}">Logout</a>
             {% endif %}
@@ -150,21 +126,6 @@
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('manage_accounts') }}">Manage Accounts</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('enquiry_retrieve_adm') }}">Enquiry Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{url_for('create_faq')}}">Create FAQ</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{url_for('faq_dashboard')}}">FAQ Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('coupon_adm') }}">Coupon</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('retrieve_coupons') }}">Coupon Dashboard</a>
         </li>
         {% else %}
         <li class="nav-item">
