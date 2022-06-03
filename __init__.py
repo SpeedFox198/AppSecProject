@@ -76,7 +76,6 @@ def retrieve_db(key, db, value=None):
     pass
 
 
-######################################################################### TODO: change to SQL
 def get_user() -> User:
     """ Returns user if cookie is correct, else returns None """
 
