@@ -12,6 +12,7 @@ import stripe
 import datetime
 import db_fetch as dbf
 from somefunc import generate_id
+from session import UserSession
 
 # Import classes
 import Book, Cart as c
@@ -150,8 +151,9 @@ def sign_up():
         dbf.create_customer(user_id, username, email, password)
 
         # Create session to login
+        new_session = UserSession(user_id)
         response = make_response(redirect(url_for("verify_send")))
-        response.set_cookie("session", user_id)
+        response.set_cookie("session", new_session)
 
         # Return redirect with session cookie
         return response
