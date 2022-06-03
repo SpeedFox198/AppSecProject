@@ -12,7 +12,7 @@ import stripe
 import datetime
 import db_fetch as dbf
 from somefunc import generate_id
-from session import UserSession
+from session_handler import create_user_session, retrieve_user_session
 from users import User
 
 # Import classes
@@ -80,13 +80,11 @@ def get_user() -> User:
     """ Returns user if cookie is correct, else returns None """
 
     # Get session cookie from request
-    user_session = request.cookies.get("session")
-
-    # Check integrity of cookie
-    pass
+    session_cookie = request.cookies.get("session")
+    user_session = retrieve_user_session(session_cookie)
 
     # Retrieve user id from session
-    user_id = user_session
+    user_id = user_session.user_id
 
     # Retrieve user data from database
     user_data = dbf.retrieve_user(user_id)
@@ -99,6 +97,11 @@ def get_user() -> User:
 
     # Return user if found
     return user
+
+@app.route("/tempp")
+def tempp():
+    x = get_user()
+    return str(x)
 
 
 ######################################################################### TODO: change to SQL
@@ -171,7 +174,7 @@ def sign_up():
         dbf.create_customer(user_id, username, email, password)
 
         # Create session to login
-        new_session = UserSession(user_id)
+        new_session = create_user_session(user_id)
         response = make_response(redirect(url_for("verify_send")))
         response.set_cookie("session", new_session)
 
