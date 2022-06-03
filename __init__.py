@@ -913,9 +913,7 @@ def price_high_to_low(books_dict):
                 sort_dict.update({id: books_dict[id]})
     return sort_dict
 
-#
-# add to buying cart
-#
+""" Adding to cart """
 @app.route("/addtocart/<int:id>", methods=['GET', 'POST'])
 def add_to_buy(id):
     user_id = get_user().get_user_id()
@@ -956,54 +954,8 @@ def add_to_buy(id):
     print(cart_dict, "final database")
     return redirect(request.referrer)
 
-#
-# add to renting cart
-#
-######################################################################### TODO: REMOVE RENT FUNCTIONALITY
-@app.route("/addtorent/<int:id>", methods=['GET', 'POST'])
-def add_to_rent(id):
-    user_id = get_user().get_user_id()
-    cart_dict = {}
-    cart_db = shelve.open('database', 'c')
-    book_dict = {}
-    try:
-        cart_dict = cart_db['Cart']
-        print(cart_dict, "original database")
-    except:
-        print("Error while retrieving data from cart.db")
 
-    book = c.AddtoRent(id)
-    if user_id in cart_dict:
-        book_dict = cart_dict[user_id]
-        print(book_dict)
-        # user has nothing in his renting cart
-        if len(book_dict) == 1:
-            print('user has nothing in his renting cart')
-            book_dict.append([id])
-            print(book_dict)
-            cart_dict[user_id] = book_dict
-            flash("Book has been added to your cart for rental.")
-        else:
-            print("user has other books in his renting cart")
-            if id in book_dict[1]:
-                print("This user already has the book in renting cart")
-                flash("Oops... You cannot rent more than 1 same book at a time.", "warning")
-            else:
-                print("This user does not has the book in renting cart")
-                book_dict[1].append(id)
-                cart_dict[user_id] = book_dict
-                flash("Book has been added to your cart for rental.")
-    else:
-        print("This user has nothing in both cart")
-        cart_dict[user_id] = ['', [id]]
-        flash("Book has been added to your cart for rental.")
-    cart_db['Cart'] = cart_dict
-    print(cart_dict, 'updated database')
-    return redirect(request.referrer)
-
-#
-# view shopping cart
-#
+""" View Shopping Cart"""
 @app.route('/shopping_cart')
 def cart():
     user_id = get_user().get_user_id()
@@ -1093,26 +1045,6 @@ def delete_buying_cart(id):
         cart_dict[user_id][0] = buy_cart
     cart_db['Cart'] = cart_dict
     print(cart_dict, 'updated database')
-    cart_db.close()
-    return redirect(request.referrer)
-
-#
-# delete item in renting cart
-#
-@app.route("/delete_renting_cart/<int:id>", methods=['GET', 'POST'])
-def delete_renting_cart(id):
-    user_id = get_user().get_user_id()
-    cart_db = shelve.open('database')
-    cart_dict = cart_db['Cart']
-    rent_cart = cart_dict[user_id][1]
-    rent_cart.remove(id)
-    cart_dict[user_id][1] = rent_cart
-    if len(rent_cart) == 0:
-        cart_dict[user_id].pop(1)
-        if cart_dict[user_id][0] == '':
-            del cart_dict[user_id]
-    print(cart_dict, 'updated database')
-    cart_db['Cart'] = cart_dict
     cart_db.close()
     return redirect(request.referrer)
 
@@ -2230,48 +2162,6 @@ def confirm_delivery(order_id):
     db.close()
     return redirect(request.referrer)
 
-######################################################################### TODO: REMOVing this func
-# Re-order cancelled order
-@app.route("/reorder", methods=['GET', 'POST'])
-def reorder():
-    db_order = []
-    reorder_cart = []
-    books_dict = {}
-    try:
-        db = shelve.open('database')
-        books_dict = db['Books']
-        db_order = db['Order']
-        print(db_order, "orders in database")
-        db.close()
-
-    except:
-        print("There might not have any orders as of now.")
-
-    for order in db_order:
-        if order.get_order_status() == 'Canceled':
-            reorder_cart.append(order)
-        else:
-            print(order, "Wrong order status")
-
-    cart_dict = {}
-
-    for order in reorder_cart:
-        user_id = get_user().get_user_id()
-        cart_db = shelve.open('database', 'c')
-        try:
-            cart_dict = cart_db['Cart']
-            print(cart_dict, "original database")
-
-        except:
-            print("Error while retrieving data from cart.db")
-
-        orderlist = []
-        orderlist.append(order.get_buy_item())
-        orderlist.append(order.get_rent_item())
-        cart_dict[user_id] = orderlist
-        cart_db['Cart'] = cart_dict
-
-    return redirect(url_for("cart"))
 
 # User Sitemap
 @app.route('/user-sitemap',methods=["GET", "POST"])
