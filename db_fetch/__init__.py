@@ -27,7 +27,7 @@ def retrieve_db(table, *columns, or_and=0, **attributes):
 
         # Loop through attribute and value pairs and format there
         for attribute, value in attributes.items():
-            selection.append(f"""{attribute} = {repr(value)}""")
+            selection.append(f"{attribute} = {repr(value)}")
 
         # Join statements with "OR"/"AND" if more than one
         selection = " WHERE " + (" OR ", " AND ")[or_and].join(selection)
@@ -90,10 +90,10 @@ def admin_exists():
     return username_exists("admin")
 
 
-def user_auth(username, password):
+def user_auth(username, email, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE username = '{username}' and password = '{password}';"""
+    query = f"""SELECT * FROM Users WHERE username = '{username}' AND password = '{password}';"""
     user_data = cur.execute(query).fetchone()
     con.close()
     return user_data
