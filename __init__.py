@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
-import db_fetch as dbf
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
 from users import User
+import db_fetch as dbf
+import os  # For saving and deleting images
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -186,9 +187,10 @@ def login():
                 user_id = user.user_id
 
                 # Create session to login
-                new_session = create_user_session(user_id)
+                new_session = create_user_session(user_id, user.is_admin)
                 response = make_response(redirect(url_for("home")))
                 response.set_cookie("session", new_session)
+                return response
 
     # Render page
     return render_template("user/login.html", form=login_form)
@@ -201,6 +203,55 @@ def logout():
         if DEBUG: print("Logout:", get_user())
     return redirect(url_for("home"))
 
+
+# Forgot password page
+@app.route("/user/password/forget", methods=["GET", "POST"])
+def password_forget():
+
+    # Get user
+    user = get_user()
+
+    # Only Guest will forget password
+    if session["UserType"] != "Guest":
+        return redirect(url_for("home"))
+
+    # Create form
+    forget_password_form = ForgetPasswordForm(request.form)
+
+    if request.method == "POST":
+        if not forget_password_form.validate():
+            if DEBUG: print("Forget Password: form field invalid")
+            session["DisplayFieldError"] = True
+        else:
+            # Configure noreplybbb02@gmail.com
+            # app.config.from_pyfile("config/noreply_email.cfg")
+            # mail.init_app(app)
+
+            # Get email
+            email = forget_password_form.email.data.lower()
+
+            with shelve.open("database") as db:
+                email_to_user_id = retrieve_db("EmailToUserID", db)
+            
+            if email in email_to_user_id:
+                # Generate token
+                token = url_serialiser.dumps(email, salt=app.config["PASSWORD_FORGET_SALT"])
+
+                # Send message to email entered
+                msg = Message(subject="Reset Your Password",
+                            sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
+                            recipients=[email])
+                link = url_for("password_reset", token=token, _external=True)
+                msg.html = render_template("emails/_password_reset.html", link=link)
+                mail.send(msg)
+                if DEBUG: print(f"Sent email to {email}")
+            else:
+                if DEBUG: print(f"No user with email: {email}")
+
+            flash(f"Verification email sent to {email}")
+            return redirect(url_for("login"))
+
+    return render_template("user/password/password_forget.html", form=forget_password_form)
 
 
 

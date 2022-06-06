@@ -2,11 +2,12 @@ import pickle
 from base64 import b64encode, b64decode
 
 class UserSession:
-    def __init__(self, user_id:str) -> None:
+    def __init__(self, user_id:str, is_admin:bool=False) -> None:
         self.user_id = user_id
+        self.is_admin = is_admin
 
-def create_user_session(user_id:str) -> bytes:
-    return b64encode(pickle.dumps(UserSession(user_id)))
+def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
+    return b64encode(pickle.dumps(UserSession(user_id, bool(is_admin))))
 
 def retrieve_user_session(session:bytes) -> UserSession:
 
