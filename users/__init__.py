@@ -12,6 +12,20 @@ class User(NamedTuple):
     login_attempts: int
 
 
+class Customer(NamedTuple):
+    user_id: str
+    username: str
+    email: str
+    password: str
+    profile_pic: str
+    is_admin: int
+    login_attempts: int
+    name: str
+    credit_card_no: str
+    address: str
+    phone_no: int
+
+
 # Profile pic path
 _UPLOAD_FOLDER = r"/static/img/profile-pic/"
 _DEFAULT_PIC_NAME = r"default.png"
