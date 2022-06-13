@@ -20,75 +20,10 @@
       </ol>
     </div>
 
-    <div class="row justify-content-center book-info">
-      <div class="col-4">
-        <img src="/static/img/The_Chronicles_of_Narnia.png" alt="The Chronicles of Narnia">
-      </div>
-      <div class="col-6">
-        <h2>The Chronicles of Narnia</h2>
-        <p>By Author name here</p>
-        <p>Book ID: <span>1</span></span></p>
-        <p>Language: <span></span></p>
-        <p>Category: <span></span></p>
-        <p>Age: <span></span></p>
+    <!-- ----------------------------- Filter ----------------------------- -->
 
-        <h4>$<span>39.99</span></h4>
-
-        <form method="POST" action="/addtocart">
-            <input type="number" class="quantity-selector" name="quantity" min="1" value="1">
-            <input type="submit" onclick="add_to_cart()" class="btn add-cart-button" value="ADD TO CART">
-            <p>Alternatively, you may want to <a href="/add_to_rent">rent</a> this.</p>
-        </form>
-
-        <h5>Description</h5>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent tristique tincidunt erat, ac eleifend purus bibendum nec. Suspendisse id semper dolor. Praesent sagittis efficitur quam at venenatis. Integer eros lacus, volutpat sit amet sem sed, volutpat aliquet sem. Suspendisse id ipsum dui. Vestibulum convallis magna ac nulla vehicula maximus.
-          <br>Etiam feugiat vestibulum dapibus. Donec nisl mauris, consectetur eu semper et, commodo quis urna. Aenean tempor ante at suscipit vulputate. Phasellus rutrum eros in turpis aliquet, nec eleifend lacus lobortis. Cras efficitur nunc et sem ornare, sit amet tristique quam faucibus. Morbi vel tortor vitae leo malesuada hendrerit.</p>
-      </div>
-    </div>
-
-    <div class="row justify-content-center book-info">
-      <div class="col-10">
-        <h4>You might also like...</h4>
-        <div class="row row-cols-2 row-cols-md-4 g-4">
-          <div class="col">
-            <div class="card h-100">
-              <img src="{{ url_for('static',filename='img/cover2.png') }}" class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Book Title</h5>
-                <p class="card-text">$99.99</p>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card h-100">
-              <img src="{{ url_for('static',filename='img/cover2.png') }}" class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Book Title</h5>
-                <p class="card-text">$99.99</p>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card h-100">
-              <img src="{{ url_for('static',filename='img/cover2.png') }}" class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Book Title</h5>
-                <p class="card-text">$99.99</p>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card h-100">
-              <img src="{{ url_for('static',filename='img/cover2.png') }}" class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Book Title</h5>
-                <p class="card-text">$99.99</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="row justify-content-center">
+      
 
 {% endblock %}
 

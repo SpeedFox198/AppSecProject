@@ -45,8 +45,6 @@
               <th>Author</th>
               <th>Price($)</th>
               <th>Quantity</th>
-              <th>Rented</th>
-              <th>Action</th>
               <th></th>
               <th></th>
               <th></th>
@@ -58,15 +56,13 @@
             <tr>
               <td>{{ book.get_book_id() }}</td>
               <td>
-                <img src="{{ book.get_img() }}" alt="{{ book.get_title() }}" style="width:40px;height:60px;">
+                <img src="/static/img/books/{{ book.get_img() }}" alt="{{ book.get_title() }}" style="width:40px;height:60px;">
               </td>
               <td>{{ book.get_language() }}</td>
               <td>{{ book.get_title() }}</td>
               <td>{{ book.get_author() }}</td>
               <td>{{ book.get_price() }}</td>
               <td>{{ book.get_qty() }}</td>
-              <td>{{ book.get_rented() }}</td>
-              <td>{{ book.get_action() }}</td>
               <td><a href="/book/{{book.get_book_id()}}" data-bs-toggle="tooltip" title="View"><i class="actions-button fa fa-eye"></i></a></td>
               <td><a href="{{ url_for('update_book', id=book.get_book_id())}}" data-bs-toggle="tooltip" title="Update"><i class="actions-button fa fa-pen"></i></a></td>
               <td>

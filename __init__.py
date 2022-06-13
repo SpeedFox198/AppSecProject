@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, g as flask_global
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
 from users import Admin, Customer
 import db_fetch as dbf
 import os  # For saving and deleting images
+from PIL import Image
 from Book import Book
 
 from forms import (
@@ -16,10 +18,13 @@ from forms import (
 # CONSTANTS
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
 
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
+BOOK_IMG_UPLOAD_FOLDER = 'static/img/books'
+app.config['UPLOAD_FOLDER'] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
 
 limiter = Limiter(
     app,
@@ -391,6 +396,10 @@ def inventory():
     return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
 
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 @app.route('/admin/add-book', methods=['GET', 'POST'])
 def add_book():
     lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
@@ -400,6 +409,50 @@ def add_book():
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
 
+    if request.method == "POST" and add_book_form.validate():
+        if 'bookimg' not in request.files:
+            flash('There is no image uploaded!')
+            return redirect(request.url)
+
+        book_img = request.files['bookimg']
+
+        if book_img == '':
+            flash('No selected image')
+            return redirect(request.url)
+
+        if book_img and allowed_file(book_img.filename):
+            book_img_filename = secure_filename(book_img.filename)
+            path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
+            book_img.save(path)
+            image = Image.open(path)
+            resized_image = image.resize((259, 371))
+            resized_image.save(path)
+
+            book_details = (generate_id(),
+                            add_book_form.language.data,
+                            add_book_form.category.data,
+                            add_book_form.title.data,
+                            int(add_book_form.qty.data),
+                            int(add_book_form.price.data),
+                            add_book_form.author.data,
+                            add_book_form.desc.data,
+                            book_img_filename)
+
+            dbf.book_add(book_details)
+            flash("Book successfully added!")
+
+    return render_template('admin/add_book.html', form=add_book_form)
+
+
+@app.route('/update-book/<id>/', methods=['GET', 'POST'])
+def update_book(id):
+    return "update book"
+
+
+@app.route('/delete-book/<id>/', methods=['POST'])
+def delete_book(id):
+    return "delete book"
+
 
 @app.route("/admin/manage-orders")
 def manage_orders():
@@ -407,6 +460,38 @@ def manage_orders():
 
 
 """    Books Pages    """
+
+@app.route('/book/<int:id>', methods=['GET', 'POST'])
+def book_info2(id):
+    book_db = shelve.open('database', 'r')
+    books_dict = book_db['Books']
+    book_db.close()
+
+    currentbook = []
+    book = books_dict.get(id)
+
+
+
+    book.set_book_id(book.get_book_id())
+    book.set_language(book.get_language())
+    book.set_category(book.get_category())
+    book.set_age(book.get_age())
+    book.set_action(book.get_action())
+    book.set_title(book.get_title())
+    book.set_author(book.get_author())
+    book.set_price(book.get_price())
+    book.set_qty(book.get_qty())
+    book.set_desc(book.get_desc())
+    book.set_img(book.get_img())
+
+    currentbook.append(book)
+    print(currentbook, book.get_title())
+
+    return render_template('book_info2.html', currentbook=currentbook)
+
+@app.route('/book/<int:id>/reviews/page_<int:reviewPageNumber>')
+def book_reviews(id, reviewPageNumber):
+    pass
 
 """ Search Results Page """
 
@@ -417,6 +502,10 @@ def search_result(sort_this):
     sort_dict = {}
     books_dict = {}
     language_list = []
+    try:
+        pass
+    except:
+        pass
     # try:
     #     books_dict = {}
     #     db = shelve.open('database', 'r')
