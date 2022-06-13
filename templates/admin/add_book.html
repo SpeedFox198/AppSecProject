@@ -28,38 +28,16 @@
     <div class="d-flex flex-column col-lg-10 py-3 px-5">
       <h2>Add Book</h2>
       <hr>
-      <form method="POST" enctype="multipart/form-data" action="">
-
+      <form method="POST" enctype="multipart/form-data">
         <div class="row">
           <div class="col-md grid-form-spacer">
             <div class="form-group">
               {{ render_field(form.language, class="form-control") }}
-
-              <details>
-                <summary>
-                  <span class="icon">Add new</span>
-                </summary>
-                <p>
-                  {{form.language2}}
-                </p>
-              </details>
-
-            </div>
+           </div>
           </div>
           <div class="col-md grid-form-spacer">
             <div class="form-group">
               {{ render_field(form.category, class="form-control") }}
-
-              <details>
-                <summary>
-                  <span class="icon">Add new</span>
-                </summary>
-                <p>
-                  {{form.category2}}
-                </p>
-              </details>
-
-
             </div>
           </div>
         </div>
@@ -68,11 +46,6 @@
           <div class="col-md grid-form-spacer">
             <div class="form-group">
               {{ render_field(form.age, class="form-control") }}
-            </div>
-          </div>
-          <div class="col-md grid-form-spacer">
-            <div class="form-group">
-              {{ render_field(form.action, class="form-check", style="list-style-type:none") }}
             </div>
           </div>
         </div>

@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, g as flask_global
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
 from users import User
 import db_fetch as dbf
 import os  # For saving and deleting images
+from PIL import Image
 from Book import Book
 
 from forms import (
@@ -16,10 +18,13 @@ from forms import (
 # CONSTANTS
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
 
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
+BOOK_IMG_UPLOAD_FOLDER = 'static/img/books'
+app.config['UPLOAD_FOLDER'] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
 
 limiter = Limiter(
     app,
@@ -80,6 +85,8 @@ def before_request():
 """    Home Page    """
 
 """ Home page """
+
+
 @app.route("/")
 @limiter.limit("100/minute", override_defaults=False)
 def home():
@@ -113,6 +120,8 @@ def home():
 """    Login/Sign-up Pages    """
 
 """ Sign up page """
+
+
 @app.route("/user/sign-up", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def sign_up():
@@ -161,6 +170,8 @@ def sign_up():
 
 
 """ Login page """
+
+
 @app.route("/user/login", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def login():
@@ -221,6 +232,8 @@ def login():
 
 
 """ Logout """
+
+
 @app.route("/user/logout")
 @limiter.limit("100/minute", override_defaults=False)
 def logout():
@@ -230,6 +243,8 @@ def logout():
 
 
 """ Forgot password page """
+
+
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def password_forget():
@@ -374,6 +389,10 @@ def inventory():
     return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
 
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 @app.route('/admin/add-book', methods=['GET', 'POST'])
 def add_book():
     lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
@@ -382,6 +401,50 @@ def add_book():
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
+
+    if request.method == "POST" and add_book_form.validate():
+        if 'bookimg' not in request.files:
+            flash('There is no image uploaded!')
+            return redirect(request.url)
+
+        book_img = request.files['bookimg']
+
+        if book_img == '':
+            flash('No selected image')
+            return redirect(request.url)
+
+        if book_img and allowed_file(book_img.filename):
+            book_img_filename = secure_filename(book_img.filename)
+            path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
+            book_img.save(path)
+            image = Image.open(path)
+            resized_image = image.resize((259, 371))
+            resized_image.save(path)
+
+            book_details = (generate_id(),
+                            add_book_form.language.data,
+                            add_book_form.category.data,
+                            add_book_form.title.data,
+                            int(add_book_form.qty.data),
+                            int(add_book_form.price.data),
+                            add_book_form.author.data,
+                            add_book_form.desc.data,
+                            book_img_filename)
+
+            dbf.book_add(book_details)
+            flash("Book successfully added!")
+
+    return render_template('admin/add_book.html', form=add_book_form)
+
+
+@app.route('/update-book/<id>/', methods=['GET', 'POST'])
+def update_book(id):
+    return "update book"
+
+
+@app.route('/delete-book/<id>/', methods=['POST'])
+def delete_book(id):
+    return "delete book"
 
 
 @app.route("/admin/manage-orders")

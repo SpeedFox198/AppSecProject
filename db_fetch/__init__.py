@@ -135,10 +135,19 @@ def create_admin(admin_id, username, email, password):
 def retrieve_inventory():
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = "SELECT * FROM Books"
+    query = "SELECT * FROM Books;"
     books = cur.execute(query).fetchall()
+    con.close()
     return books
 
+
+def book_add(details: tuple):
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = "INSERT INTO Books VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
+    cur.execute(query, details)
+    con.commit()
+    con.close()
 
 """ Start of Order functions"""
 
