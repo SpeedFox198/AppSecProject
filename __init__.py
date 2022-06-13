@@ -3,7 +3,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
-from users import User
+from users import Admin, Customer
 import db_fetch as dbf
 import os  # For saving and deleting images
 from Book import Book
@@ -46,8 +46,18 @@ def get_user():
 
         # If user is not found
         if user_data is not None:
-            # Create and return user object
-            return User(*user_data)
+
+            # If user is admin
+            if user_data[5]:
+                user = Admin(*user_data)
+
+            # Else user is a customer
+            else:
+                user_data += dbf.retrieve_customer_details(user_id)
+                user = Customer(*user_data)
+
+            # Return user object
+            return user
 
 
 """    Before Request    """
@@ -209,7 +219,7 @@ def login():
             # If login credentials are correct
             else:
                 # Get user id
-                user = User(*user_data)
+                user = Admin(*user_data)
                 user_id = user.user_id
 
                 # Create session to login

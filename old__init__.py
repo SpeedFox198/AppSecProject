@@ -13,7 +13,7 @@ import datetime
 import db_fetch as dbf
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
-from users import User
+from users import Admin
 
 # Import classes
 import Book, Cart as c
@@ -97,7 +97,7 @@ def get_user():
         return
 
     # Create and return user object
-    return User(*user_data)
+    return Admin(*user_data)
 
 
 """    Before Request    """
@@ -208,7 +208,7 @@ def login():
             # If login credentials are correct
             else:
                 # Get user id
-                user = User(*user_data)
+                user = Admin(*user_data)
                 user_id = user.user_id
 
                 # Create session to login

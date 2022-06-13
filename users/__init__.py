@@ -2,7 +2,7 @@
 
 from typing import NamedTuple
 
-class User(NamedTuple):
+class Admin(NamedTuple):
     user_id: str
     username: str
     email: str
