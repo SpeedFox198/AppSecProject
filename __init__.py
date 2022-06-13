@@ -502,10 +502,15 @@ def search_result(sort_this):
     sort_dict = {}
     books_dict = {}
     language_list = []
+    inventory_data = dbf.retrieve_inventory()
     try:
-        pass
+        for data in inventory_data:
+            book = Book(*data)
+            books_dict[book.get_book_id()] = book
+            language_list.append(book.get_language())
+            sort_dict = {'title': 'Title', 'author': 'Author', 'language': 'Language', 'category': 'Category', 'price': 'Price'}
     except:
-        pass
+        print("No books in inventory")
     # try:
     #     books_dict = {}
     #     db = shelve.open('database', 'r')

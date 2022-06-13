@@ -20,8 +20,7 @@ import Book, Cart as c
 from users_old import GuestDB, Guest, Customer, Admin
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
-    AccountPageForm, CreateUserForm, DeleteUserForm, Enquiry, UserEnquiry, Faq, FaqEntry,
-    AddBookForm, Coupon, CreateCoupon, OrderForm, RequestCoupon, ReplyEnquiry, UpdateCoupon
+    AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm
 )
 
 

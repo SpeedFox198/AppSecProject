@@ -225,6 +225,7 @@ def get_shopping_cart(user_id):
 """ Royston :D """
 
 
+
 def decrease_login_attempts(credentials, attempts):
     """ Decrease user's login attempts and return attempts left """
     con = sqlite3.connect(DATABASE)
