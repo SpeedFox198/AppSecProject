@@ -7,8 +7,6 @@ class Book:
         __book_id (str): unique ID identifier of book
         __language (str): book language
         __category (str): book category
-        __age (str): book age group
-        __action (str): whether book is available for buy/rent - "B" for only buy, "R" for only rent, "BR" for buy and rent
         __title (str): book title
         __author (str): book author
         __price (int): book price
@@ -19,20 +17,17 @@ class Book:
 
     count_id = 0
 
-    def __init__(self, language, category, age, action, title, author, price, qty, desc, img, rented):
+    def __init__(self, language, category, title, qty, price, author, desc, img):
         Book.count_id += 1
         self.__book_id = Book.count_id
         self.__language = language
         self.__category = category
-        self.__age = age
-        self.__action = action
         self.__title = title
         self.__author = author
         self.__price = price
         self.__qty = qty
         self.__desc = desc
         self.__img = img
-        self.__rented = rented
 
     # Mutator methods
 
@@ -44,12 +39,6 @@ class Book:
 
     def set_category(self, category):
         self.__category = category
-
-    def set_age(self, age):
-        self.__age = age
-
-    def set_action(self, action):
-        self.__action = action
 
     def set_title(self, title):
         self.__title = title
@@ -69,9 +58,6 @@ class Book:
     def set_img(self, img):
         self.__img = img
 
-    def set_rented(self, rented):
-        self.__rented = rented
-
     # Accessor methods
     def get_book_id(self):
         return self.__book_id
@@ -81,12 +67,6 @@ class Book:
 
     def get_category(self):
         return self.__category
-
-    def get_age(self):
-        return self.__age
-
-    def get_action(self):
-        return self.__action
 
     def get_title(self):
         return self.__title
@@ -105,6 +85,3 @@ class Book:
 
     def get_img(self):
         return self.__img
-
-    def get_rented(self):
-        return self.__rented
