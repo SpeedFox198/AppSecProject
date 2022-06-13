@@ -236,9 +236,11 @@ def login():
 @app.route("/user/logout")
 @limiter.limit("100/minute", override_defaults=False)
 def logout():
-    if session["UserType"] != "Guest":
-        if DEBUG: print("Logout:", get_user())
-    return redirect(url_for("home"))
+    response = make_response(redirect(url_for("home")))
+    if flask_global.user is not None:
+        # Remove session cookie
+        response.set_cookie("session", "", expires=0)
+    return response
 
 
 """ Forgot password page """
