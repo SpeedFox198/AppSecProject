@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
 from users import User
@@ -18,6 +20,11 @@ app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -546,6 +553,11 @@ def about():
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("error/404.html")
+
+@app.route("/medium")
+@limiter.limit("100/minute", override_defaults=False)
+def medium():
+    return ":|"
 
 
 """    Main    """
