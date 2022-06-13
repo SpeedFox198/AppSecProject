@@ -128,7 +128,20 @@ def create_admin(admin_id, username, email, password):
     con.commit()
     con.close()
 
+
+""" Admin Functions """
+
+
+def retrieve_inventory():
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = "SELECT * FROM Books"
+    books = cur.execute(query).fetchall()
+    return books
+
+
 """ Start of Order functions"""
+
 
 def create_order_details(order_id, user_id, shipping_option):
     con = sqlite3.connect(DATABASE)
@@ -137,6 +150,7 @@ def create_order_details(order_id, user_id, shipping_option):
     cur.execute(query)
     con.commit()
     con.close()
+
 
 def get_order_details(user_id):
     """ Returns order details using order_id"""
@@ -148,6 +162,7 @@ def get_order_details(user_id):
 
     return order_data
 
+
 def get_order_items(book_id):
     """ Returns book's order items using book_id"""
     con = sqlite3.connect(DATABASE)
@@ -158,9 +173,12 @@ def get_order_items(book_id):
 
     return order_items
 
+
 """ End of Order functions"""
 
 """ Start of Shopping Cart functions """
+
+
 def adding_to_shopping_cart(user_id, book_id, quantity):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
@@ -168,7 +186,8 @@ def adding_to_shopping_cart(user_id, book_id, quantity):
     cur.execute(query)
     con.commit()
     con.close()
-    
+
+
 def get_shopping_cart(user_id):
     """ Returns user's shopping cart info using user_id"""
     con = sqlite3.connect(DATABASE)
@@ -179,10 +198,11 @@ def get_shopping_cart(user_id):
 
     return cart_data
 
+
 """ End of Shopping Cart functions """
 
-
 """ Royston :D """
+
 
 def decrease_login_attempts(credentials, attempts):
     """ Decrease user's login attempts and return attempts left """

@@ -6,6 +6,7 @@ from session_handler import create_user_session, retrieve_user_session
 from users import User
 import db_fetch as dbf
 import os  # For saving and deleting images
+from Book import Book
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -361,6 +362,16 @@ def account():
                            email=user.get_email())
 
 
+"""    Admin Pages    """
+
+
+@app.route('/admin/inventory')
+def inventory():
+    inventory_data = dbf.retrieve_inventory()
+
+    # Create book object and store in inventory
+    book_inventory = [Book(*data) for data in inventory_data]
+    return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
 
 
 """    Books Pages    """
