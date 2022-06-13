@@ -14,7 +14,7 @@ from forms import (
 )
 
 # CONSTANTS
-DEBUG = True            # Debug flag (True when debugging)
+DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 
 app = Flask(__name__)
@@ -26,6 +26,7 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["30 per second"]
 )
+
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -45,7 +46,6 @@ def get_user():
 
         # If user is not found
         if user_data is not None:
-
             # Create and return user object
             return User(*user_data)
 
@@ -53,12 +53,12 @@ def get_user():
 """    Before Request    """
 
 """ Before first request """
+
+
 @app.before_first_request
 def before_first_request():
-
     # Create admin if not in database
     if not dbf.admin_exists():
-
         # Admin details
         admin_id = generate_id()
         username = "admin"
@@ -70,11 +70,11 @@ def before_first_request():
 
 
 """ Before request """
+
+
 @app.before_request
 def before_request():
     flask_global.user = get_user()
-
-
 
 
 """    Home Page    """
@@ -83,7 +83,6 @@ def before_request():
 @app.route("/")
 @limiter.limit("100/minute", override_defaults=False)
 def home():
-
     # Old code
     # try:
     #     books_dict = {}
@@ -93,7 +92,6 @@ def home():
 
     # except:
     #     print("There are no books")
-
 
     # english = []
     # chinese = []
@@ -112,15 +110,12 @@ def home():
     return render_template("home.html", english=[], chinese=[])  # optional: books_list=books_list
 
 
-
-
 """    Login/Sign-up Pages    """
 
 """ Sign up page """
 @app.route("/user/sign-up", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def sign_up():
-
     # Get sign up form
     sign_up_form = SignUpForm(request.form)
 
@@ -169,7 +164,6 @@ def sign_up():
 @app.route("/user/login", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def login():
-
     # Get user
     user = get_user()
 
@@ -239,7 +233,6 @@ def logout():
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def password_forget():
-
     # Get user
     user = get_user()
 
@@ -264,15 +257,15 @@ def password_forget():
 
             with shelve.open("database") as db:
                 email_to_user_id = retrieve_db("EmailToUserID", db)
-            
+
             if email in email_to_user_id:
                 # Generate token
                 token = url_serialiser.dumps(email, salt=app.config["PASSWORD_FORGET_SALT"])
 
                 # Send message to email entered
                 msg = Message(subject="Reset Your Password",
-                            sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
-                            recipients=[email])
+                              sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
+                              recipients=[email])
                 link = url_for("password_reset", token=token, _external=True)
                 msg.html = render_template("emails/_password_reset.html", link=link)
                 mail.send(msg)
@@ -286,10 +279,11 @@ def password_forget():
     return render_template("user/password/password_forget.html", form=forget_password_form)
 
 
-
 """    User Pages    """
 
 """ View account page """
+
+
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def account():
@@ -326,7 +320,7 @@ def account():
             if "picture" in request.files:
                 file = request.files["picture"]
                 if file and allowed_file(file.filename):
-                    file.save(os.path.join(PROFILE_PIC_UPLOAD_FOLDER, user.get_user_id()+".png"))
+                    file.save(os.path.join(PROFILE_PIC_UPLOAD_FOLDER, user.get_user_id() + ".png"))
                 else:
                     file = None
             else:
@@ -365,6 +359,12 @@ def account():
 """    Admin Pages    """
 
 
+# Manage accounts page
+@app.route("/admin/manage-accounts", methods=["GET", "POST"])
+def manage_accounts():
+    return "manage accounts"
+
+
 @app.route('/admin/inventory')
 def inventory():
     inventory_data = dbf.retrieve_inventory()
@@ -374,9 +374,26 @@ def inventory():
     return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
 
 
+@app.route('/admin/add-book', methods=['GET', 'POST'])
+def add_book():
+    lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
+    category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), ('Classic', 'Classic'),
+                     ('Comic', 'Comic'), ('Detective & Mystery', 'Detective & Mystery')]
+    add_book_form = AddBookForm(request.form)
+    add_book_form.language.choices = lang_list
+    add_book_form.category.choices = category_list
+
+
+@app.route("/admin/manage-orders")
+def manage_orders():
+    return "manage orders"
+
+
 """    Books Pages    """
 
 """ Search Results Page """
+
+
 @app.route("/search-result/<sort_this>")
 @limiter.limit("100/minute", override_defaults=False)
 def search_result(sort_this):
@@ -424,15 +441,16 @@ def search_result(sort_this):
     return render_template("all_books.html", books_dict=books_dict, sort_dict=sort_dict, language_list=language_list)
 
 
-
-
 """    Start of Cart Pages    """
+
 
 # Add to cart
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
 @limiter.limit("100/minute", override_defaults=False)
 def add_to_cart(user_id, book_id, quantity):
     pass
+
+
 # def add_to_buy(id):
 #     user_id = get_user().get_user_id()
 #     buy_quantity = int(request.form['quantity'])
@@ -474,14 +492,16 @@ def add_to_cart(user_id, book_id, quantity):
 
 
 """ View Shopping Cart"""
+
+
 @app.route('/shopping-cart')
 @limiter.limit("100/minute", override_defaults=False)
 def cart():
     user_id = get_user().get_user_id()
     cart_dict = {}
     books_dict = {}
-    cart_db = None #shelve.open('database', 'c')
-    book_db = None #shelve.open('database')
+    cart_db = None  # shelve.open('database', 'c')
+    book_db = None  # shelve.open('database')
     try:
         books_dict = book_db['Books']
         book_db.close()
@@ -510,7 +530,7 @@ def cart():
             for key in buy_cart:
                 buy_count += buy_cart[key]
                 total_price = float(total_price)
-                total_price += float(buy_cart[key]*books_dict[key].get_price())
+                total_price += float(buy_cart[key] * books_dict[key].get_price())
                 total_price = float(("%.2f" % round(total_price, 2)))
         if len(user_cart) == 1:
             print('This user has nothing in the renting cart')
@@ -520,14 +540,15 @@ def cart():
             for book in rent_cart:
                 total_price += float(books_dict[book].get_price()) * 0.1
                 total_price = float(("%.2f" % round(total_price, 2)))
-    return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart, rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
-
-
+    return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
+                           rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
 
 
 """    Order Pages    """
 
 """ Customer Orders Page """
+
+
 @app.route("/my-orders")
 @limiter.limit("100/minute", override_defaults=False)
 def my_orders():
@@ -571,32 +592,34 @@ def my_orders():
 
     print("canceled_order: ", canceled_order)
     return render_template('user/my_orders.html', all_order=db_order, new_order=new_order, \
-                           confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order, canceled_order=canceled_order, \
+                           confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
+                           canceled_order=canceled_order, \
                            books_dict=books_dict)
-
-
 
 
 """    Miscellaneous Pages    """
 
 """ About Page """
+
+
 @app.route("/about")
 def about():
     return render_template("about.html")
 
 
-
-
 """    Error Handlers    """
+
 
 # Error handling page
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("error/404.html")
 
+
 @app.errorhandler(429)
 def too_many_request(e):
     return render_template("error/429.html")
+
 
 @app.route("/medium")
 @limiter.limit("100/minute", override_defaults=False)
