@@ -374,6 +374,15 @@ def inventory():
     return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
 
 
+@app.route('/admin/add-book', methods=['GET', 'POST'])
+def add_book():
+    lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
+    category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), ('Classic', 'Classic'), ('Comic', 'Comic'), ('Detective & Mystery', 'Detective & Mystery')]
+    add_book_form = AddBookForm(request.form)
+    add_book_form.language.choices = lang_list
+    add_book_form.category.choices = category_list
+
+
 """    Books Pages    """
 
 """ Search Results Page """
