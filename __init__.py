@@ -60,11 +60,11 @@ def get_user():
             return user
 
 
+
+
 """    Before Request    """
 
 """ Before first request """
-
-
 @app.before_first_request
 def before_first_request():
     # Create admin if not in database
@@ -80,18 +80,16 @@ def before_first_request():
 
 
 """ Before request """
-
-
 @app.before_request
 def before_request():
-    flask_global.user = get_user()
+    flask_global.user = get_user()  # Get user
+
+
 
 
 """    Home Page    """
 
 """ Home page """
-
-
 @app.route("/")
 @limiter.limit("100/minute", override_defaults=False)
 def home():
@@ -122,12 +120,19 @@ def home():
     return render_template("home.html", english=[], chinese=[])  # optional: books_list=books_list
 
 
+
+
 """    Login/Sign-up Pages    """
 
 """ Sign up page """
 @app.route("/user/sign-up", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def sign_up():
+
+    # If user is already logged in
+    if flask_global.user is not None:
+        return redirect(url_for("account"))
+
     # Get sign up form
     sign_up_form = SignUpForm(request.form)
 
@@ -176,11 +181,9 @@ def sign_up():
 @app.route("/user/login", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def login():
-    # Get user
-    user = get_user()
 
     # If user is already logged in
-    if user is not None:
+    if flask_global.user is not None:
         return redirect(url_for("account"))
 
     login_form = LoginForm(request.form)
@@ -243,7 +246,7 @@ def logout():
     return response
 
 
-""" Forgot password page """
+""" Forgot password page """ ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def password_forget():
@@ -293,11 +296,11 @@ def password_forget():
     return render_template("user/password/password_forget.html", form=forget_password_form)
 
 
+
+
 """    User Pages    """
 
-""" View account page """
-
-
+""" View account page """ ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO TODO
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def account():
