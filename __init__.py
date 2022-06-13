@@ -23,7 +23,7 @@ app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja enviro
 limiter = Limiter(
     app,
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["30 per second"]
 )
 
 def get_user():
@@ -75,6 +75,7 @@ def before_first_request():
 
 """ Home page """
 @app.route("/")
+@limiter.limit("100/minute", override_defaults=False)
 def home():
 
     # Old code
@@ -111,6 +112,7 @@ def home():
 
 # Sign up page
 @app.route("/user/sign-up", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def sign_up():
 
     # Get sign up form
@@ -159,6 +161,7 @@ def sign_up():
 
 # Login page
 @app.route("/user/login", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def login():
 
     # Get user
@@ -205,6 +208,7 @@ def login():
 
 # Logout
 @app.route("/user/logout")
+@limiter.limit("100/minute", override_defaults=False)
 def logout():
     if session["UserType"] != "Guest":
         if DEBUG: print("Logout:", get_user())
@@ -213,6 +217,7 @@ def logout():
 
 # Forgot password page
 @app.route("/user/password/forget", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def password_forget():
 
     # Get user
@@ -266,6 +271,7 @@ def password_forget():
 
 """ View account page """
 @app.route("/user/account", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def account():
     # Get current user
     user = get_user()
@@ -342,6 +348,7 @@ def account():
 
 """ Search Results Page """
 @app.route("/search-result/<sort_this>")
+@limiter.limit("100/minute", override_defaults=False)
 def search_result(sort_this):
     sort_dict = {}
     books_dict = {}
@@ -393,6 +400,7 @@ def search_result(sort_this):
 
 # Add to cart
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
+@limiter.limit("100/minute", override_defaults=False)
 def add_to_cart(user_id, book_id, quantity):
     pass
 # def add_to_buy(id):
@@ -437,6 +445,7 @@ def add_to_cart(user_id, book_id, quantity):
 
 """ View Shopping Cart"""
 @app.route('/shopping-cart')
+@limiter.limit("100/minute", override_defaults=False)
 def cart():
     user_id = get_user().get_user_id()
     cart_dict = {}
@@ -490,6 +499,7 @@ def cart():
 
 """ Customer Orders Page """
 @app.route("/my-orders")
+@limiter.limit("100/minute", override_defaults=False)
 def my_orders():
     db_order = []
     new_order = []
