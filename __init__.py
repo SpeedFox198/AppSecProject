@@ -116,7 +116,7 @@ def home():
 
 """    Login/Sign-up Pages    """
 
-# Sign up page
+""" Sign up page """
 @app.route("/user/sign-up", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def sign_up():
@@ -165,7 +165,7 @@ def sign_up():
     return render_template("user/sign_up.html", form=sign_up_form)
 
 
-# Login page
+""" Login page """
 @app.route("/user/login", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def login():
@@ -226,7 +226,7 @@ def login():
     return render_template("user/login.html", form=login_form)
 
 
-# Logout
+""" Logout """
 @app.route("/user/logout")
 @limiter.limit("100/minute", override_defaults=False)
 def logout():
@@ -235,7 +235,7 @@ def logout():
     return redirect(url_for("home"))
 
 
-# Forgot password page
+""" Forgot password page """
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def password_forget():
