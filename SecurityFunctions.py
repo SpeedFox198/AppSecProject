@@ -2,8 +2,11 @@ import uuid
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import scrypt
+from hashlib import blake2b
+from hmac import compare_digest
 
-
+SECRET_KEY = b"pseudorandomly generated secret key"
+AUTH_SIZE = 32
 
 """
 Some parameters in GCM mode is:
@@ -55,3 +58,16 @@ def generate_id():
     Generates a UUID using a SHA-1 hash of a namespace UUID and a name
     """
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, 'vsecurebookstore.com'))
+
+
+""" Keyed Hashing algorithm """
+def sign(cookie): # cookie is a byte string
+    h = blake2b(digest_size=AUTH_SIZE, key=SECRET_KEY)
+    h.update(cookie)
+
+    return h.hexdigest().encode("utf-8")
+
+def verify(cookie, sig):
+    good_sig = sign(cookie)
+
+    return compare_digest(good_sig, sig)

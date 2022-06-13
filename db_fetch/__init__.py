@@ -120,6 +120,18 @@ def retrieve_user(user_id):
     return user_data
 
 
+def retrieve_customer_details(user_id):
+    """ Returns details of customer """
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = f"""SELECT * FROM Customers WHERE user_id = '{user_id}';"""
+    customer_details = cur.execute(query).fetchone()
+    con.close()
+
+    # Returns a tuple if found else None
+    return customer_details
+
+
 def create_admin(admin_id, username, email, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()

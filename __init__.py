@@ -4,7 +4,7 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
-from users import User
+from users import Admin, Customer
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -51,8 +51,18 @@ def get_user():
 
         # If user is not found
         if user_data is not None:
-            # Create and return user object
-            return User(*user_data)
+
+            # If user is admin
+            if user_data[5]:
+                user = Admin(*user_data)
+
+            # Else user is a customer
+            else:
+                user_data += dbf.retrieve_customer_details(user_id)
+                user = Customer(*user_data)
+
+            # Return user object
+            return user
 
 
 """    Before Request    """
@@ -218,7 +228,7 @@ def login():
             # If login credentials are correct
             else:
                 # Get user id
-                user = User(*user_data)
+                user = Admin(*user_data)
                 user_id = user.user_id
 
                 # Create session to login
@@ -237,9 +247,11 @@ def login():
 @app.route("/user/logout")
 @limiter.limit("100/minute", override_defaults=False)
 def logout():
-    if session["UserType"] != "Guest":
-        if DEBUG: print("Logout:", get_user())
-    return redirect(url_for("home"))
+    response = make_response(redirect(url_for("home")))
+    if flask_global.user is not None:
+        # Remove session cookie
+        response.set_cookie("session", "", expires=0)
+    return response
 
 
 """ Forgot password page """
@@ -454,6 +466,38 @@ def manage_orders():
 
 """    Books Pages    """
 
+@app.route('/book/<int:id>', methods=['GET', 'POST'])
+def book_info2(id):
+    book_db = shelve.open('database', 'r')
+    books_dict = book_db['Books']
+    book_db.close()
+
+    currentbook = []
+    book = books_dict.get(id)
+
+
+
+    book.set_book_id(book.get_book_id())
+    book.set_language(book.get_language())
+    book.set_category(book.get_category())
+    book.set_age(book.get_age())
+    book.set_action(book.get_action())
+    book.set_title(book.get_title())
+    book.set_author(book.get_author())
+    book.set_price(book.get_price())
+    book.set_qty(book.get_qty())
+    book.set_desc(book.get_desc())
+    book.set_img(book.get_img())
+
+    currentbook.append(book)
+    print(currentbook, book.get_title())
+
+    return render_template('book_info2.html', currentbook=currentbook)
+
+@app.route('/book/<int:id>/reviews/page_<int:reviewPageNumber>')
+def book_reviews(id, reviewPageNumber):
+    pass
+
 """ Search Results Page """
 
 
@@ -463,6 +507,10 @@ def search_result(sort_this):
     sort_dict = {}
     books_dict = {}
     language_list = []
+    try:
+        pass
+    except:
+        pass
     # try:
     #     books_dict = {}
     #     db = shelve.open('database', 'r')
