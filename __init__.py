@@ -564,6 +564,10 @@ def about():
 def page_not_found(e):
     return render_template("error/404.html")
 
+@app.errorhandler(429)
+def too_many_request(e):
+    return render_template("error/429.html")
+
 @app.route("/medium")
 @limiter.limit("100/minute", override_defaults=False)
 def medium():
