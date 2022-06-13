@@ -1,4 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, g as flask_global
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
 from users import User
@@ -18,6 +20,11 @@ app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["30 per second"]
+)
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -27,26 +34,24 @@ def get_user():
     user_session = retrieve_user_session(session_cookie)
 
     # Return None
-    if user_session is None:
-        return
+    if user_session is not None:
 
-    # Retrieve user id from session
-    user_id = user_session.user_id
+        # Retrieve user id from session
+        user_id = user_session.user_id
 
-    # Retrieve user data from database
-    user_data = dbf.retrieve_user(user_id)
+        # Retrieve user data from database
+        user_data = dbf.retrieve_user(user_id)
 
-    # If user is not found
-    if user_data is None:
-        return
+        # If user is not found
+        if user_data is not None:
 
-    # Create and return user object
-    return User(*user_data)
+            # Create and return user object
+            return User(*user_data)
 
 
 """    Before Request    """
 
-# Before first request
+""" Before first request """
 @app.before_first_request
 def before_first_request():
 
@@ -63,11 +68,19 @@ def before_first_request():
         dbf.create_admin(admin_id, username, email, password)
 
 
+""" Before request """
+@app.before_request
+def before_request():
+    flask_global.user = get_user()
+
+
+
 
 """    Home Page    """
 
 """ Home page """
 @app.route("/")
+@limiter.limit("100/minute", override_defaults=False)
 def home():
 
     # Old code
@@ -104,6 +117,7 @@ def home():
 
 # Sign up page
 @app.route("/user/sign-up", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def sign_up():
 
     # Get sign up form
@@ -152,6 +166,7 @@ def sign_up():
 
 # Login page
 @app.route("/user/login", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def login():
 
     # Get user
@@ -174,8 +189,22 @@ def login():
             # Check username/email
             user_data = dbf.user_auth(username, password)
 
+            # Check if user exists
+            user_attempts = dbf.retrieve_user_attempts(username)
+
+            # Check if account still has attempts left
+            print(user_attempts)
+            if user_attempts == 0:
+                flash("Max login attempts has been reached, account has been locked", "form-error")
+                return render_template("user/login.html", form=login_form)
+
             # If user_data is not succesfully retrieved (username/email/password is/are wrong)
-            if user_data is None:
+            elif user_data is None:
+
+                # If username / email is correct (failed password attempt)
+                if user_attempts is not None:
+                    dbf.decrease_login_attempts(username, user_attempts)
+
                 # Flash login error message
                 flash("Your account and/or password is incorrect, please try again", "form-error")
                 return render_template("user/login.html", form=login_form)
@@ -198,6 +227,7 @@ def login():
 
 # Logout
 @app.route("/user/logout")
+@limiter.limit("100/minute", override_defaults=False)
 def logout():
     if session["UserType"] != "Guest":
         if DEBUG: print("Logout:", get_user())
@@ -206,6 +236,7 @@ def logout():
 
 # Forgot password page
 @app.route("/user/password/forget", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def password_forget():
 
     # Get user
@@ -259,6 +290,7 @@ def password_forget():
 
 """ View account page """
 @app.route("/user/account", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
 def account():
     # Get current user
     user = get_user()
@@ -335,6 +367,7 @@ def account():
 
 """ Search Results Page """
 @app.route("/search-result/<sort_this>")
+@limiter.limit("100/minute", override_defaults=False)
 def search_result(sort_this):
     sort_dict = {}
     books_dict = {}
@@ -386,6 +419,7 @@ def search_result(sort_this):
 
 # Add to cart
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
+@limiter.limit("100/minute", override_defaults=False)
 def add_to_cart(user_id, book_id, quantity):
     pass
 # def add_to_buy(id):
@@ -430,6 +464,7 @@ def add_to_cart(user_id, book_id, quantity):
 
 """ View Shopping Cart"""
 @app.route('/shopping-cart')
+@limiter.limit("100/minute", override_defaults=False)
 def cart():
     user_id = get_user().get_user_id()
     cart_dict = {}
@@ -483,6 +518,7 @@ def cart():
 
 """ Customer Orders Page """
 @app.route("/my-orders")
+@limiter.limit("100/minute", override_defaults=False)
 def my_orders():
     db_order = []
     new_order = []
@@ -546,6 +582,15 @@ def about():
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("error/404.html")
+
+@app.errorhandler(429)
+def too_many_request(e):
+    return render_template("error/429.html")
+
+@app.route("/medium")
+@limiter.limit("100/minute", override_defaults=False)
+def medium():
+    return ":|"
 
 
 """    Main    """

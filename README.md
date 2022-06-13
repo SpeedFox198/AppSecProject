@@ -29,12 +29,13 @@ Our web application is an online bookstore. It provides the service of purchasin
 
 **1. Flask** | `pip install flask `  
 **2. Flask-Mail** | `pip install flask-mail`  
-**3. email-validator** | `pip install email-validator`  
-**4. WTForms** | `pip install wtforms`  
-**5. Flask-WTF** | `pip install flask-wtf`  
-**6. argon2-cffi** | `pip install argon2-cffi`  
-**7. stripe** | `pip install stripe`  
-**8. Pillow** | `pip install pillow`  
+**3. Flask-Limiter** | `pip install Flask-Limiter`  
+**4. email-validator** | `pip install email-validator`  
+**5. WTForms** | `pip install wtforms`  
+**6. Flask-WTF** | `pip install flask-wtf`  
+**7. argon2-cffi** | `pip install argon2-cffi`  
+**8. stripe** | `pip install stripe`  
+**9. Pillow** | `pip install pillow`  
 
 You may install all using: `pip3 install -r requirements.txt`
 

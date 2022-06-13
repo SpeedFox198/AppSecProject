@@ -9,6 +9,7 @@ class User(NamedTuple):
     password: str
     profile_pic: str
     is_admin: int
+    login_attempts: int
 
 
 # Profile pic path
@@ -30,11 +31,3 @@ _DEFAULT_PIC_NAME = r"default.png"
 
 #     def get_profile_pic(self):
 #         return _UPLOAD_FOLDER + (self.profile_pic or _DEFAULT_PIC_NAME)
-
-
-class Customer(User):
-    name: str
-    credit_card_no: int
-    address: str
-    phone_no: int
-
