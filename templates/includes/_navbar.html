@@ -1,5 +1,5 @@
-{% set is_admin = session["UserType"] == "Admin" %}
-{% set is_guest = session["UserType"] == "Guest" %}
+{% set is_logged_in = g.user is not none %}
+{% set is_admin = is_logged_in and g.user.is_admin %}
 <!-- Brand name and Logo -->
 <nav class="navbar brand-nav d-none d-lg-block">
   <div class="container-fluid">
@@ -61,15 +61,15 @@
           <div class="dropdown">
             <a class="nav-link" href="{{ url_for('login' if is_guest else 'account') }}"><i class="fa fa-user nav-icon"></i></a>
             <div class="dropdown-content account-link-display">
-            {% if is_guest %}
-              <a href="{{ url_for('login') }}">Login</a>
-              <a href="{{ url_for('sign_up') }}">Sign Up</a>
-            {% else %}
+            {% if is_logged_in %}
               <a href="{{ url_for('account') }}">Account</a>
               {% if not is_admin %}
               <a href="{{ url_for('my_orders') }}">Orders</a>
               {% endif %}
               <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+              <a href="{{ url_for('login') }}">Login</a>
+              <a href="{{ url_for('sign_up') }}">Sign Up</a>
             {% endif %}
             </div>
           </div>

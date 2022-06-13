@@ -5,7 +5,6 @@
     "Add Book": url_for("add_book"),
     "Manage Orders": url_for("manage_orders"),
     "Manage Accounts": url_for("manage_accounts"),
-    "Enquiry Dashboard": url_for("enquiry_retrieve_adm")
   } %}
   {% do links_dict.update({active: "#"}) %}
   {{ render_sidebar(links_dict) }}
