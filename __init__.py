@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
+from flask import g as flask_global
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
 from users import User
@@ -27,26 +28,24 @@ def get_user():
     user_session = retrieve_user_session(session_cookie)
 
     # Return None
-    if user_session is None:
-        return
+    if user_session is not None:
 
-    # Retrieve user id from session
-    user_id = user_session.user_id
+        # Retrieve user id from session
+        user_id = user_session.user_id
 
-    # Retrieve user data from database
-    user_data = dbf.retrieve_user(user_id)
+        # Retrieve user data from database
+        user_data = dbf.retrieve_user(user_id)
 
-    # If user is not found
-    if user_data is None:
-        return
+        # If user is not found
+        if user_data is not None:
 
-    # Create and return user object
-    return User(*user_data)
+            # Create and return user object
+            return User(*user_data)
 
 
 """    Before Request    """
 
-# Before first request
+""" Before first request """
 @app.before_first_request
 def before_first_request():
 
@@ -61,6 +60,13 @@ def before_first_request():
 
         # Create admin
         dbf.create_admin(admin_id, username, email, password)
+
+
+""" Before request """
+@app.before_request
+def before_request():
+    flask_global.user = get_user()
+
 
 
 
@@ -174,8 +180,22 @@ def login():
             # Check username/email
             user_data = dbf.user_auth(username, password)
 
+            # Check if user exists
+            user_attempts = dbf.retrieve_user_attempts(username)
+
+            # Check if account still has attempts left
+            print(user_attempts)
+            if user_attempts == 0:
+                flash("Max login attempts has been reached, account has been locked", "form-error")
+                return render_template("user/login.html", form=login_form)
+
             # If user_data is not succesfully retrieved (username/email/password is/are wrong)
-            if user_data is None:
+            elif user_data is None:
+
+                # If username / email is correct (failed password attempt)
+                if user_attempts is not None:
+                    dbf.decrease_login_attempts(username, user_attempts)
+
                 # Flash login error message
                 flash("Your account and/or password is incorrect, please try again", "form-error")
                 return render_template("user/login.html", form=login_form)
