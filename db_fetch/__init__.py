@@ -2,6 +2,7 @@ from contextlib import closing
 import sqlite3
 
 DATABASE = r"database.db"
+MAX_ALLOWED_ATTEMPTS = 5
 
 
 def retrieve_db(table, *columns, or_and=0, **attributes):
@@ -61,7 +62,7 @@ def execute_db(sql: str, parameters):
 def create_customer(user_id, username, email, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""INSERT INTO Users VALUES ('{user_id}', '{username}', '{email}', '{password}', NULL, 0);"""
+    query = f"""INSERT INTO Users VALUES ('{user_id}', '{username}', '{email}', '{password}', NULL, 0, );"""
     cur.execute(query)
     cur.execute(f"""INSERT INTO Customers (user_id) VALUES ('{user_id}')""")
     con.commit()
@@ -84,6 +85,14 @@ def email_exists(email):
 
 def username_exists(username):
     return _exists("Users", username=username)
+
+
+def retrieve_user_attempts(credentials):
+    results = retrieve_db("Users", "attempts", email=credentials, username=credentials)
+    if results:
+        return results[0][0]
+    else:
+        return None
 
 
 def admin_exists():
@@ -114,7 +123,7 @@ def retrieve_user(user_id):
 def create_admin(admin_id, username, email, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""INSERT INTO Users VALUES('{admin_id}', '{username}', '{email}', '{password}', NULL, 1);"""
+    query = f"""INSERT INTO Users VALUES('{admin_id}', '{username}', '{email}', '{password}', NULL, 1, {MAX_ALLOWED_ATTEMPTS});"""
     cur.execute(query)
     con.commit()
     con.close()
@@ -171,3 +180,15 @@ def get_shopping_cart(user_id):
     return cart_data
 
 """ End of Shopping Cart functions """
+
+
+""" Royston :D """
+
+def decrease_login_attempts(credentials, attempts):
+    """ Decrease user's login attempts and return attempts left """
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = f"""UPDATE Users SET attempts = {attempts - 1} WHERE user_id = '{credentials}' OR email = '{credentials}';"""
+    cur.execute(query)
+    con.commit()
+    con.close()
