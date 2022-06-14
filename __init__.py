@@ -397,6 +397,7 @@ def inventory():
 
 
 def allowed_file(filename):
+    # Return true if there is an extension in file, and its extension is in the allowed extensions
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -408,6 +409,8 @@ def add_book():
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
+
+    # Book cover upload (Code is from Flask documentation https://flask.palletsprojects.com/en/2.1.x/patterns/fileuploads/)
 
     if request.method == "POST" and add_book_form.validate():
         if 'bookimg' not in request.files:
@@ -421,7 +424,7 @@ def add_book():
             return redirect(request.url)
 
         if book_img and allowed_file(book_img.filename):
-            book_img_filename = secure_filename(book_img.filename)
+            book_img_filename = f"{generate_id()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
             path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
             book_img.save(path)
             image = Image.open(path)
@@ -432,8 +435,8 @@ def add_book():
                             add_book_form.language.data,
                             add_book_form.category.data,
                             add_book_form.title.data,
-                            int(add_book_form.qty.data),
-                            int(add_book_form.price.data),
+                            int(add_book_form.qty.data),  # int for sqlite
+                            int(add_book_form.price.data),  # int for sqlite
                             add_book_form.author.data,
                             add_book_form.desc.data,
                             book_img_filename)
