@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
-from SecurityFunctions import encrypt_info, decrypt_info, generate_id
+from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid5, generate_uuid4, sign, verify
 from session_handler import create_user_session, retrieve_user_session
 from users import User
 import db_fetch as dbf
@@ -556,7 +556,14 @@ def search_result(sort_this):
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
 @limiter.limit("100/minute", override_defaults=False)
 def add_to_cart(user_id, book_id, quantity):
-    pass
+
+    # User is a Class
+    user:User = flask_global.user
+
+    if user.is_admin == 1:
+        return redirect(url_for('admin_page')) # If user is admin, redirect to admin page
+    
+    
 
 
 # def add_to_buy(id):
