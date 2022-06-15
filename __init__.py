@@ -464,7 +464,34 @@ def update_book(book_id):
     update_book_form.category.choices = category_list
 
     if request.method == 'POST' and update_book_form.validate():
-        pass
+
+        book_img = request.files['bookimg']
+
+        # If no selected book cover
+        if book_img == '':
+            book_img_filename = selected_book.book_id
+
+        if book_img and allowed_file(book_img.filename):
+            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
+            book_img.save(path)
+            image = Image.open(path)
+            resized_image = image.resize((259, 371))
+            resized_image.save(path)
+
+        updated_details = (
+            update_book_form.language.data,
+            update_book_form.category.data,
+            update_book_form.title.data,
+            update_book_form.author.data,
+            update_book_form.price.data,
+            update_book_form.qty.data,
+            update_book_form.desc.data,
+            book_img_filename,
+            selected_book.book_id
+        )
+        dbf.book_update(updated_details)
+        flash("Book successfully updated!")
     else:
         update_book_form.language.data = selected_book.language
         update_book_form.category.data = selected_book.category
@@ -554,22 +581,22 @@ def search_result(sort_this):
     # except:
     #     print("There are no books")
 
-    # if books_dict != {}:
-    #     if sort_this == 'latest':
-    #         books_dict = dict(reversed(list(books_dict.items())))
-    #         sort_dict = books_dict
-    #     elif sort_this == 'name_a_to_z':
-    #         sort_dict = name_a_to_z(books_dict)
-    #     elif sort_this == 'name_z_to_a':
-    #         sort_dict = name_z_to_a(books_dict)
-    #     elif sort_this == 'price_low_to_high':
-    #         sort_dict = price_low_to_high(books_dict)
-    #     elif sort_this == 'price_high_to_low':
-    #         sort_dict = price_high_to_low(books_dict)
-    #     elif sort_this.capitalize() in language_list:
-    #         sort_dict = filter_language(sort_this)
-    #     else:
-    #         sort_dict = books_dict
+    if books_dict != {}:
+         if sort_this == 'latest':
+             books_dict = dict(reversed(list(books_dict.items())))
+             sort_dict = books_dict
+         elif sort_this == 'name_a_to_z':
+             sort_dict = name_a_to_z(books_dict)
+         elif sort_this == 'name_z_to_a':
+             sort_dict = name_z_to_a(books_dict)
+         elif sort_this == 'price_low_to_high':
+             sort_dict = price_low_to_high(books_dict)
+         elif sort_this == 'price_high_to_low':
+             sort_dict = price_high_to_low(books_dict)
+         elif sort_this.capitalize() in language_list:
+             sort_dict = filter_language(sort_this)
+         else:
+             sort_dict = books_dict
 
     q = request.args.get("q", default="", type=str)
 
@@ -580,6 +607,84 @@ def search_result(sort_this):
 
     return render_template("all_books.html", books_dict=books_dict, sort_dict=sort_dict, language_list=language_list)
 
+def filter_language(language):
+    books = {}
+    books_dict = {}
+    inventory_data = dbf.retrieve_inventory()
+
+    for book in inventory_data:
+        if inventory_data[book].get_language() == language:
+            books.update({book: inventory_data[book]})
+    return books
+
+# Sort name from a to z
+def name_a_to_z(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: inventory_data[book].get_title()})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
+
+# Sort name from z to a
+def name_z_to_a(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: inventory_data[book].get_title()})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
+
+# Sort price from low to high
+def price_low_to_high(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: float(inventory_data[book].get_price())})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
+
+# Sort price from high to low
+def price_high_to_low(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: float(inventory_data[book].get_price())})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
+
 
 """    Start of Cart Pages    """
 
@@ -588,6 +693,12 @@ def search_result(sort_this):
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
 @limiter.limit("100/minute", override_defaults=False)
 def add_to_cart(user_id, book_id, quantity):
+
+    # User is a Class
+    user:User = flask_global.user
+
+    if user.is_admin() == 1:
+        return redirect(url_for('admin_dashboard')) # Redirect to admin dashboard if user is admin
     pass
 
 

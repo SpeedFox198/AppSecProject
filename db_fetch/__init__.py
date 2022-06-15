@@ -177,6 +177,15 @@ def retrieve_book(id_of_book):
     return retrieve_db("Books", book_id=id_of_book)
 
 
+def book_update(details: tuple):
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = "UPDATE Books SET language = ?, genre = ?, title = ?, stock = ?, price = ?, author = ?, description = ?, cover_img = ? WHERE book_id = ?"
+    cur.execute(query, details)
+    con.commit()
+    con.close()
+
+
 """ Start of Order functions"""
 
 
