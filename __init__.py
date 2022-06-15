@@ -53,17 +53,12 @@ def get_user():
         # If user is not found
         if user_data is not None:
 
-            # If user is admin
-            if user_data[5]:
-                user = Admin(*user_data)
-
-            # Else user is a customer
-            else:
+            # If user is a customer
+            if not user_data[5]:
                 user_data += dbf.retrieve_customer_details(user_id)
-                user = Customer(*user_data)
 
             # Return user object
-            return user
+            return User(*user_data)
 
 
 """    Before Request    """
@@ -230,7 +225,7 @@ def login():
             # If login credentials are correct
             else:
                 # Get user id
-                user = Admin(*user_data)
+                user = User(*user_data)
                 user_id = user.user_id
 
                 # Create session to login

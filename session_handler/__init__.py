@@ -1,5 +1,7 @@
 import pickle
 from base64 import b64encode, b64decode
+from hmac import digest, compare_digest
+from itsdangerous import Signer
 
 class UserSession:
     def __init__(self, user_id:str, is_admin:bool=False) -> None:
