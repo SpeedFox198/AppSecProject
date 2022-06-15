@@ -5,7 +5,7 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from session_handler import create_user_session, retrieve_user_session
-from users import Admin, Customer
+from users import User
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
