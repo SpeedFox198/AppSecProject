@@ -469,7 +469,34 @@ def update_book(book_id):
     update_book_form.category.choices = category_list
 
     if request.method == 'POST' and update_book_form.validate():
-        pass
+
+        book_img = request.files['bookimg']
+
+        # If no selected book cover
+        if book_img == '':
+            book_img_filename = selected_book.book_id
+
+        if book_img and allowed_file(book_img.filename):
+            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
+            book_img.save(path)
+            image = Image.open(path)
+            resized_image = image.resize((259, 371))
+            resized_image.save(path)
+
+        updated_details = (
+            update_book_form.language.data,
+            update_book_form.category.data,
+            update_book_form.title.data,
+            update_book_form.author.data,
+            update_book_form.price.data,
+            update_book_form.qty.data,
+            update_book_form.desc.data,
+            book_img_filename,
+            selected_book.book_id
+        )
+        dbf.book_update(updated_details)
+        flash("Book successfully updated!")
     else:
         update_book_form.language.data = selected_book.language
         update_book_form.category.data = selected_book.category
