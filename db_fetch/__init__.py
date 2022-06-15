@@ -5,8 +5,19 @@ DATABASE = r"database.db"
 MAX_ALLOWED_ATTEMPTS = 5
 
 
-def retrieve_db(table, *columns, or_and=0, **attributes):
-    """ Retrieve rows from table """
+def retrieve_db(table:str, *columns:str, or_and:int=0, **attributes:str) -> list:
+    """
+    Retrieve rows from table
+
+    Args:
+        table (str): Table to be retrieved.
+        *columns: Columns to be projected.
+        or_and(:obj:`int`, optional): 0 for OR, 1 for AND.
+        **attributes: Attributes to be selected.
+
+    Returns:
+        list: A list of retrieved rows
+    """
 
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
@@ -27,8 +38,8 @@ def retrieve_db(table, *columns, or_and=0, **attributes):
         selection = []
 
         # Loop through attribute and value pairs and format there
-        for attribute, value in attributes.items():
-            selection.append(f"{attribute} = {repr(value)}")
+        for attribute in attributes:
+            selection.append(f"{attribute} = ?")
 
         # Join statements with "OR"/"AND" if more than one
         selection = " WHERE " + (" OR ", " AND ")[or_and].join(selection)
@@ -42,7 +53,7 @@ def retrieve_db(table, *columns, or_and=0, **attributes):
     query = f"""SELECT {projection} FROM {table}{selection};"""
 
     # Fetch and return results of the query
-    return cur.execute(query).fetchall()
+    return cur.execute(query, tuple(attributes.values())).fetchall()
 
 
 def execute_db(sql: str, parameters):

@@ -4,7 +4,7 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_user_session
-from users import Admin, Customer
+from users import User
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -52,17 +52,12 @@ def get_user():
         # If user is not found
         if user_data is not None:
 
-            # If user is admin
-            if user_data[5]:
-                user = Admin(*user_data)
-
-            # Else user is a customer
-            else:
+            # If user is a customer
+            if not user_data[5]:
                 user_data += dbf.retrieve_customer_details(user_id)
-                user = Customer(*user_data)
 
             # Return user object
-            return user
+            return User(*user_data)
 
 
 
@@ -227,7 +222,7 @@ def login():
             # If login credentials are correct
             else:
                 # Get user id
-                user = Admin(*user_data)
+                user = User(*user_data)
                 user_id = user.user_id
 
                 # Create session to login
@@ -309,12 +304,11 @@ def password_forget():
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def account():
-    # Get current user
-    user = get_user()
 
-    # If user is not logged in
-    if session["UserType"] == "Guest":
+    # If user is already not logged in
+    if flask_global.user is None:
         return redirect(url_for("login"))
+
 
     # Get account page form
     account_page_form = AccountPageForm(request.form)
