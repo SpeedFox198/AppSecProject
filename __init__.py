@@ -162,7 +162,7 @@ def sign_up():
             return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
-        user_id = generate_id()  # Generate new unique user id for customer
+        user_id = generate_uuid5(username)  # Generate new unique user id for customer
         dbf.create_customer(user_id, username, email, password)
 
         # Create session to login
