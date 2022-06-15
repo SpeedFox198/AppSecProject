@@ -593,6 +593,12 @@ def search_result(sort_this):
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
 @limiter.limit("100/minute", override_defaults=False)
 def add_to_cart(user_id, book_id, quantity):
+
+    # User is a Class
+    user:User = flask_global.user
+
+    if user.is_admin() == 1:
+        return redirect(url_for('admin_dashboard')) # Redirect to admin dashboard if user is admin
     pass
 
 

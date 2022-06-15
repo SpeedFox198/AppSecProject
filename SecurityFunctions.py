@@ -66,14 +66,14 @@ def generate_uuid4():
 
 
 """ Keyed Hashing algorithm """
-def sign(cookie):  # cookie is a byte string
+def sign(data):  # data is a byte string
     h = blake2b(digest_size=AUTH_SIZE, key=SECRET_KEY)
-    h.update(cookie)
+    h.update(data)
 
     return h.hexdigest().encode("utf-8")
 
 
-def verify(cookie, sig):
-    good_sig = sign(cookie)
+def verify(data, sig):
+    good_sig = sign(data)
 
     return compare_digest(good_sig, sig)
