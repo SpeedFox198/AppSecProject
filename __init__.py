@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
-from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5
+from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from session_handler import create_user_session, retrieve_user_session
 from users import Admin, Customer
 import db_fetch as dbf
