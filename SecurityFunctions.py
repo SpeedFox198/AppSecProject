@@ -54,7 +54,7 @@ def decrypt_info(ciphertext, tag, nonce, salt):
     return plaintext
 
 """ UUID v5 for user id"""
-def generate_uuid5(username):  # Not unique, need to fix
+def generate_uuid5(username):
     """ 
     Generates a UUID using a SHA-1 hash of a namespace UUID and a name
     """
