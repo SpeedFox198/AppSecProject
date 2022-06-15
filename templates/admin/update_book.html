@@ -12,61 +12,32 @@
 
 {% block content %}
 {% from "includes/_form.html" import render_field %}
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
 
 <!--<h1 class="display-4 padding-top">Add Book</h1>-->
 
+{{ render_breadcrumb({
+  "Home": url_for("home"),
+  "Inventory": url_for("inventory"),
+  "Update Book": "#"
+}) }}
+
 <div class="d-flex justify-content-center align-items-center h-100">
-<div class = "card">
+<div class="card">
 <div class="card-header">
-
-<h2 class="m-0">Update Book</h2>
+  <h2 class="m-0">Update Book</h2>
 </div>
-
 <form method="POST" enctype="multipart/form-data" action="">
 
   <div class="row">
     <div class="col grid-form-spacer">
       <div class="form-group">
         {{ render_field(form.language, class="form-control") }}
-
-        <details>
-          <summary>
-            <span class="icon">Add new</span>
-          </summary>
-          <p>
-            {{form.language2}}
-          </p>
-        </details>
-
       </div>
     </div>
     <div class="col grid-form-spacer">
       <div class="form-group">
         {{ render_field(form.category, class="form-control") }}
-
-        <details>
-          <summary>
-            <span class="icon">Add new</span>
-          </summary>
-          <p>
-            {{form.category2}}
-          </p>
-        </details>
-
-
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col grid-form-spacer">
-      <div class="form-group">
-        {{ render_field(form.age, class="form-control") }}
-      </div>
-    </div>
-    <div class="col grid-form-spacer">
-      <div class="form-group">
-        {{ render_field(form.action, class="form-check", style="list-style-type:none") }}
       </div>
     </div>
   </div>
@@ -104,11 +75,9 @@
       </div>
     </div>
     <div class="col grid-form-spacer">
-<!--      <div class="form-group">-->
-<!--        {{ render_field(form.img, class="form-control") }}-->
-<!--      </div>-->
       <div class="form-group">
-        <input type="file" name="bookimg" accept="image/*" onchange="document.getElementById('bookcover').src = window.URL.createObjectURL(this.files[0])">
+        <label for="bookimg">Book Cover</label>
+        <input type="file" name="bookimg" id="bookimg" class="form-control" style="margin-bottom: 0.5rem" accept="image/*" onchange="document.getElementById('bookcover').src = window.URL.createObjectURL(this.files[0])">
         <img id="bookcover" alt="Book Cover" src="" width="100px" height="150px">
       </div>
     </div>

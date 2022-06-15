@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, g as flask_global
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, g as flask_global, \
+    abort
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
-from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid5, generate_uuid4, sign, verify
+from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5
 from session_handler import create_user_session, retrieve_user_session
-from users import User
+from users import Admin, Customer
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -52,25 +53,30 @@ def get_user():
         # If user is not found
         if user_data is not None:
 
-            # If user is a customer
-            if not user_data[5]:
+            # If user is admin
+            if user_data[5]:
+                user = Admin(*user_data)
+
+            # Else user is a customer
+            else:
                 user_data += dbf.retrieve_customer_details(user_id)
+                user = Customer(*user_data)
 
             # Return user object
-            return User(*user_data)
-
-
+            return user
 
 
 """    Before Request    """
 
 """ Before first request """
+
+
 @app.before_first_request
 def before_first_request():
     # Create admin if not in database
     if not dbf.admin_exists():
         # Admin details
-        admin_id = generate_id()
+        admin_id = generate_uuid5("admin")
         username = "admin"
         email = "admin@vsecurebookstore.com"
         password = "PASS{uNh@5h3d}"
@@ -80,16 +86,18 @@ def before_first_request():
 
 
 """ Before request """
+
+
 @app.before_request
 def before_request():
     flask_global.user = get_user()  # Get user
 
 
-
-
 """    Home Page    """
 
 """ Home page """
+
+
 @app.route("/")
 @limiter.limit("100/minute", override_defaults=False)
 def home():
@@ -120,15 +128,14 @@ def home():
     return render_template("home.html", english=[], chinese=[])  # optional: books_list=books_list
 
 
-
-
 """    Login/Sign-up Pages    """
 
 """ Sign up page """
+
+
 @app.route("/user/sign-up", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def sign_up():
-
     # If user is already logged in
     if flask_global.user is not None:
         return redirect(url_for("account"))
@@ -162,7 +169,7 @@ def sign_up():
             return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
-        user_id = generate_id()  # Generate new unique user id for customer
+        user_id = generate_uuid5(username)  # Generate new unique user id for customer
         dbf.create_customer(user_id, username, email, password)
 
         # Create session to login
@@ -178,10 +185,11 @@ def sign_up():
 
 
 """ Login page """
+
+
 @app.route("/user/login", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def login():
-
     # If user is already logged in
     if flask_global.user is not None:
         return redirect(url_for("account"))
@@ -222,7 +230,7 @@ def login():
             # If login credentials are correct
             else:
                 # Get user id
-                user = User(*user_data)
+                user = Admin(*user_data)
                 user_id = user.user_id
 
                 # Create session to login
@@ -236,6 +244,8 @@ def login():
 
 
 """ Logout """
+
+
 @app.route("/user/logout")
 @limiter.limit("100/minute", override_defaults=False)
 def logout():
@@ -246,7 +256,9 @@ def logout():
     return response
 
 
-""" Forgot password page """ ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO
+""" Forgot password page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO
+
+
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def password_forget():
@@ -296,19 +308,20 @@ def password_forget():
     return render_template("user/password/password_forget.html", form=forget_password_form)
 
 
-
-
 """    User Pages    """
 
-""" View account page """ ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO TODO
+""" View account page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO TODO
+
+
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def account():
+    # Get current user
+    user = get_user()
 
-    # If user is already not logged in
-    if flask_global.user is None:
+    # If user is not logged in
+    if session["UserType"] == "Guest":
         return redirect(url_for("login"))
-
 
     # Get account page form
     account_page_form = AccountPageForm(request.form)
@@ -395,11 +408,13 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
+category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), ('Classic', 'Classic'),
+                 ('Comic', 'Comic'), ('Detective & Mystery', 'Detective & Mystery')]
+
+
 @app.route('/admin/add-book', methods=['GET', 'POST'])
 def add_book():
-    lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
-    category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), ('Classic', 'Classic'),
-                     ('Comic', 'Comic'), ('Detective & Mystery', 'Detective & Mystery')]
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
@@ -418,14 +433,14 @@ def add_book():
             return redirect(request.url)
 
         if book_img and allowed_file(book_img.filename):
-            book_img_filename = f"{generate_id()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
             path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
             book_img.save(path)
             image = Image.open(path)
             resized_image = image.resize((259, 371))
             resized_image.save(path)
 
-            book_details = (generate_id(),
+            book_details = (generate_uuid4(),
                             add_book_form.language.data,
                             add_book_form.category.data,
                             add_book_form.title.data,
@@ -441,9 +456,29 @@ def add_book():
     return render_template('admin/add_book.html', form=add_book_form)
 
 
-@app.route('/update-book/<id>/', methods=['GET', 'POST'])
-def update_book(id):
-    return "update book"
+@app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
+def update_book(book_id):
+    # Get specified book
+    if not dbf.retrieve_book(book_id):
+        abort(404)
+
+    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+
+    update_book_form = AddBookForm(request.form)
+    update_book_form.language.choices = lang_list
+    update_book_form.category.choices = category_list
+
+    if request.method == 'POST' and update_book_form.validate():
+        pass
+    else:
+        update_book_form.language.data = selected_book.language
+        update_book_form.category.data = selected_book.category
+        update_book_form.title.data = selected_book.title
+        update_book_form.author.data = selected_book.author
+        update_book_form.price.data = selected_book.price
+        update_book_form.qty.data = selected_book.qty
+        update_book_form.desc.data = selected_book.desc
+        return render_template('admin/update_book.html', form=update_book_form)
 
 
 @app.route('/delete-book/<id>/', methods=['POST'])
@@ -458,6 +493,7 @@ def manage_orders():
 
 """    Books Pages    """
 
+
 @app.route('/book/<int:id>', methods=['GET', 'POST'])
 def book_info2(id):
     book_db = shelve.open('database', 'r')
@@ -466,8 +502,6 @@ def book_info2(id):
 
     currentbook = []
     book = books_dict.get(id)
-
-
 
     book.set_book_id(book.get_book_id())
     book.set_language(book.get_language())
@@ -486,9 +520,11 @@ def book_info2(id):
 
     return render_template('book_info2.html', currentbook=currentbook)
 
+
 @app.route('/book/<int:id>/reviews/page_<int:reviewPageNumber>')
 def book_reviews(id, reviewPageNumber):
     pass
+
 
 """ Search Results Page """
 
@@ -505,7 +541,8 @@ def search_result(sort_this):
             book = Book(*data)
             books_dict[book.get_book_id()] = book
             language_list.append(book.get_language())
-            sort_dict = {'title': 'Title', 'author': 'Author', 'language': 'Language', 'category': 'Category', 'price': 'Price'}
+            sort_dict = {'title': 'Title', 'author': 'Author', 'language': 'Language', 'category': 'Category',
+                         'price': 'Price'}
     except:
         print("No books in inventory")
     # try:
@@ -556,14 +593,7 @@ def search_result(sort_this):
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
 @limiter.limit("100/minute", override_defaults=False)
 def add_to_cart(user_id, book_id, quantity):
-
-    # User is a Class
-    user:User = flask_global.user
-
-    if user.is_admin == 1:
-        return redirect(url_for('admin_page')) # If user is admin, redirect to admin page
-    
-    
+    pass
 
 
 # def add_to_buy(id):

@@ -130,7 +130,6 @@ class AddBookForm(Form):
 
     language = SelectField('Language', [validators.Optional()], default='')
     category = SelectField('Category', [validators.Optional()], default='')
-    age = SelectField('Age', [validators.InputRequired()], choices=[('', 'Select'), ('Children', 'Children'), ('Teenagers', 'Teenagers'), ('Young Adults', 'Young Adults'), ('Adults', 'Adults')], default='')
     title = StringField('Title', [validators.InputRequired("Title is required")])
     author = StringField('Author', [validators.InputRequired("Author is required")])
     price = DecimalField('Price', [validators.InputRequired("Price is required")], places=2, rounding=None)
