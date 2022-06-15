@@ -4,6 +4,7 @@ from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import scrypt
 from hashlib import blake2b
 from hmac import compare_digest
+import os
 
 SECRET_KEY = b"pseudorandomly generated secret key"
 AUTH_SIZE = 32
@@ -67,7 +68,7 @@ def generate_uuid4():
 
 """ Keyed Hashing algorithm """
 def sign(data):  # data is a byte string
-    h = blake2b(digest_size=AUTH_SIZE, key=SECRET_KEY)
+    h = blake2b(digest_size=AUTH_SIZE, key=os.envrion.get('VERY_SECRET_KEY'))
     h.update(data)
 
     return h.hexdigest().encode("utf-8")
