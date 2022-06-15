@@ -40,8 +40,9 @@ summary::-webkit-details-marker {
 
 .card {
     width: 1250px;
+    padding: 1rem
 }
 
-.card-header, .card-footer {
+/* .card-header, .card-footer {
     padding: 1rem 2rem;
-}
+} */

@@ -172,6 +172,11 @@ def book_add(details: tuple):
     con.commit()
     con.close()
 
+
+def retrieve_book(id_of_book):
+    return retrieve_db("Books", book_id=id_of_book)
+
+
 """ Start of Order functions"""
 
 
@@ -234,7 +239,6 @@ def get_shopping_cart(user_id):
 """ End of Shopping Cart functions """
 
 """ Royston :D """
-
 
 
 def decrease_login_attempts(credentials, attempts):
