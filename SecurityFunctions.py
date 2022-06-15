@@ -53,17 +53,19 @@ def decrypt_info(ciphertext, tag, nonce, salt):
 
     return plaintext
 
-
-def generate_id():  # Not unique, need to fix
+""" UUID v5 for user id"""
+def generate_uuid5(username):  # Not unique, need to fix
     """ 
     Generates a UUID using a SHA-1 hash of a namespace UUID and a name
     """
-    return str(uuid.uuid5(uuid.NAMESPACE_DNS, 'vsecurebookstore.com'))
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, username))
+
+""" UUID v4 for book id"""
+def generate_uuid4():
+    return str(uuid.uuid4())
 
 
 """ Keyed Hashing algorithm """
-
-
 def sign(cookie):  # cookie is a byte string
     h = blake2b(digest_size=AUTH_SIZE, key=SECRET_KEY)
     h.update(cookie)
