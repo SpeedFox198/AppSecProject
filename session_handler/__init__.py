@@ -1,4 +1,4 @@
-import pickle
+from pickle import dumps, loads
 from base64 import b64encode, b64decode
 from hmac import digest, compare_digest
 from typing import Union
@@ -6,6 +6,8 @@ from os import environ
 
 # Get secret key (you ain't gonna see it in plain text lol)
 SECRET_KEY = environ.get("VERY_SECRET_KEY").encode()
+
+# Character for separating session data and signature
 SEPARATOR = b"."
 
 
@@ -19,7 +21,7 @@ def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
     """ Creates and returns user session cookie """
 
     # Serialise user session object
-    session = b64encode(pickle.dumps(UserSession(user_id, bool(is_admin))))
+    session = b64encode(dumps(UserSession(user_id, bool(is_admin))))
 
     # Generate signature
     signature = b64encode(digest(SECRET_KEY, session, "sha256"))
@@ -42,4 +44,4 @@ def retrieve_user_session(session:bytes) -> Union[UserSession, None]:
         if compare_digest(a, b):
 
             # Returns user session object if session is valid
-            return pickle.loads(b64decode(values[0]))
+            return loads(b64decode(values[0]))
