@@ -559,22 +559,22 @@ def search_result(sort_this):
     # except:
     #     print("There are no books")
 
-    # if books_dict != {}:
-    #     if sort_this == 'latest':
-    #         books_dict = dict(reversed(list(books_dict.items())))
-    #         sort_dict = books_dict
-    #     elif sort_this == 'name_a_to_z':
-    #         sort_dict = name_a_to_z(books_dict)
-    #     elif sort_this == 'name_z_to_a':
-    #         sort_dict = name_z_to_a(books_dict)
-    #     elif sort_this == 'price_low_to_high':
-    #         sort_dict = price_low_to_high(books_dict)
-    #     elif sort_this == 'price_high_to_low':
-    #         sort_dict = price_high_to_low(books_dict)
-    #     elif sort_this.capitalize() in language_list:
-    #         sort_dict = filter_language(sort_this)
-    #     else:
-    #         sort_dict = books_dict
+    if books_dict != {}:
+         if sort_this == 'latest':
+             books_dict = dict(reversed(list(books_dict.items())))
+             sort_dict = books_dict
+         elif sort_this == 'name_a_to_z':
+             sort_dict = name_a_to_z(books_dict)
+         elif sort_this == 'name_z_to_a':
+             sort_dict = name_z_to_a(books_dict)
+         elif sort_this == 'price_low_to_high':
+             sort_dict = price_low_to_high(books_dict)
+         elif sort_this == 'price_high_to_low':
+             sort_dict = price_high_to_low(books_dict)
+         elif sort_this.capitalize() in language_list:
+             sort_dict = filter_language(sort_this)
+         else:
+             sort_dict = books_dict
 
     q = request.args.get("q", default="", type=str)
 
@@ -584,6 +584,84 @@ def search_result(sort_this):
                 sort_dict.pop(book_id, None)
 
     return render_template("all_books.html", books_dict=books_dict, sort_dict=sort_dict, language_list=language_list)
+
+def filter_language(language):
+    books = {}
+    books_dict = {}
+    inventory_data = dbf.retrieve_inventory()
+
+    for book in inventory_data:
+        if inventory_data[book].get_language() == language:
+            books.update({book: inventory_data[book]})
+    return books
+
+# Sort name from a to z
+def name_a_to_z(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: inventory_data[book].get_title()})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
+
+# Sort name from z to a
+def name_z_to_a(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: inventory_data[book].get_title()})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
+
+# Sort price from low to high
+def price_low_to_high(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: float(inventory_data[book].get_price())})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
+
+# Sort price from high to low
+def price_high_to_low(inventory_data):
+    sort_dict = {}
+    unsorted_dict = {}
+    if inventory_data != {}:
+        for book in inventory_data:
+            unsorted_dict.update({book: float(inventory_data[book].get_price())})
+        print(unsorted_dict)
+        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
+        unsorted_dict = {k: v for k, v in unsorted_dict}
+        print(unsorted_dict)
+
+        for id in unsorted_dict:
+            if id in inventory_data:
+                sort_dict.update({id: inventory_data[id]})
+    return sort_dict
 
 
 """    Start of Cart Pages    """
