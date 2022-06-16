@@ -5,7 +5,7 @@ DATABASE = r"database.db"
 MAX_ALLOWED_ATTEMPTS = 5
 
 
-def retrieve_db(table:str, *columns:str, or_and:int=0, **attributes:str) -> list:
+def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list:
     """
     Retrieve rows from table
 
@@ -19,18 +19,19 @@ def retrieve_db(table:str, *columns:str, or_and:int=0, **attributes:str) -> list
         list: A list of retrieved rows
     """
 
+    # Connect to database
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
+
+    # Default values of statements
+    projection = "*"   # Project all columns
+    selection = ""     # No selection options
+    limit_offset = ""  # No limit
 
     if columns:  # If columns were specified
 
         # Construct projection statement
         projection = ", ".join(columns)
-
-    else:  # If no columns were specified
-
-        # Project all columns
-        projection = "*"
 
     if attributes:  # If attributes were specified
 
@@ -44,31 +45,50 @@ def retrieve_db(table:str, *columns:str, or_and:int=0, **attributes:str) -> list
         # Join statements with "OR"/"AND" if more than one
         selection = " WHERE " + (" OR ", " AND ")[or_and].join(selection)
 
-    else:  # If no attributes were specified
+    if limit:  # If limits were specified
 
-        # No selection options
-        selection = ""
+        # Limits and offsets should be positive
+        assert limit >= 0, "Limit should be a int more than 0"
+        assert offset >= 0, "Offset should be a int more than 0"
+
+        limit_offset = f" LIMIT {int(limit)} OFFSET {int(offset)}"
 
     # Create query
-    query = f"""SELECT {projection} FROM {table}{selection};"""
+    query = f"""SELECT {projection} FROM {table}{selection}{limit_offset};"""
 
     # Fetch and return results of the query
     return cur.execute(query, tuple(attributes.values())).fetchall()
 
 
+def delete_rows(table: str, or_and: int=0, **attributes) -> None:
+    """ Deletes rows from database """
+
+    # Connect to database
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+
+    # Selection statements
+    selection = []
+
+    # Loop through attribute and value pairs and format there
+    for attribute in attributes:
+        selection.append(f"{attribute} = ?")
+
+    selection = (" OR ", " AND ")[or_and].join(selection)
+
+    query = f"""DELETE FROM {table} WHERE """
+
+    cur.execute(query, tuple(attributes.values()))
+
+
 def execute_db(sql: str, parameters):
+    """ Execute sql query with parameters """
     with closing(sqlite3.connect(DATABASE)) as con:
         with con:
             cur = con.cursor()
             data = cur.execute(sql, parameters).fetchall()
             return data
 
-
-# def create_user(user):
-#     execute_db(
-#         """INSERT INTO Users VALUES (?, ?, ?, ?, NULL, ?)""",
-#         (user.id, user.username, user.email, user.password, user.is_admin)
-#     )
 
 def create_customer(user_id, username, email, password):
     con = sqlite3.connect(DATABASE)
@@ -193,6 +213,25 @@ def delete_book(id_of_book: str):
     cur.execute(query, (id_of_book,))
     con.commit()
     con.close()
+
+
+def retrieve_these_customers(offset: int):
+    """ Retrieves and returns a list of max 10 customers starting from offset """
+    return retrieve_db("Users NATURAL JOIN Customers", limit=10, offset=offset, is_admin=0)
+
+
+def number_of_customers() -> int:
+    """ Returns count of number of customers """
+    return retrieve_db("Customers", "COUNT(*)")[0][0]
+
+
+def delete_customer(user_id: str):
+    """ Deletes and returns customer from database """
+    customer_data = retrieve_db("Customers", user_id=user_id)
+    if customer_data:
+        delete_rows("Users", user_id=user_id)
+        delete_rows("Customers", user_id=user_id)
+        return customer_data[0]
 
 
 """ Start of Order functions"""
