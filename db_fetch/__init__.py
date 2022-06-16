@@ -176,12 +176,7 @@ def create_admin(admin_id, username, email, password):
 
 
 def retrieve_inventory():
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = "SELECT * FROM Books;"
-    books = cur.execute(query).fetchall()
-    con.close()
-    return books
+    return retrieve_db("Books")
 
 
 def book_add(details: tuple):
