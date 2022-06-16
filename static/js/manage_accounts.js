@@ -17,10 +17,7 @@ function selectAccount(userID, username, buttonID) {
     clickButton(buttonID);
 }
 
-function viewUser(accountType, username, name, email, gender, profilePic) {
-    if (accountType != "") {
-        getElement("viewUserUserType").innerText = accountType;
-    }
+function viewUser(username, name, email, gender, profilePic) {
     getElement("viewUserUsername").innerText = username;
     getElement("viewUserName").innerText = name;
     getElement("viewUserEmail").innerText = email;
