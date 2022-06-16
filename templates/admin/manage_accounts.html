@@ -39,31 +39,17 @@
               <th scope="col">Username</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
-              {% if is_master %}
-              <th scope="col">Type</th>
-              {% endif %}
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for user in display_users %}
-            {% if user.__class__.__name__ != "Admin" or not user.is_master() %} {# Don't display master #}
-            {% if user.__class__.__name__ == "Admin" %}
-              {% set name = "-" %}
-              {% set gender = "-" %}
-            {% else %}
-              {% set name = user.get_name() if user.get_name() else "-" %}
-              {% set gender = user.get_gender() if user.get_gender() else "-" %}
-            {% endif %}
             <tr class="account-row">
               <td>{{ user.get_username() }}</td>
               <td>{{ name }}</td>
               <td>{{ user.get_email() }}</td>
-              {% if is_master %}
-              <td>{{ user.__class__.__name__ }}</td>
-              {% endif %}
               <td class="account-actions d-flex">
-                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="View" onclick="viewUser('{{ user.__class__.__name__ if is_master }}', '{{ user.get_username() }}', '{{ name }}', '{{ user.get_email() }}', '{{ gender }}', '{{ user.get_profile_pic() }}');">
+                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="View" onclick="viewUser('{{ user.get_username() }}', '{{ name }}', '{{ user.get_email() }}', '{{ gender }}', '{{ user.get_profile_pic() }}');">
                   <i class="fa fa-eye"></i>
                 </button>
                 <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="selectAccount('{{ user.get_user_id() }}', '{{ user.get_username() }}', 'deleteUserButton');">
@@ -71,7 +57,6 @@
                 </button>
               </td>
             </tr>
-            {% endif %}
             {% endfor %}
           </tbody>
         </table>
@@ -115,8 +100,8 @@
     {% endif %}
   {% endwith %}
 {% endmacro %}
-{% macro display_error_span(session_name) %}
-  {% if session.pop(session_name, False) %}
+{% macro display_error_span(error_name) %}
+  {% if g.errors.pop(error_name, False) %}
     <span class="d-none display-invalid"></span>
   {% endif %}
 {% endmacro %}
@@ -131,11 +116,6 @@
       </div>
       <div class="modal-body">
         <form class="needs-validation" method="POST" action="" novalidate>
-          {% if is_master %}
-          <div class="mb-4">
-            {{ render_field(create_user_form.user_type, "Please select a user type", class="form-select") }}
-          </div>
-          {% endif %}
           <div class="mb-4">
             {{ display_error_span("CreateUserUsernameError") }}
             {{ render_field(create_user_form.username, "Username should be 3-20 characters long", class="form-control", placeholder="Username") }}
@@ -183,10 +163,6 @@
               </div>
             </div>
           </dd>
-          {% if is_master %}
-          <dt class="col-sm-3">Type</dt>
-          <dd class="col-sm-9" id="viewUserUserType"></dd>
-          {% endif %}
           <dt class="col-sm-3">Username</dt>
           <dd class="col-sm-9" id="viewUserUsername"></dd>
           <dt class="col-sm-3">Name</dt>
