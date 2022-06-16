@@ -518,8 +518,173 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
-def manage_orders():
-    return "manage orders"
+@app.route("/admin/manage-accounts", methods=["GET", "POST"])
+def manage_accounts():
+    admin = get_user()
+
+    # If user is not admin
+    if not isinstance(admin, Admin):
+        return redirect(url_for("home"))
+
+    # Get page number
+    active_page = request.args.get("page", default=1, type=int)
+
+    # Get sign up form
+    create_user_form = CreateUserForm(request.form)
+    delete_user_form = DeleteUserForm(request.form)
+
+    form_trigger = "addUserButton"  # id of form to trigger on page load
+
+    # Validate sign up form if request is post
+    if request.method == "GET":
+        form_trigger = ""
+    else:
+        if delete_user_form.validate() and delete_user_form.user_id.data:
+            form_trigger = ""
+
+            # Delete selected user
+            user_id = delete_user_form.user_id.data
+
+            with shelve.open("database") as db:
+
+                # Get Customers, Admins, UsernameToUserID, EmailToUserID
+                customers_db = retrieve_db("Customers", db)
+                admins_db = retrieve_db("Admins", db)
+                username_to_user_id = retrieve_db("UsernameToUserID", db)
+                email_to_user_id = retrieve_db("EmailToUserID", db)
+            
+                try:
+                    del_user = customers_db[user_id]
+                except KeyError:
+                    if not admin.is_master():
+                        del_user = None
+                    else:
+                        try:
+                            del_user = admins_db[user_id]
+                        except KeyError:
+                            del_user = None
+                        else:
+                            user_type = "A"
+                else:
+                    user_type = "C"
+
+                if del_user is None:
+                    flash("No changes were made", "warning")
+                else:
+                    # Delete user
+                    {"C":customers_db, "A":admins_db}[user_type].pop(user_id, None)
+                    username_to_user_id.pop(del_user.get_username(), None)
+                    email_to_user_id.pop(del_user.get_email(), None)
+                    if DEBUG: print(f"Delete User: deleted {del_user}")
+
+                    # Save changes
+                    db["Customers"] = customers_db
+                    db["Admins"] = admins_db
+                    db["UsernameToUserID"] = username_to_user_id
+                    db["EmailToUserID"] = email_to_user_id
+
+                    # Redirect to prevent form resubmission
+                    flash(f"Deleted {del_user.__class__.__name__.lower()}: {del_user.get_username()}")
+                    return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+
+        elif not create_user_form.validate():
+            if DEBUG: print("Create User: form field invalid")
+            session["DisplayFieldError"] = True
+        else:
+            # Extract data from sign up form
+            if admin.is_master():
+                user_type = create_user_form.user_type.data
+            else:
+                user_type = "C"  # non-master admins can only create customers
+            username = create_user_form.username.data
+            email = create_user_form.email.data.lower()
+            password = create_user_form.password.data
+
+            # Create new user
+            with shelve.open("database") as db:
+
+                # Get UsersDB, UsernameToUserID, EmailToUserID
+                db_key = {"C":"Customers", "A":"Admins"}[user_type]
+                users_db = retrieve_db(db_key, db)
+                username_to_user_id = retrieve_db("UsernameToUserID", db)
+                email_to_user_id = retrieve_db("EmailToUserID", db)
+
+                # Ensure that email and username are not registered yet
+                if username.lower() in username_to_user_id:
+                    if DEBUG: print("Create User: username already exists")
+                    session["DisplayFieldError"] = session["CreateUserUsernameError"] = True
+                    flash("Username taken", "create-user-username-error")
+                elif email in email_to_user_id:
+                    if DEBUG: print("Create User: email already exists")
+                    session["DisplayFieldError"] = session["CreateUserEmailError"] = True
+                    flash("Email already registered", "create-user-email-error")
+                else:
+                    # Create customer
+                    created_user = {"C":Customer, "A":Admin}[user_type](username, email, password)
+                    if DEBUG: print(f"Created: {created_user}")
+
+                    # Store customer into database
+                    user_id = created_user.get_user_id()
+                    users_db[user_id] = created_user
+                    username_to_user_id[username.lower()] = user_id
+                    email_to_user_id[email] = user_id
+
+                    # Save changes to database
+                    db["UsernameToUserID"] = username_to_user_id
+                    db["EmailToUserID"] = email_to_user_id
+                    db[db_key] = users_db
+
+                    # Redirect to prevent form resubmission
+                    form_trigger = ""
+                    flash(f"Created new {created_user.__class__.__name__.lower()}: {username}")
+                    return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+
+    # Get users database
+    with shelve.open("database") as db:
+        all_users = tuple(retrieve_db("Customers", db).values())
+
+        # If is master admin
+        if admin.is_master():
+            # Removed master admin from list
+            admins_db = retrieve_db("Admins", db)
+            admins_db.pop(retrieve_db("UsernameToUserID", db)["admin"], None)
+            all_users = tuple(admins_db.values()) + all_users
+
+    # Set page number
+    last_page = math.ceil(len(all_users)/ACCOUNTS_PER_PAGE)
+    if active_page < 1:
+        active_page = 1
+    elif active_page > last_page:
+        active_page = last_page
+
+    first_index = (active_page-1)*ACCOUNTS_PER_PAGE
+    display_users = all_users[first_index:first_index+10]
+
+    # Get page list
+    if last_page <= 5:
+        page_list = [i for i in range(1, last_page+1)]
+    else:
+        center_item = active_page
+        if center_item < 3:
+            center_item = 3
+        elif center_item > last_page - 2:
+            center_item = last_page - 2
+        page_list = [i for i in range(center_item-2, center_item+2+1)]
+    prev_page = active_page-1 if active_page-1 > 0 else active_page
+    next_page = active_page+1 if active_page+1 <= last_page else last_page
+
+    # Get entries range
+    entries_range = (first_index+1, first_index+len(display_users))
+
+    return render_template("admin/manage_accounts.html",
+                           display_users=display_users, is_master=admin.is_master(),
+                           active_page=active_page, page_list=page_list,
+                           prev_page=prev_page, next_page=next_page,
+                           first_page=1, last_page=last_page,
+                           entries_range=entries_range, total_entries=len(all_users),
+                           form_trigger=form_trigger,
+                           create_user_form=create_user_form,
+                           delete_user_form=delete_user_form)
 
 
 """    Books Pages    """
