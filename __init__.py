@@ -25,7 +25,7 @@ app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_IMG_UPLOAD_FOLDER = 'static/img/books'
-app.config['UPLOAD_FOLDER'] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
+app.config['BOOK_UPLOAD_FOLDER'] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
 
 limiter = Limiter(
     app,
@@ -429,7 +429,7 @@ def add_book():
 
         if book_img and allowed_file(book_img.filename):
             book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
-            path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
+            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
             book_img.save(path)
             image = Image.open(path)
             resized_image = image.resize((259, 371))
@@ -472,7 +472,7 @@ def update_book(book_id):
 
         if book_img and allowed_file(book_img.filename):
             book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
-            path = os.path.join(app.config['UPLOAD_FOLDER'], book_img_filename)
+            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
             book_img.save(path)
             image = Image.open(path)
             resized_image = image.resize((259, 371))
@@ -503,9 +503,18 @@ def update_book(book_id):
         return render_template('admin/update_book.html', form=update_book_form)
 
 
-@app.route('/delete-book/<id>/', methods=['POST'])
-def delete_book(id):
-    return "delete book"
+@app.route('/delete-book/<book_id>/', methods=['POST'])
+def delete_book(book_id):
+    # Deletes book and its cover image
+    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+    book_cover_img = selected_book.img
+    cover_img_path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_cover_img)
+    if os.path.isfile(cover_img_path):
+        os.remove(cover_img_path)
+    else:
+        print("Book cover does not exist.")
+    dbf.delete_book(book_id)
+    return redirect(url_for('inventory'))
 
 
 @app.route("/admin/manage-orders")
