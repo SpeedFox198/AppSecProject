@@ -10,6 +10,7 @@ import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
 from Book import Book
+from math import ceil
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -128,6 +129,7 @@ def home():
 """ Sign up page """
 
 
+## TODO TODO TODO TODO TODO TODO TODO TODO TODO remove session TODO TODO TODO TODO TODO TODO TODO TODO 
 @app.route("/user/sign-up", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def sign_up():
@@ -138,11 +140,15 @@ def sign_up():
     # Get sign up form
     sign_up_form = SignUpForm(request.form)
 
+    # Flask global error variable for css
+    flask_global.errors = {}
+    errors = flask_global.errors
+
     # Validate sign up form if request is post
     if request.method == "POST":
         if not sign_up_form.validate():
             if DEBUG: print("Sign-up: form field invalid")
-            session["DisplayFieldError"] = True
+            errors["DisplayFieldError"] = True
             return render_template("user/sign_up.html", form=sign_up_form)
 
         # Extract data from sign up form
@@ -154,12 +160,12 @@ def sign_up():
 
         # Ensure that email and username are not registered yet
         if dbf.username_exists(username):
-            session["DisplayFieldError"] = session["SignUpUsernameError"] = True
+            errors["DisplayFieldError"] = errors["SignUpUsernameError"] = True
             flash("Username taken", "sign-up-username-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
         elif dbf.email_exists(email):
-            session["DisplayFieldError"] = session["SignUpEmailError"] = True
+            errors["DisplayFieldError"] = errors["SignUpEmailError"] = True
             flash("Email already registered", "sign-up-email-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
@@ -206,7 +212,6 @@ def login():
             user_attempts = dbf.retrieve_user_attempts(username)
 
             # Check if account still has attempts left
-            print(user_attempts)
             if user_attempts == 0:
                 flash("Max login attempts has been reached, account has been locked", "form-error")
                 return render_template("user/login.html", form=login_form)
@@ -384,14 +389,18 @@ def account():
 
 
 # Manage accounts page
-@app.route("/admin/manage-accounts", methods=["GET", "POST"])
+# TODO TODO TODO TODO TODO TODO TODO TODO continue work (SpeedFox198) TODO TODO TODO TODO TODO TODO
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
 def manage_accounts():
     user:User = flask_global.user
 
     # If user is not admin
-    if not user.is_admin:
-        abort(403)
+    if user is None or not user.is_admin:
+        abort(403)  # Forbidden, go away D:
+
+    # Flask global error variable for css
+    flask_global.errors = {}
+    errors = flask_global.errors
 
     # Get page number
     active_page = request.args.get("page", default=1, type=int)
@@ -412,61 +421,30 @@ def manage_accounts():
             # Delete selected user
             user_id = delete_user_form.user_id.data
 
-            with shelve.open("database") as db:
+            # Try deleting the user (False if user doesn't exist)
+            deleted_customer = dbf.delete_customer(user_id)
 
-                # Get Customers, Admins, UsernameToUserID, EmailToUserID
-                customers_db = retrieve_db("Customers", db)
-                admins_db = retrieve_db("Admins", db)
-                username_to_user_id = retrieve_db("UsernameToUserID", db)
-                email_to_user_id = retrieve_db("EmailToUserID", db)
-            
-                try:
-                    del_user = customers_db[user_id]
-                except KeyError:
-                    if not admin.is_master():
-                        del_user = None
-                    else:
-                        try:
-                            del_user = admins_db[user_id]
-                        except KeyError:
-                            del_user = None
-                        else:
-                            user_type = "A"
-                else:
-                    user_type = "C"
+            # If customer exists in database (and is deleted)
+            if deleted_customer:
+                deleted_customer = User(*deleted_customer)
+                # Flash success message
+                flash(f"Deleted customer: {deleted_customer.username}")
 
-                if del_user is None:
-                    flash("No changes were made", "warning")
-                else:
-                    # Delete user
-                    {"C":customers_db, "A":admins_db}[user_type].pop(user_id, None)
-                    username_to_user_id.pop(del_user.get_username(), None)
-                    email_to_user_id.pop(del_user.get_email(), None)
-                    if DEBUG: print(f"Delete User: deleted {del_user}")
-
-                    # Save changes
-                    db["Customers"] = customers_db
-                    db["Admins"] = admins_db
-                    db["UsernameToUserID"] = username_to_user_id
-                    db["EmailToUserID"] = email_to_user_id
-
-                    # Redirect to prevent form resubmission
-                    flash(f"Deleted {del_user.__class__.__name__.lower()}: {del_user.get_username()}")
-                    return redirect(f"{url_for('manage_accounts')}?page={active_page}")
-
-        elif not create_user_form.validate():
-            if DEBUG: print("Create User: form field invalid")
-            session["DisplayFieldError"] = True
-        else:
-            # Extract data from sign up form
-            if admin.is_master():
-                user_type = create_user_form.user_type.data
+            # Else user is not in database
             else:
-                user_type = "C"  # non-master admins can only create customers
+                # Flash warning message
+                flash("Customer does not exist", "warning")
+
+            # Redirect to prevent form resubmission
+            return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+
+        elif create_user_form.validate():
+            # Extract data from sign up form
             username = create_user_form.username.data
             email = create_user_form.email.data.lower()
             password = create_user_form.password.data
 
+            # TODO TODO TODO TODO TODO TODO TODO continue here SpeedFox198 TODO TODO TODO TODO TODO
             # Create new user
             with shelve.open("database") as db:
 
@@ -479,11 +457,11 @@ def manage_accounts():
                 # Ensure that email and username are not registered yet
                 if username.lower() in username_to_user_id:
                     if DEBUG: print("Create User: username already exists")
-                    session["DisplayFieldError"] = session["CreateUserUsernameError"] = True
+                    errors["DisplayFieldError"] = errors["CreateUserUsernameError"] = True
                     flash("Username taken", "create-user-username-error")
                 elif email in email_to_user_id:
                     if DEBUG: print("Create User: email already exists")
-                    session["DisplayFieldError"] = session["CreateUserEmailError"] = True
+                    errors["DisplayFieldError"] = errors["CreateUserEmailError"] = True
                     flash("Email already registered", "create-user-email-error")
                 else:
                     # Create customer
@@ -506,19 +484,16 @@ def manage_accounts():
                     flash(f"Created new {created_user.__class__.__name__.lower()}: {username}")
                     return redirect(f"{url_for('manage_accounts')}?page={active_page}")
 
-    # Get users database
-    with shelve.open("database") as db:
-        all_users = tuple(retrieve_db("Customers", db).values())
+        # Else, form was invalid
+        else:
+            errors["DisplayFieldError"] = True
 
-        # If is master admin
-        if admin.is_master():
-            # Removed master admin from list
-            admins_db = retrieve_db("Admins", db)
-            admins_db.pop(retrieve_db("UsernameToUserID", db)["admin"], None)
-            all_users = tuple(admins_db.values()) + all_users
+    # Get users database
+    all_users = [User(*data) for data in dbf.retrieve_these_customers()]
+    customer_count = dbf.number_of_customers()
 
     # Set page number
-    last_page = math.ceil(len(all_users)/ACCOUNTS_PER_PAGE)
+    last_page = ceil(customer_count/ACCOUNTS_PER_PAGE)
     if active_page < 1:
         active_page = 1
     elif active_page > last_page:
@@ -544,11 +519,11 @@ def manage_accounts():
     entries_range = (first_index+1, first_index+len(display_users))
 
     return render_template("admin/manage_accounts.html",
-                           display_users=display_users, is_master=admin.is_master(),
+                           display_users=display_users,
                            active_page=active_page, page_list=page_list,
                            prev_page=prev_page, next_page=next_page,
                            first_page=1, last_page=last_page,
-                           entries_range=entries_range, total_entries=len(all_users),
+                           entries_range=entries_range, total_entries=customer_count,
                            form_trigger=form_trigger,
                            create_user_form=create_user_form,
                            delete_user_form=delete_user_form)
