@@ -6,6 +6,7 @@ from os import environ
 
 # Get secret key (you ain't gonna see it in plain text lol)
 SECRET_KEY = environ.get("VERY_SECRET_KEY").encode()
+assert SECRET_KEY, "Secret key must be set in OS System environment variable"
 
 # Character for separating session data and signature
 SEPARATOR = b"."
