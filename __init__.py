@@ -468,8 +468,7 @@ def update_book(book_id):
         book_img = request.files['bookimg']
 
         # If no selected book cover
-        if book_img == '':
-            book_img_filename = selected_book.book_id
+        book_img_filename = selected_book.img
 
         if book_img and allowed_file(book_img.filename):
             book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
@@ -483,15 +482,16 @@ def update_book(book_id):
             update_book_form.language.data,
             update_book_form.category.data,
             update_book_form.title.data,
+            int(update_book_form.qty.data),
+            int(update_book_form.price.data),
             update_book_form.author.data,
-            update_book_form.price.data,
-            update_book_form.qty.data,
             update_book_form.desc.data,
             book_img_filename,
-            selected_book.book_id
+            selected_book.book_id  # book id here for WHERE statement in query
         )
         dbf.book_update(updated_details)
         flash("Book successfully updated!")
+        return redirect(url_for('inventory'))
     else:
         update_book_form.language.data = selected_book.language
         update_book_form.category.data = selected_book.category
