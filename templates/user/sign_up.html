@@ -21,8 +21,8 @@
     {% endif %}
   {% endwith %}
 {% endmacro %}
-{% macro display_error_span(session_name) %}
-  {% if session.pop(session_name, False) %}
+{% macro display_error_span(error_name) %}
+  {% if g.errors.pop(error_name, False) %}
     <span class="d-none display-invalid"></span>
   {% endif %}
 {% endmacro %}
