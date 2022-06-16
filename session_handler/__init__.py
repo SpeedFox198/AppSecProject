@@ -30,18 +30,25 @@ def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
     return session + SEPARATOR + signature
 
 
-def retrieve_user_session(session:bytes) -> Union[UserSession, None]:
+def retrieve_user_session(session:str) -> Union[UserSession, None]:
     """ Retrieve user session object from session cookie """
 
     if session:  # If session is not empty
 
         # Get session values (session and signature)
-        values = session.split(SEPARATOR)
-        a = digest(SECRET_KEY, values[0], "sha256")
-        b = b64decode(values[-1])
+        try:
+            values = session.encode().split(SEPARATOR)
+            a = digest(SECRET_KEY, values[0], "sha256")
+            b = b64decode(values[-1])
 
-        # Check for integrity of session
-        if compare_digest(a, b):
+            # Check for integrity of session
+            if compare_digest(a, b):
 
-            # Returns user session object if session is valid
-            return loads(b64decode(values[0]))
+                # Returns user session object if session is valid
+                return loads(b64decode(values[0]))
+
+        # If error occurs when comparing/decoding
+        # Bad session was provided
+        except Exception:
+            # print("User session invalid")
+            pass
