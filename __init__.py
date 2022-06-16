@@ -385,146 +385,13 @@ def account():
 
 # Manage accounts page
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
-def manage_accounts():
-    return "manage accounts"
-
-
-@app.route('/admin/inventory')
-def inventory():
-    inventory_data = dbf.retrieve_inventory()
-
-    # Create book object and store in inventory
-    book_inventory = [Book(*data) for data in inventory_data]
-    return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
-
-
-def allowed_file(filename):
-    # Return true if there is an extension in file, and its extension is in the allowed extensions
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
-category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), ('Classic', 'Classic'),
-                 ('Comic', 'Comic'), ('Detective & Mystery', 'Detective & Mystery')]
-
-
-@app.route('/admin/add-book', methods=['GET', 'POST'])
-def add_book():
-    add_book_form = AddBookForm(request.form)
-    add_book_form.language.choices = lang_list
-    add_book_form.category.choices = category_list
-
-    # Book cover upload (Code is from Flask documentation https://flask.palletsprojects.com/en/2.1.x/patterns/fileuploads/)
-
-    if request.method == "POST" and add_book_form.validate():
-        if 'bookimg' not in request.files:
-            flash('There is no image uploaded!')
-            return redirect(request.url)
-
-        book_img = request.files['bookimg']
-
-        if book_img == '':
-            flash('No selected image')
-            return redirect(request.url)
-
-        if book_img and allowed_file(book_img.filename):
-            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
-            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
-            book_img.save(path)
-            image = Image.open(path)
-            resized_image = image.resize((259, 371))
-            resized_image.save(path)
-
-            book_details = (generate_uuid4(),
-                            add_book_form.language.data,
-                            add_book_form.category.data,
-                            add_book_form.title.data,
-                            int(add_book_form.qty.data),  # int for sqlite
-                            int(add_book_form.price.data),  # int for sqlite
-                            add_book_form.author.data,
-                            add_book_form.desc.data,
-                            book_img_filename)
-
-            dbf.book_add(book_details)
-            flash("Book successfully added!")
-
-    return render_template('admin/add_book.html', form=add_book_form)
-
-
-@app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
-def update_book(book_id):
-    # Get specified book
-    if not dbf.retrieve_book(book_id):
-        abort(404)
-
-    selected_book = Book(*dbf.retrieve_book(book_id)[0])
-
-    update_book_form = AddBookForm(request.form)
-    update_book_form.language.choices = lang_list
-    update_book_form.category.choices = category_list
-
-    if request.method == 'POST' and update_book_form.validate():
-
-        book_img = request.files['bookimg']
-
-        # If no selected book cover
-        book_img_filename = selected_book.img
-
-        if book_img and allowed_file(book_img.filename):
-            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
-            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
-            book_img.save(path)
-            image = Image.open(path)
-            resized_image = image.resize((259, 371))
-            resized_image.save(path)
-
-        updated_details = (
-            update_book_form.language.data,
-            update_book_form.category.data,
-            update_book_form.title.data,
-            int(update_book_form.qty.data),
-            int(update_book_form.price.data),
-            update_book_form.author.data,
-            update_book_form.desc.data,
-            book_img_filename,
-            selected_book.book_id  # book id here for WHERE statement in query
-        )
-        dbf.book_update(updated_details)
-        flash("Book successfully updated!")
-        return redirect(url_for('inventory'))
-    else:
-        update_book_form.language.data = selected_book.language
-        update_book_form.category.data = selected_book.category
-        update_book_form.title.data = selected_book.title
-        update_book_form.author.data = selected_book.author
-        update_book_form.price.data = selected_book.price
-        update_book_form.qty.data = selected_book.qty
-        update_book_form.desc.data = selected_book.desc
-        return render_template('admin/update_book.html', form=update_book_form)
-
-
-@app.route('/delete-book/<book_id>/', methods=['POST'])
-def delete_book(book_id):
-    # Deletes book and its cover image
-    selected_book = Book(*dbf.retrieve_book(book_id)[0])
-    book_cover_img = selected_book.img
-    cover_img_path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_cover_img)
-    if os.path.isfile(cover_img_path):
-        os.remove(cover_img_path)
-    else:
-        print("Book cover does not exist.")
-    dbf.delete_book(book_id)
-    return redirect(url_for('inventory'))
-
-
-@app.route("/admin/manage-orders")
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
 def manage_accounts():
-    admin = get_user()
+    user:User = flask_global.user
 
     # If user is not admin
-    if not isinstance(admin, Admin):
-        return redirect(url_for("home"))
+    if not user.is_admin:
+        abort(403)
 
     # Get page number
     active_page = request.args.get("page", default=1, type=int)
@@ -686,6 +553,138 @@ def manage_accounts():
                            create_user_form=create_user_form,
                            delete_user_form=delete_user_form)
 
+
+@app.route('/admin/inventory')
+def inventory():
+    inventory_data = dbf.retrieve_inventory()
+
+    # Create book object and store in inventory
+    book_inventory = [Book(*data) for data in inventory_data]
+    return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
+
+
+def allowed_file(filename):
+    # Return true if there is an extension in file, and its extension is in the allowed extensions
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
+category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), ('Classic', 'Classic'),
+                 ('Comic', 'Comic'), ('Detective & Mystery', 'Detective & Mystery')]
+
+
+@app.route('/admin/add-book', methods=['GET', 'POST'])
+def add_book():
+    add_book_form = AddBookForm(request.form)
+    add_book_form.language.choices = lang_list
+    add_book_form.category.choices = category_list
+
+    # Book cover upload (Code is from Flask documentation https://flask.palletsprojects.com/en/2.1.x/patterns/fileuploads/)
+
+    if request.method == "POST" and add_book_form.validate():
+        if 'bookimg' not in request.files:
+            flash('There is no image uploaded!')
+            return redirect(request.url)
+
+        book_img = request.files['bookimg']
+
+        if book_img == '':
+            flash('No selected image')
+            return redirect(request.url)
+
+        if book_img and allowed_file(book_img.filename):
+            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
+            book_img.save(path)
+            image = Image.open(path)
+            resized_image = image.resize((259, 371))
+            resized_image.save(path)
+
+            book_details = (generate_uuid4(),
+                            add_book_form.language.data,
+                            add_book_form.category.data,
+                            add_book_form.title.data,
+                            int(add_book_form.qty.data),  # int for sqlite
+                            int(add_book_form.price.data),  # int for sqlite
+                            add_book_form.author.data,
+                            add_book_form.desc.data,
+                            book_img_filename)
+
+            dbf.book_add(book_details)
+            flash("Book successfully added!")
+
+    return render_template('admin/add_book.html', form=add_book_form)
+
+
+@app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
+def update_book(book_id):
+    # Get specified book
+    if not dbf.retrieve_book(book_id):
+        abort(404)
+
+    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+
+    update_book_form = AddBookForm(request.form)
+    update_book_form.language.choices = lang_list
+    update_book_form.category.choices = category_list
+
+    if request.method == 'POST' and update_book_form.validate():
+
+        book_img = request.files['bookimg']
+
+        # If no selected book cover
+        book_img_filename = selected_book.img
+
+        if book_img and allowed_file(book_img.filename):
+            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
+            book_img.save(path)
+            image = Image.open(path)
+            resized_image = image.resize((259, 371))
+            resized_image.save(path)
+
+        updated_details = (
+            update_book_form.language.data,
+            update_book_form.category.data,
+            update_book_form.title.data,
+            int(update_book_form.qty.data),
+            int(update_book_form.price.data),
+            update_book_form.author.data,
+            update_book_form.desc.data,
+            book_img_filename,
+            selected_book.book_id  # book id here for WHERE statement in query
+        )
+        dbf.book_update(updated_details)
+        flash("Book successfully updated!")
+        return redirect(url_for('inventory'))
+    else:
+        update_book_form.language.data = selected_book.language
+        update_book_form.category.data = selected_book.category
+        update_book_form.title.data = selected_book.title
+        update_book_form.author.data = selected_book.author
+        update_book_form.price.data = selected_book.price
+        update_book_form.qty.data = selected_book.qty
+        update_book_form.desc.data = selected_book.desc
+        return render_template('admin/update_book.html', form=update_book_form)
+
+
+@app.route('/delete-book/<book_id>/', methods=['POST'])
+def delete_book(book_id):
+    # Deletes book and its cover image
+    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+    book_cover_img = selected_book.img
+    cover_img_path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_cover_img)
+    if os.path.isfile(cover_img_path):
+        os.remove(cover_img_path)
+    else:
+        print("Book cover does not exist.")
+    dbf.delete_book(book_id)
+    return redirect(url_for('inventory'))
+
+
+@app.route("/admin/manage-orders")
+def manage_orders():
+    return "sorry for removing your code"
 
 """    Books Pages    """
 
@@ -1027,7 +1026,7 @@ def my_orders():
 """ About Page """
 
 
-@app.route("/about")
+@app.route("/home2")
 def about():
     return render_template("about.html")
 
@@ -1036,6 +1035,11 @@ def about():
 
 
 # Error handling page
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template("error/403.html")
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("error/404.html")
