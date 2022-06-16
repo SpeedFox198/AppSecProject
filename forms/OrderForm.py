@@ -1,22 +1,34 @@
-import uuid
+from SecurityFunctions import generate_uuid4
 import datetime
-from wtforms import Form, StringField, IntegerField, TextAreaField, EmailField, RadioField, validators
+from wtforms import Form, StringField, IntegerField, TextAreaField, EmailField, validators
 
-def contact_num_check(form, field):
+
+def contact_num_check(field):
     if len(str(field.data)) != 8:
         raise validators.ValidationError('Please enter a valid mobile number!')
-    elif str((field.data))[0] != '9':
-        if str((field.data))[0] != '8':
-            num = str(field.data)
-            print(num[0])
-            print(type(str((field.data))[0]))
-            raise validators.ValidationError('Please make sure your phone number starts with 8 or 9!')
+    elif str((field.data))[0] != '9' and str((field.data))[0] != '8':
+        raise validators.ValidationError(
+            'Please make sure your phone number starts with 8 or 9!')
+
 
 class OrderForm(Form):
-    name = StringField('Name', [validators.Length(min=1, max=100), validators.DataRequired()])
-    contact_num = IntegerField("Contact Number", [contact_num_check, validators.DataRequired()])
-    email = EmailField("Email", [validators.Email(), validators.DataRequired()])
-    address = TextAreaField("Address")
+    # Name
+    name = StringField('Name', [validators.Length(min=1, max=100,
+                                message="Name must be between 1 and 100 characters"),
+                                validators.DataRequired()])
+
+    # Contact number
+    contact_num = IntegerField(
+        "Contact Number", [contact_num_check, validators.DataRequired()])
+
+    # Email
+    email = EmailField(
+        "Email", [validators.Email(), validators.DataRequired()])
+
+    # Address
+    address = TextAreaField("Address", [validators.DataRequired(),
+                                        validators.Length(min=1, max=200,
+                                        message="Address must be between 1 and 200 characters")])
 
 class User_Order():
     user_order = {}
@@ -35,7 +47,7 @@ class Order_Detail(User_Order):
         self.contact_num = contact_num
         self.order_item = order_item
         self.total_price = total_price
-        self.order_id = str(uuid.uuid4())
+        self.order_id = generate_uuid4()
         self.ship_info = {'name': name, 'email': email, 'contact_num': contact_num,\
                           'ship_address': ship_address, 'ship_method': ship_method, \
                           'order_date': str(datetime.date.today()), 'order_status': 'Ordered'}
