@@ -27,7 +27,9 @@ app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_IMG_UPLOAD_FOLDER = 'static/img/books'
+PROFILE_PIC_UPLOAD_FOLDER = 'static/img/profile-pic'
 app.config['BOOK_UPLOAD_FOLDER'] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
+app.config['PROFILE_PIC_UPLOAD_FOLDER'] = PROFILE_PIC_UPLOAD_FOLDER
 
 limiter = Limiter(
     app,
@@ -309,19 +311,54 @@ def password_forget():
     return render_template("user/password/password_forget.html", form=forget_password_form)
 
 
+"""Verification page in case"""
+# Send verification link page
+@app.route("/user/verify")
+def verify_send():
+
+    # Get user
+    user = get_user()
+
+    # If not customer or email is verified
+    if not isinstance(user, Customer) or user.is_verified():
+        return redirect(url_for("home"))
+
+    # Configure noreplybbb02@gmail.com
+    # app.config.from_pyfile("config/noreply_email.cfg")
+    # mail.init_app(app)
+
+    # Get email
+    email = user.get_email()
+
+    # Generate token
+    token = url_serialiser.dumps(email, salt=app.config["VERIFY_EMAIL_SALT"])
+
+    # Send message to email entered
+    msg = Message(subject="Verify Email",
+                  sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
+                  recipients=[email])
+    link = url_for("verify", token=token, _external=True)
+    msg.html = f"Click <a href='{link}'>here</a> to verify your email.<br />(Link expires after 15 minutes)"
+    mail.send(msg)
+
+    flash(f"Verification email sent to {email}")
+    return redirect(url_for("account"))
+
+
 """    User Pages    """
 
 """ View account page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO TODO
+# TODO Chung Wai do hehe
 
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def account():
     # Get current user
-    user = get_user()
+    user: User = flask_global.user
 
     # If user is not logged in
-    if session["UserType"] == "Guest":
+    if not user:
         return redirect(url_for("login"))
 
     # Get account page form
@@ -376,28 +413,31 @@ def account():
         return redirect(url_for("account"))
 
     # Set username and gender to display
-    account_page_form.name.data = user.get_name()
-    account_page_form.gender.data = user.get_gender()
+    account_page_form.name.data = user.name
     return render_template("user/account.html",
                            form=account_page_form,
-                           display_name=user.get_display_name(),
-                           picture_path=user.get_profile_pic(),
-                           username=user.get_username(),
-                           email=user.get_email())
+                           display_name=user.name,
+                           picture_path=user.profile_pic,
+                           username=user.username,
+                           email=user.email)
 
 
 """    Admin Pages    """
+
+
+def admin_check():
+    user: User = flask_global.user
+
+    # If user is not admin
+    if user is None or not user.is_admin:
+        abort(403)  # Forbidden, go away D:
 
 
 # Manage accounts page
 # TODO TODO TODO TODO TODO TODO TODO TODO continue work (SpeedFox198) TODO TODO TODO TODO TODO TODO
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
 def manage_accounts():
-    user:User = flask_global.user
-
-    # If user is not admin
-    if user is None or not user.is_admin:
-        abort(403)  # Forbidden, go away D:
+    admin_check()
 
     # Flask global error variable for css
     flask_global.errors = {}
@@ -517,6 +557,8 @@ def manage_accounts():
 
 @app.route('/admin/inventory')
 def inventory():
+    admin_check()
+
     inventory_data = dbf.retrieve_inventory()
 
     # Create book object and store in inventory
@@ -536,6 +578,8 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
 def add_book():
+    admin_check()
+
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
@@ -579,6 +623,9 @@ def add_book():
 
 @app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
 def update_book(book_id):
+
+    admin_check()
+
     # Get specified book
     if not dbf.retrieve_book(book_id):
         abort(404)
@@ -631,6 +678,8 @@ def update_book(book_id):
 
 @app.route('/delete-book/<book_id>/', methods=['POST'])
 def delete_book(book_id):
+    admin_check()
+
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
     book_cover_img = selected_book.img
@@ -645,6 +694,7 @@ def delete_book(book_id):
 
 @app.route("/admin/manage-orders")
 def manage_orders():
+    admin_check()
     return "sorry for removing your code"
 
 """    Books Pages    """
