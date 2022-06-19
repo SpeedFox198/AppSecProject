@@ -474,7 +474,6 @@ def manage_accounts():
 
     # Set page number
     last_page = ceil(customer_count/ACCOUNTS_PER_PAGE) or 1
-    print("here:", active_page, last_page, customer_count)
     if active_page < 1:
         active_page = 1
     elif active_page > last_page:

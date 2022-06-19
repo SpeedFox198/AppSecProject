@@ -5,13 +5,27 @@ DATABASE = r"database.db"
 MAX_ALLOWED_ATTEMPTS = 5
 
 
-def execute_db(query: str, parameters):
+def execute_db(query: str, parameters) -> list:
     """ Execute sql query with parameters """
-    with closing(sqlite3.connect(DATABASE)) as con:
-        with con:
-            cur = con.cursor()
-            data = cur.execute(query, parameters).fetchall()
+
+    # Ensure that query statement ends properly
+    assert query.strip().endswith(";"), 'Must end SQL query with ";"'
+
+    # Use with statement to ensure proper closing of file
+    with closing(sqlite3.connect(DATABASE)) as connection:
+        with connection:
+
+            # Cursor for executing queries
+            cursor = connection.cursor()
+
+            # Execute parameterised queries
+            data = cursor.execute(query, parameters).fetchall()
+
+            # Return fetched data (if any)
             return data
+
+    # Code should never reach here, raise error just in case
+    raise RuntimeError("unknown critical error")
 
 
 def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list:
@@ -28,10 +42,6 @@ def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: 
         list: A list of retrieved rows
     """
 
-    # Connect to database
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-
     # Default values of statements
     projection = "*"   # Project all columns
     selection = ""     # No selection options
@@ -47,7 +57,7 @@ def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: 
         # Selection statements
         selection = []
 
-        # Loop through attribute and value pairs and format there
+        # Loop through attributes and add parameterised statements
         for attribute in attributes:
             selection.append(f"{attribute} = ?")
 
@@ -66,45 +76,48 @@ def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: 
     query = f"""SELECT {projection} FROM {table}{selection}{limit_offset};"""
 
     # Fetch and return results of the query
-    return cur.execute(query, tuple(attributes.values())).fetchall()
+    return execute_db(query, tuple(attributes.values()))
 
 
 def delete_rows(table: str, or_and: int=0, **attributes) -> None:
     """ Deletes rows from database """
 
-    # Connect to database
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
+    # At least 1 attribute needs to be specified
+    assert attributes, "Must specify at least one attribute"
 
     # Selection statements
     selection = []
 
-    # Loop through attribute and value pairs and format there
+    # Loop through attributes and add parameterised statements
     for attribute in attributes:
         selection.append(f"{attribute} = ?")
 
     selection = (" OR ", " AND ")[or_and].join(selection)
 
-    query = f"""DELETE FROM {table} WHERE """
+    # Format query statement
+    query = f"""DELETE FROM {table} WHERE {selection};"""
 
-    cur.execute(query, tuple(attributes.values()))
+    # Execute parameterised query
+    execute_db(query, tuple(attributes.values()))
 
 
 def create_customer(user_id, username, email, password):
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""INSERT INTO Users VALUES ('{user_id}', '{username}', '{email}', '{password}', NULL, 0, );"""
-    cur.execute(query)
-    cur.execute(f"""INSERT INTO Customers (user_id) VALUES ('{user_id}')""")
-    con.commit()
-    con.close()
+    """ Creates a new customer account in the database """
+
+    # Insert user data into Users table
+    query = f"""INSERT INTO Users VALUES (?, ?, ?, ?, NULL, 0, 0);"""
+    execute_db(query, (user_id, username, email, password))
+
+    # Insert customer details into Customers table
+    query = f"""INSERT INTO Customers (user_id) VALUES (?);"""
+    execute_db(query, (user_id,))
 
 
 def _exists(table, **kwargs):
     """ Checks if attribute value pair exists in the table """
 
     # Can't check if exists if there's no attribute
-    assert kwargs, "Must check at least 1 attribute"
+    assert kwargs, "Must check at least one attribute"
 
     # Return True non-empty tuple is return
     return bool(retrieve_db(table, **kwargs))
