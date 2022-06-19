@@ -211,9 +211,9 @@ def delete_book(id_of_book: str):
     con.close()
 
 
-def retrieve_these_customers(offset: int):
+def retrieve_these_customers(limit:int, offset: int):
     """ Retrieves and returns a list of max 10 customers starting from offset """
-    return retrieve_db("Users NATURAL JOIN Customers", limit=10, offset=offset, is_admin=0)
+    return retrieve_db("Users NATURAL JOIN Customers", limit=limit, offset=offset, is_admin=0)
 
 
 def number_of_customers() -> int:
