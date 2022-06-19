@@ -444,6 +444,23 @@ def manage_accounts():
             email = create_user_form.email.data.lower()
             password = create_user_form.password.data
 
+            # Create new user
+
+            # Ensure that email and username are not registered yet
+            if dbf.username_exists(username):
+                errors["DisplayFieldError"] = errors["SignUpUsernameError"] = True
+                flash("Username taken", "sign-up-username-error")
+                return render_template("user/sign_up.html", form=sign_up_form)
+
+            elif dbf.email_exists(email):
+                errors["DisplayFieldError"] = errors["SignUpEmailError"] = True
+                flash("Email already registered", "sign-up-email-error")
+                return render_template("user/sign_up.html", form=sign_up_form)
+
+            # Create new customer
+            user_id = generate_uuid5(username)  # Generate new unique user id for customer
+            dbf.create_customer(user_id, username, email, password)
+
             # TODO TODO TODO TODO TODO TODO TODO continue here SpeedFox198 TODO TODO TODO TODO TODO
             # Create new user
             with shelve.open("database") as db:

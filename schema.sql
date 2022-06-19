@@ -8,7 +8,7 @@
 
 CREATE TABLE Users (
     user_id TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     profile_pic TEXT,
