@@ -5,6 +5,15 @@ DATABASE = r"database.db"
 MAX_ALLOWED_ATTEMPTS = 5
 
 
+def execute_db(query: str, parameters):
+    """ Execute sql query with parameters """
+    with closing(sqlite3.connect(DATABASE)) as con:
+        with con:
+            cur = con.cursor()
+            data = cur.execute(query, parameters).fetchall()
+            return data
+
+
 def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list:
     """
     Retrieve rows from table
@@ -79,15 +88,6 @@ def delete_rows(table: str, or_and: int=0, **attributes) -> None:
     query = f"""DELETE FROM {table} WHERE """
 
     cur.execute(query, tuple(attributes.values()))
-
-
-def execute_db(sql: str, parameters):
-    """ Execute sql query with parameters """
-    with closing(sqlite3.connect(DATABASE)) as con:
-        with con:
-            cur = con.cursor()
-            data = cur.execute(sql, parameters).fetchall()
-            return data
 
 
 def create_customer(user_id, username, email, password):

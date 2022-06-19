@@ -62,7 +62,17 @@
         </table>
       </div>
       <div class="account-footer clearfix mt-auto">
-        <div class="hint-text">Showing <b>{{ entries_range[0] }}-{{ entries_range[1] }}</b> out of <b>{{ total_entries }}</b> users</div>
+        <div class="hint-text">
+          Showing
+          <b>
+          {% if total_entries %}}
+            {{ entries_range[0] }}-{{ entries_range[1] }}
+          {% else %}
+            0
+          {% endif %}
+          </b>
+          out of <b>{{ total_entries }}</b> users
+        </div>
         <ul class="pagination mb-0">
           <li class="page-item {{ 'disabled' if first_page == active_page }}">
             <a class="page-link" href="{{ generate_link(first_page) }}" data-bs-toggle="tooltip" title="Start"><span>&laquo;</span></a>
