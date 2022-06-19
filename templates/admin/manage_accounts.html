@@ -45,14 +45,14 @@
           <tbody>
             {% for user in display_users %}
             <tr class="account-row">
-              <td>{{ user.get_username() }}</td>
+              <td>{{ user.username }}</td>
               <td>{{ name }}</td>
-              <td>{{ user.get_email() }}</td>
+              <td>{{ user.email }}</td>
               <td class="account-actions d-flex">
-                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="View" onclick="viewUser('{{ user.get_username() }}', '{{ name }}', '{{ user.get_email() }}', '{{ gender }}', '{{ user.get_profile_pic() }}');">
+                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="View" onclick="viewUser('{{ user.username }}', '{{ name }}', '{{ user.email }}', '{{ gender }}', '{{ user.profile_pic }}');">
                   <i class="fa fa-eye"></i>
                 </button>
-                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="selectAccount('{{ user.get_user_id() }}', '{{ user.get_username() }}', 'deleteUserButton');">
+                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="selectAccount('{{ user.user_id }}', '{{ user.username }}', 'deleteUserButton');">
                   <i class="fa fa-trash"></i>
                 </button>
               </td>
@@ -65,7 +65,7 @@
         <div class="hint-text">
           Showing
           <b>
-          {% if total_entries %}}
+          {% if total_entries %}
             {{ entries_range[0] }}-{{ entries_range[1] }}
           {% else %}
             0
