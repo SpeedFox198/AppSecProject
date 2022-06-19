@@ -133,8 +133,9 @@ def admin_exists():
 def user_auth(username, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE (username = '{username}' OR email = '{username}') AND password = '{password}';"""
-    user_data = cur.execute(query).fetchone()
+    query = f"""SELECT * FROM Users WHERE (username = ? OR email = ?) AND password = ?;"""
+    creds = (username, username, password)  # 2 usernames looks odd, but it's needed for username and email lol
+    user_data = cur.execute(query, creds).fetchone()
     con.close()
     return user_data
 
