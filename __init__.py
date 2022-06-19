@@ -411,12 +411,15 @@ def manage_accounts():
 
     form_trigger = "addUserButton"  # id of form to trigger on page load
 
-    # Validate sign up form if request is post
+    # If GET request to page (no forms sent)
     if request.method == "GET":
         form_trigger = ""
+
+    # Else, POST request to delete/create user
     else:
+
+        # If action is to delete user (and POST request is valid)
         if delete_user_form.validate() and delete_user_form.user_id.data:
-            form_trigger = ""
 
             # Delete selected user
             user_id = delete_user_form.user_id.data
@@ -438,75 +441,35 @@ def manage_accounts():
             # Redirect to prevent form resubmission
             return redirect(f"{url_for('manage_accounts')}?page={active_page}")
 
+        # If action is to create user (and POST request is valid)
         elif create_user_form.validate():
             # Extract data from sign up form
             username = create_user_form.username.data
             email = create_user_form.email.data.lower()
             password = create_user_form.password.data
 
-            # Create new user
-
-            # Ensure that email and username are not registered yet
+            # Ensure that username is not registered yet
             if dbf.username_exists(username):
-                errors["DisplayFieldError"] = errors["SignUpUsernameError"] = True
-                flash("Username taken", "sign-up-username-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
+                errors["DisplayFieldError"] = errors["CreateUserUsernameError"] = True
+                flash("Username taken", "create-user-username-error")
 
+            # Ensure that email is not registered yet
             elif dbf.email_exists(email):
-                errors["DisplayFieldError"] = errors["SignUpEmailError"] = True
-                flash("Email already registered", "sign-up-email-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
+                errors["DisplayFieldError"] = errors["CreateUserEmailError"] = True
+                flash("Email already registered", "create-user-email-error")
 
-            # Create new customer
-            user_id = generate_uuid5(username)  # Generate new unique user id for customer
-            dbf.create_customer(user_id, username, email, password)
-
-            # TODO TODO TODO TODO TODO TODO TODO continue here SpeedFox198 TODO TODO TODO TODO TODO
-            # Create new user
-            with shelve.open("database") as db:
-
-                # Get UsersDB, UsernameToUserID, EmailToUserID
-                db_key = {"C":"Customers", "A":"Admins"}[user_type]
-                users_db = retrieve_db(db_key, db)
-                username_to_user_id = retrieve_db("UsernameToUserID", db)
-                email_to_user_id = retrieve_db("EmailToUserID", db)
-
-                # Ensure that email and username are not registered yet
-                if username.lower() in username_to_user_id:
-                    if DEBUG: print("Create User: username already exists")
-                    errors["DisplayFieldError"] = errors["CreateUserUsernameError"] = True
-                    flash("Username taken", "create-user-username-error")
-                elif email in email_to_user_id:
-                    if DEBUG: print("Create User: email already exists")
-                    errors["DisplayFieldError"] = errors["CreateUserEmailError"] = True
-                    flash("Email already registered", "create-user-email-error")
-                else:
-                    # Create customer
-                    created_user = {"C":Customer, "A":Admin}[user_type](username, email, password)
-                    if DEBUG: print(f"Created: {created_user}")
-
-                    # Store customer into database
-                    user_id = created_user.get_user_id()
-                    users_db[user_id] = created_user
-                    username_to_user_id[username.lower()] = user_id
-                    email_to_user_id[email] = user_id
-
-                    # Save changes to database
-                    db["UsernameToUserID"] = username_to_user_id
-                    db["EmailToUserID"] = email_to_user_id
-                    db[db_key] = users_db
-
-                    # Redirect to prevent form resubmission
-                    form_trigger = ""
-                    flash(f"Created new {created_user.__class__.__name__.lower()}: {username}")
-                    return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+            # If username and email are not used, create customer
+            else:
+                user_id = generate_uuid5(username)  # Generate new unique user id for customer
+                dbf.create_customer(user_id, username, email, password)
+                flash(f"Created new customer: {username}")
+                return redirect(f"{url_for('manage_accounts')}?page={active_page}")
 
         # Else, form was invalid
         else:
             errors["DisplayFieldError"] = True
 
-    # Get users database
-    all_users = [User(*data) for data in dbf.retrieve_these_customers()]
+    # Get total number of customers
     customer_count = dbf.number_of_customers()
 
     # Set page number
@@ -516,8 +479,11 @@ def manage_accounts():
     elif active_page > last_page:
         active_page = last_page
 
+    # Get users to be displayed
+    offset = (active_page-1) * ACCOUNTS_PER_PAGE  # Offset for SQL query
+    display_users = [User(*data) for data in dbf.retrieve_these_customers(ACCOUNTS_PER_PAGE, offset)]
+
     first_index = (active_page-1)*ACCOUNTS_PER_PAGE
-    display_users = all_users[first_index:first_index+10]
 
     # Get page list
     if last_page <= 5:
@@ -535,15 +501,17 @@ def manage_accounts():
     # Get entries range
     entries_range = (first_index+1, first_index+len(display_users))
 
-    return render_template("admin/manage_accounts.html",
-                           display_users=display_users,
-                           active_page=active_page, page_list=page_list,
-                           prev_page=prev_page, next_page=next_page,
-                           first_page=1, last_page=last_page,
-                           entries_range=entries_range, total_entries=customer_count,
-                           form_trigger=form_trigger,
-                           create_user_form=create_user_form,
-                           delete_user_form=delete_user_form)
+    return render_template(
+        "admin/manage_accounts.html",
+        display_users=display_users,
+        active_page=active_page, page_list=page_list,
+        prev_page=prev_page, next_page=next_page,
+        first_page=1, last_page=last_page,
+        entries_range=entries_range, total_entries=customer_count,
+        form_trigger=form_trigger,
+        create_user_form=create_user_form,
+        delete_user_form=delete_user_form
+        )
 
 
 @app.route('/admin/inventory')
