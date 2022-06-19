@@ -11,7 +11,12 @@ con = sqlite3.connect("database.db")
 # cur.execute("DELETE FROM Users WHERE 1=1")
 # con.commit()
 
-# x = cur.execute("SELECT * FROM Users").fetchall()
+# x = cur.execute("SELECT * FROM Customers;").fetchall()
+# for i in x:
+#     print(i)
+# q = "DELETE FROM Customers WHERE user_id = 'one' or user_id = 'two';"
+# cur.execute(q)
+# x = cur.execute("SELECT * FROM Customers;").fetchall()
 # for i in x:
 #     print(i)
 
