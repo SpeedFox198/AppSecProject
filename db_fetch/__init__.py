@@ -236,11 +236,11 @@ def number_of_customers() -> int:
 
 def delete_customer(user_id: str):
     """ Deletes and returns customer from database """
-    customer_data = retrieve_db("Customers", user_id=user_id)
+    customer_data = retrieve_user(user_id)
     if customer_data:
         delete_rows("Users", user_id=user_id)
         delete_rows("Customers", user_id=user_id)
-        return customer_data[0]
+        return customer_data
 
 
 """ Start of Order functions"""

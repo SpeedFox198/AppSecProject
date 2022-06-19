@@ -49,7 +49,6 @@ def retrieve_user_session(session:str) -> Union[UserSession, None]:
                 return loads(b64decode(values[0]))
 
         # If error occurs when comparing/decoding
-        # Bad session was provided
+        # Bad session was provided, return None
         except Exception:
-            # print("User session invalid")
-            pass
+            return None

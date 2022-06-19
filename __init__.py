@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, g as flask_global, \
+from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g as flask_global, \
     abort
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -21,6 +21,7 @@ from forms import (
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
+SESSION_COOKIE = "user_session"
 
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
@@ -39,7 +40,7 @@ def get_user():
     """ Returns user if cookie is correct, else returns None """
 
     # Get session cookie from request
-    session_cookie = request.cookies.get("session")
+    session_cookie = request.cookies.get(SESSION_COOKIE)
     user_session = retrieve_user_session(session_cookie)
 
     # Return None
@@ -176,7 +177,7 @@ def sign_up():
         # Create session to login
         new_session = create_user_session(user_id)
         response = make_response(redirect(url_for("verify_send")))
-        response.set_cookie("session", new_session)
+        response.set_cookie(SESSION_COOKIE, new_session)
 
         # Return redirect with session cookie
         return response
@@ -236,7 +237,7 @@ def login():
                 # Create session to login
                 new_session = create_user_session(user_id, user.is_admin)
                 response = make_response(redirect(url_for("home")))
-                response.set_cookie("session", new_session)
+                response.set_cookie(SESSION_COOKIE, new_session)
                 return response
 
     # Render page
@@ -252,7 +253,7 @@ def logout():
     response = make_response(redirect(url_for("home")))
     if flask_global.user is not None:
         # Remove session cookie
-        response.set_cookie("session", "", expires=0)
+        response.set_cookie(SESSION_COOKIE, "", expires=0)
     return response
 
 
