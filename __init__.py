@@ -682,13 +682,14 @@ def manage_orders():
 
 
 @app.route('/book/<int:id>', methods=['GET', 'POST'])
-def book_info2(id):
-    book_db = shelve.open('database', 'r')
-    books_dict = book_db['Books']
-    book_db.close()
+def book_info2(book_id):
 
-    currentbook = []
-    book = books_dict.get(id)
+    # Get book details
+    book:Book = dbf.retrieve_book(book_id)
+
+    # Get specified book
+    if not dbf.retrieve_book(book_id):
+        abort(404)
 
     book.set_book_id(book.get_book_id())
     book.set_language(book.get_language())
@@ -857,13 +858,26 @@ def price_high_to_low(inventory_data):
 # Add to cart
 @app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
 @limiter.limit("100/minute", override_defaults=False)
-def add_to_cart(user_id, book_id, quantity):
+def add_to_cart(user_id, book_id):
 
     # User is a Class
     user:User = flask_global.user
 
-    if user.is_admin() == 1:
-        return redirect(url_for('admin_dashboard')) # Redirect to admin dashboard if user is admin
+    if user is None or not user.is_admin:
+        abort(403)
+
+
+    # Get book from database
+    book:Book = dbf.retrieve_book(book_id)
+
+    # Add to cart
+    user_id = user.get_user_id
+    book_id = book.get_book_id()
+    buying_quantity = int(request.form['quantity'])
+
+    dbf.add_to_shopping_cart(user_id, book_id, buying_quantity)
+
+    
     pass
 
 

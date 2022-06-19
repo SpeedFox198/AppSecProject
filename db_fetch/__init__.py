@@ -176,12 +176,7 @@ def create_admin(admin_id, username, email, password):
 
 
 def retrieve_inventory():
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = "SELECT * FROM Books;"
-    books = cur.execute(query).fetchall()
-    con.close()
-    return books
+    return retrieve_db("Books")
 
 
 def book_add(details: tuple):
@@ -273,7 +268,7 @@ def get_order_items(book_id):
 """ Start of Shopping Cart functions """
 
 
-def adding_to_shopping_cart(user_id, book_id, quantity):
+def add_to_shopping_cart(user_id, book_id, quantity):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
     query = f"""INSERT INTO CartItems VALUES('{user_id}', '{book_id}', '{quantity}');"""

@@ -17,19 +17,7 @@
     <div class="col-lg-9 col-12">
         <h3>Shipping Information</h3>
         <form method="POST" class="row checkout-form" id="checkout" action="/create-checkout-session/{{ total_price }}">
-            <h5>Shipping Option</h5>
-            <div class="form-group col-12">
-                <div class="radio">
-                    <input type="radio" id="delivery" onchange="get_radio_value(this)" name="ship-method" value="Standard Delivery" checked="checked">
-                    <label for="delivery"><h5>&nbsp;<i class="fa-solid fa-truck-fast"></i>&nbsp; Standard Delivery (3 - 5 business days) </h5> </label>
-                    <span class="float-right">$5.00</span>
-                </div>
-                <div class="radio">
-                    <input type="radio" id="collection" onchange="get_radio_value(this)" name="ship-method" value="Self-collection">
-                    <label for="collection"><h5>&nbsp;<i class="fa-solid fa-shop"></i>&nbsp; Self-collection </h5></label>
-                    <span class="float-right">FREE</span>
-                </div>
-            </div>
+
             <h5>Shipping Address</h5>
             <div class="form-group col-12">
                 {{ render_field(form.name, class="form-control") }}

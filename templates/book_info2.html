@@ -38,16 +38,7 @@
 
           <form method="POST" action="/addtocart/{{ book.get_book_id() }}">
               <input type="number" class="quantity-selector" name="quantity" min="1" value="1">
-              {% if book.get_action() == "Buy and Rent" %}
-              <input type="submit" onclick="add_to_buy()" class="btn add-cart-button" value="ADD TO CART">
-              <p>Alternatively, you may want to <a href="/addtorent/{{ book.get_book_id() }}">rent</a> this at {{ "$%.2f"|format((book.get_price()|float)*0.1) }} for 14 days.</p>
-              {% elif book.get_action() == "Rent" %}
-              <input type="submit" onclick="add_to_buy()" class="btn add-cart-button" value="ADD TO CART" disabled>
-              <p>This book is only available for <a href="/addtorent/{{ book.get_book_id() }}">renting</a> at {{ "$%.2f"|format((book.get_price()|float)*0.1) }} for 14 days.</p>
-              {% elif book.get_action() == "Buy" %}
-              <input type="submit" onclick="add_to_buy()" class="btn add-cart-button" value="ADD TO CART">
-              <p>This book is not available for renting.</p>
-              {% endif %}
+              <input type="submit" onclick="add_to__shopping_cart()" class="btn add-cart-button" value="ADD TO CART">
           </form>
 
           <h5>Description</h5>
