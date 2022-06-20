@@ -152,7 +152,6 @@ def sign_up():
     # Validate sign up form if request is post
     if request.method == "POST":
         if not sign_up_form.validate():
-            if DEBUG: print("Sign-up: form field invalid")
             errors["DisplayFieldError"] = True
             return render_template("user/sign_up.html", form=sign_up_form)
 
@@ -172,6 +171,11 @@ def sign_up():
         elif dbf.email_exists(email):
             errors["DisplayFieldError"] = errors["SignUpEmailError"] = True
             flash("Email already registered", "sign-up-email-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
+
+        if username == password:
+            errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
+            flash("Username and password cannot be the same", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
