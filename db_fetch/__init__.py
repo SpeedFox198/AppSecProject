@@ -164,8 +164,8 @@ def retrieve_user(user_id):
     """ Returns user_data using user_id """
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE user_id = '{user_id}';"""
-    user_data = cur.execute(query).fetchone()
+    query = f"""SELECT * FROM Users WHERE user_id = ?;"""
+    user_data = cur.execute(query, (user_id,)).fetchone()
     con.close()
 
     # Returns a tuple if found else None
