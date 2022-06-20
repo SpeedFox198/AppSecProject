@@ -233,6 +233,8 @@ def login():
 
             # If login credentials are correct
             else:
+                #Google Authentication insert here -Royston
+
                 # Get user id
                 user = User(*user_data)
                 user_id = user.user_id
@@ -311,7 +313,7 @@ def password_forget():
 
     return render_template("user/password/password_forget.html", form=forget_password_form)
 
-
+#Needs to be changed
 """Verification page in case"""
 # Send verification link page
 @app.route("/user/verify")
