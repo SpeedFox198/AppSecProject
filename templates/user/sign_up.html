@@ -45,7 +45,9 @@
           {{ display_flash_error("sign-up-email-error") }}
         </div>
         <div class="mb-4">
+          {{ display_error_span("SignUpPasswordError") }}
           {{ render_field(form.password, "Password should be at least 8 characters long", class="form-control", placeholder="Password") }}
+          {{ display_flash_error("sign-up-password-error") }}
         </div>
         <div class="mb-4">
           {{ render_field(form.confirm, "Please confirm your password", class="form-control", placeholder="Confirm Password") }}
