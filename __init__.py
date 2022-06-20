@@ -347,7 +347,7 @@ def verify_send():
 
 """    User Pages    """
 
-""" View account page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO TODO
+""" View account page """  ### TODO: work on this TODO TODO TODO TODO TODO TODO TODO TODO
 # TODO Chung Wai do hehe
 
 
