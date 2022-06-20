@@ -173,9 +173,9 @@ def sign_up():
             flash("Email already registered", "sign-up-email-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
-        if username == password:
+        elif username in password:
             errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
-            flash("Username and password cannot be the same", "sign-up-password-error")
+            flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
