@@ -107,7 +107,7 @@ class AccountPageForm(Form):
                                 validators.Length(min=2, max=26, message="Name should be 2-26 characters long")])
 
     # Gender
-    phone_number = IntegerField("Phone number", [validators.Optional(),
+    phone_number = StringField("Phone number", [validators.Optional(),
                                                  validators.Length(min=8, max=8, message="Phone number should be 8 characters long")])
 
 
