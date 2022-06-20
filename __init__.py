@@ -355,6 +355,9 @@ def account():
     if not user:
         return redirect(url_for("login"))
 
+    if user.is_admin:
+        abort(404)
+
     # Get account page form
     account_page_form = AccountPageForm(request.form)
 
@@ -363,11 +366,11 @@ def account():
 
         if not account_page_form.validate():
             name = account_page_form.name
-            gender = account_page_form.gender
             picture = account_page_form.picture
+            phone_number = account_page_form.phone_number
 
             # Flash error message (only flash the 1st error)
-            error = name.errors[0] if name.errors else picture.errors[0] if picture.errors else gender.errors[0]
+            error = name.errors[0] if name.errors else picture.errors[0] if picture.errors else phone_number.errors[0]
             flash(error, "error")
         else:
             # Flash success message
@@ -375,33 +378,20 @@ def account():
 
             # Extract email and password from sign up form
             name = " ".join(account_page_form.name.data.split())
-            gender = account_page_form.gender.data
+            phone_number = account_page_form.phone_number.data
+            profile_pic_filename = user.profile_pic
 
             # Check files submitted for profile pic
             if "picture" in request.files:
-                file = request.files["picture"]
-                if file and allowed_file(file.filename):
-                    file.save(os.path.join(PROFILE_PIC_UPLOAD_FOLDER, user.get_user_id() + ".png"))
-                else:
-                    file = None
-            else:
-                file = None
+                profile_pic = request.files["picture"]
+                if profile_pic and allowed_file(profile_pic.filename):
+                    profile_pic_filename = f"{user.user_id}_{profile_pic.filename}"
+                    profile_pic.save(os.path.join(app.config['PROFILE_PIC_UPLOAD_FOLDER'], profile_pic_filename))
 
-            with shelve.open("database") as db:
-                # Get Customers
-                customers_db = retrieve_db("Customers", db)
-                user = customers_db[session["UserID"]]
-
-                # Set name and gender
-                user.set_name(name)
-                user.set_gender(gender)
-
-                # If image uploaded, set profile pic
-                if file is not None:
-                    user.set_profile_pic()
-
-                # Save changes to database
-                db["Customers"] = customers_db
+            # Apparently account details were needed to be split because profile picture is in user table
+            account_details = (name, phone_number)
+            account_details2 = (profile_pic_filename,)
+            dbf.update_customer_account(account_details, account_details2)
 
         # Redirect to prevent form resubmission
         return redirect(url_for("account"))
@@ -413,7 +403,8 @@ def account():
                            display_name=user.name,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=user.email)
+                           email=user.email,
+                           phone_no=user.phone_no)
 
 
 """    Admin Pages    """
