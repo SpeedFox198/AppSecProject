@@ -398,6 +398,7 @@ def account():
 
     # Set username and gender to display
     account_page_form.name.data = user.name
+    account_page_form.phone_number.data = user.phone_no
     return render_template("user/account.html",
                            form=account_page_form,
                            display_name=user.name,
@@ -861,9 +862,9 @@ def price_high_to_low(inventory_data):
 
 
 # Add to cart
-@app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
+@app.route("/add-to-cart", methods=['GET', 'POST']) # should there be a GET here?
 @limiter.limit("100/minute", override_defaults=False)
-def add_to_cart(user_id, book_id):
+def add_to_cart(book_id):
 
     # User is a Class
     user:User = flask_global.user
@@ -871,59 +872,46 @@ def add_to_cart(user_id, book_id):
     if user is None or not user.is_admin:
         abort(403)
 
-
     # Get book from database
     book:Book = dbf.retrieve_book(book_id)
 
-    # Add to cart
-    user_id = user.get_user_id
-    book_id = book.get_book_id()
-    buying_quantity = int(request.form['quantity'])
+    if request.method == 'POST':
 
-    dbf.add_to_shopping_cart(user_id, book_id, buying_quantity)
+        user_id = user.get_user_id()
+        # Getting book_id and quantity to add
+        book_id = request.form['book_id']
+        buying_quantity = request.form['quantity']
+        
+        # Checking if book_id is in inventory
+        try:
+            buying_quantity = int(buying_quantity)
+        except:
+            buying_quantity = 1
+        if buying_quantity < 1:
+            buying_quantity = 1
+        
+        if book_id == dbf.retrieve_db("Books", book_id="book_id"):
+            # if book_id is found
+            # Checking if book_id is already in cart
+            cartItems = dbf.get_shopping_cart(user_id)
+            for bookID, quantity in cartItems:
+                if bookID == book_id:
+                    # if book_id is already in cart
+                    # Update quantity
+                    user.add_existing_to_shopping_cart(user_id, book_id, buying_quantity)
+                    flash("Book already exists, adding quantity only.")
 
-    
-    pass
+                    return redirect(url_for('home'))
 
+                elif bookID != book_id:
+                    # if book_id is not in cart
+                    # Add to cart
+                    user.add_to_shopping_cart(user_id, book_id, buying_quantity)
+                    flash("Book has been added to your cart.")
 
-# def add_to_buy(id):
-#     user_id = get_user().get_user_id()
-#     buy_quantity = int(request.form['quantity'])
-#     cart_dict = {}
-#     cart_db = shelve.open('database', 'c')
-#     msg = ""
-#     try:
-#         cart_dict = cart_db['Cart']
-#         print(cart_dict, "original database")
-#     except:
-#         print("Error while retrieving data from cart.db")
-
-#     book = c.AddtoBuy(id, buy_quantity)
-#     if user_id in cart_dict:
-#         book_dict = cart_dict[user_id]
-#         print(book_dict)
-#         book_dict = book_dict[0]
-#         if book_dict == '':
-#             print("This user does not has anything in buying cart")
-#             cart_dict[user_id].pop(0)
-#             cart_dict[user_id].insert(0, {id:buy_quantity})
-#         else:
-#             if book.get_book_id() in book_dict:
-#                 book_dict[book.get_book_id()] += buy_quantity
-#                 print("This user has the book in cart")
-#                 cart_dict[user_id][0] = book_dict
-#                 msg = "Added to cart"
-#             else:
-#                 print('This user does not has this book in cart')
-#                 book_dict[id] = buy_quantity
-#                 cart_dict[user_id][0] = book_dict
-#     else:
-#         print("This user has nothing in cart")
-#         cart_dict[user_id] = [{id:buy_quantity}]
-#     flash("Book has been added to your cart for you to buy.")
-#     cart_db['Cart'] = cart_dict
-#     print(cart_dict, "final database")
-#     return redirect(request.referrer)
+                    return redirect(url_for('home'))
+        else:
+            return redirect(url_for('home')) # Return to catalogue if book_id is not in inventory
 
 
 """ View Shopping Cart"""
