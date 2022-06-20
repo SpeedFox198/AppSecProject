@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 BOOK_IMG_UPLOAD_FOLDER = r"/static/img/books/"
 
+# TODO: remove if not needed TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 # Ignore this for now, just thinking about something
 # WOULD NOT AFFECT CODE AS Book CLASS IS DEFINED AGAIN
 # LATER ON AND WILL OVERWRITE THIS DEFINATION
