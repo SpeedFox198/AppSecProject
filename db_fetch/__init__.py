@@ -202,6 +202,10 @@ def update_customer_account(details1, details2):
     con.close()
 
 
+def retrieve_books_by_language(book_language):
+    return retrieve_db("Books", language=book_language)
+
+
 """ Admin Functions """
 
 
