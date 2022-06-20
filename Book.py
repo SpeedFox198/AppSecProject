@@ -1,4 +1,4 @@
-BOOK_IMG_UPLOAD_FOLDER = r"static/img/books"
+BOOK_IMG_UPLOAD_FOLDER = r"/static/img/books/"
 
 class Book:
 

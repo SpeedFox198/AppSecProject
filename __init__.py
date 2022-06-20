@@ -126,7 +126,11 @@ def home():
     #     book = books_dict.get(key)
     #     books_list.append(book)
 
-    return render_template("home.html", english=[], chinese=[])  # optional: books_list=books_list
+    english_books_data = dbf.retrieve_books_by_language("English")
+    chinese_books_data = dbf.retrieve_books_by_language("Chinese")
+    english = [Book(*data) for data in english_books_data]
+    chinese = [Book(*data) for data in chinese_books_data]
+    return render_template("home.html", english=english, chinese=chinese)  # optional: books_list=books_list
 
 
 """    Login/Sign-up Pages    """
