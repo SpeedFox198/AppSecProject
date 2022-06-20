@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+# Profile pic path
+_UPLOAD_FOLDER = r"/static/img/profile-pic/"
+_DEFAULT_PIC_NAME = r"default.png"
+
 @dataclass
 class User:
     user_id: str
@@ -13,8 +17,7 @@ class User:
     address: str = None
     phone_no: int = None
 
-
-######################## TEMP NOTE if not used remove later TODO TODO TODO TODO TODO
-# Profile pic path
-_UPLOAD_FOLDER = r"/static/img/profile-pic/"
-_DEFAULT_PIC_NAME = r"default.png"
+    def __post_init__(self):
+        if self.profile_pic is None:
+            self.profile_pic = _DEFAULT_PIC_NAME
+        self.profile_pic = _UPLOAD_FOLDER + self.profile_pic

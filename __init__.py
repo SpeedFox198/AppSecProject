@@ -177,13 +177,6 @@ def sign_up():
             errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
-        
-        # check if the password has more than 2 of the same character in a row
-        for i in range(len(password) - 2):
-            if password[i] == password[i+1] == password[i+2]:
-                errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
-                flash("Password cannot contain more than 2 of the same character in a row", "sign-up-password-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
         user_id = generate_uuid5(username)  # Generate new unique user id for customer
@@ -396,8 +389,8 @@ def account():
                     profile_pic.save(os.path.join(app.config['PROFILE_PIC_UPLOAD_FOLDER'], profile_pic_filename))
 
             # Apparently account details were needed to be split because profile picture is in user table
-            account_details = (name, int(phone_number), user.user_id)
-            account_details2 = (profile_pic_filename, user.user_id)
+            account_details = (name, phone_number)
+            account_details2 = (profile_pic_filename,)
             dbf.update_customer_account(account_details, account_details2)
 
         # Redirect to prevent form resubmission
@@ -410,7 +403,8 @@ def account():
                            display_name=user.name,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=user.email)
+                           email=user.email,
+                           phone_no=user.phone_no)
 
 
 """    Admin Pages    """
