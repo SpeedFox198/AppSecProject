@@ -290,6 +290,13 @@ def add_to_shopping_cart(user_id, book_id, quantity):
     con.commit()
     con.close()
 
+def add_existing_to_shopping_cart(user_id, book_id, quantity):
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = f"""UPDATE CartItems SET quantity = quantity + {quantity} WHERE user_id = '{user_id}' AND book_id = '{book_id}';"""
+    cur.execute(query)
+    con.commit()
+    con.close()
 
 def get_shopping_cart(user_id):
     """ Returns user's shopping cart info using user_id"""
