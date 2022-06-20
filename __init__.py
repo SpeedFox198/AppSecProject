@@ -729,35 +729,18 @@ def book_reviews(id, reviewPageNumber):
 """ Search Results Page """
 
 
-@app.route("/search-result/<sort_this>")
+@app.route("/books/<sort_this>")
 @limiter.limit("100/minute", override_defaults=False)
-def search_result(sort_this):
+def books(sort_this):
     sort_dict = {}
     books_dict = {}
     language_list = []
     inventory_data = dbf.retrieve_inventory()
-    try:
-        for data in inventory_data:
-            book = Book(*data)
-            books_dict[book.get_book_id()] = book
-            language_list.append(book.get_language())
-            sort_dict = {'title': 'Title', 'author': 'Author', 'language': 'Language', 'category': 'Category',
-                         'price': 'Price'}
-    except:
-        print("No books in inventory")
-    # try:
-    #     books_dict = {}
-    #     db = shelve.open('database', 'r')
-    #     books_dict = db['Books']
-    #     db.close()
-    #     for book in books_dict:
-    #         language = books_dict[book].get_language()
-    #         if language not in language_list:
-    #             language_list.append(language)
-    #             print(language_list)
 
-    # except:
-    #     print("There are no books")
+    for data in inventory_data:
+        book = Book(*data)
+        books_dict[book.get_book_id()] = book
+        language_list.append(book.get_language())
 
     if books_dict != {}:
          if sort_this == 'latest':
@@ -783,7 +766,7 @@ def search_result(sort_this):
             if not any([s.lower() in book.get_title().lower() for s in q.split()]):
                 sort_dict.pop(book_id, None)
 
-    return render_template("all_books.html", books_dict=books_dict, sort_dict=sort_dict, language_list=language_list)
+    return render_template("books.html", books_list=sort_dict.values(), language_list=language_list)
 
 
 def filter_language(language):

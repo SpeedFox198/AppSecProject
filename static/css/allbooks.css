@@ -1,3 +1,15 @@
+.why-kelly > i{
+  background: none !important;
+  color: #ffffff !important;
+  border-radius: unset !important;
+  padding: unset !important;
+}
+
+.why-kelly {
+  padding-left: 25px;
+  padding-right: 25px;
+}
+
 .dropdown-filter, .fa-angle-up{
   display: none;
 }
