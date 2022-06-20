@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g as flask_global, \
-    abort
+from flask import (
+    Flask, render_template, request, redirect, url_for, flash,
+    make_response, g as flask_global, abort
+)
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
