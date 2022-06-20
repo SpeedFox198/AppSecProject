@@ -18,6 +18,4 @@ class User:
     phone_no: int = None
 
     def __post_init__(self):
-        if self.profile_pic is None:
-            self.profile_pic = _DEFAULT_PIC_NAME
-        self.profile_pic = _UPLOAD_FOLDER + self.profile_pic
+        self.profile_pic = _UPLOAD_FOLDER + (self.profile_pic or _DEFAULT_PIC_NAME)

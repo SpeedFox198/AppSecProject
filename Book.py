@@ -1,3 +1,5 @@
+BOOK_IMG_UPLOAD_FOLDER = r"static/img/books"
+
 class Book:
 
     """
@@ -24,7 +26,7 @@ class Book:
         self.price = price
         self.qty = qty
         self.desc = desc
-        self.img = img
+        self.img = BOOK_IMG_UPLOAD_FOLDER + img
 
     # Mutator methods
 
