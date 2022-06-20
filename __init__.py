@@ -900,21 +900,24 @@ def add_to_cart(book_id):
             # if book_id is found
             # Checking if book_id is already in cart
             cartItems = dbf.get_shopping_cart(user_id)
-            for i, j in cartItems:
-                if i == book_id:
+            for bookID, quantity in cartItems:
+                if bookID == book_id:
                     # if book_id is already in cart
                     # Update quantity
                     user.add_existing_to_shopping_cart(user_id, book_id, buying_quantity)
                     flash("Book already exists, adding quantity only.")
-                elif i != book_id:
+
+                    return redirect(url_for('home'))
+
+                elif bookID != book_id:
                     # if book_id is not in cart
                     # Add to cart
                     user.add_to_shopping_cart(user_id, book_id, buying_quantity)
                     flash("Book has been added to your cart.")
 
-                    return 
-        else:    
-            return redirect(url_for('')) # Return to catalogue if book_id is not in inventory
+                    return redirect(url_for('home'))
+        else:
+            return redirect(url_for('home')) # Return to catalogue if book_id is not in inventory
 
 
 """ View Shopping Cart"""
