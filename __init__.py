@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g as flask_global, \
-    abort
+from flask import (
+    Flask, render_template, request, redirect, url_for, flash,
+    make_response, g as flask_global, abort
+)
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
@@ -150,7 +152,6 @@ def sign_up():
     # Validate sign up form if request is post
     if request.method == "POST":
         if not sign_up_form.validate():
-            if DEBUG: print("Sign-up: form field invalid")
             errors["DisplayFieldError"] = True
             return render_template("user/sign_up.html", form=sign_up_form)
 
@@ -171,6 +172,18 @@ def sign_up():
             errors["DisplayFieldError"] = errors["SignUpEmailError"] = True
             flash("Email already registered", "sign-up-email-error")
             return render_template("user/sign_up.html", form=sign_up_form)
+
+        elif username in password:
+            errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
+            flash("Password cannot contain username", "sign-up-password-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
+        
+        # check if the password has more than 2 of the same character in a row
+        for i in range(len(password) - 2):
+            if password[i] == password[i+1] == password[i+2]:
+                errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
+                flash("Password cannot contain more than 2 of the same character in a row", "sign-up-password-error")
+                return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
         user_id = generate_uuid5(username)  # Generate new unique user id for customer
@@ -211,20 +224,8 @@ def login():
             # Check username/email
             user_data = dbf.user_auth(username, password)
 
-            # Check if user exists
-            user_attempts = dbf.retrieve_user_attempts(username)
-
-            # Check if account still has attempts left
-            if user_attempts == 0:
-                flash("Max login attempts has been reached, account has been locked", "form-error")
-                return render_template("user/login.html", form=login_form)
-
             # If user_data is not succesfully retrieved (username/email/password is/are wrong)
-            elif user_data is None:
-
-                # If username / email is correct (failed password attempt)
-                if user_attempts is not None:
-                    dbf.decrease_login_attempts(username, user_attempts)
+            if user_data is None:
 
                 # Flash login error message
                 flash("Your account and/or password is incorrect, please try again", "form-error")
@@ -347,7 +348,7 @@ def verify_send():
 
 """    User Pages    """
 
-""" View account page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO TODO
+""" View account page """  ### TODO: work on this TODO TODO TODO TODO TODO TODO TODO TODO
 # TODO Chung Wai do hehe
 
 
@@ -361,6 +362,9 @@ def account():
     if not user:
         return redirect(url_for("login"))
 
+    if user.is_admin:
+        abort(404)
+
     # Get account page form
     account_page_form = AccountPageForm(request.form)
 
@@ -369,11 +373,11 @@ def account():
 
         if not account_page_form.validate():
             name = account_page_form.name
-            gender = account_page_form.gender
             picture = account_page_form.picture
+            phone_number = account_page_form.phone_number
 
             # Flash error message (only flash the 1st error)
-            error = name.errors[0] if name.errors else picture.errors[0] if picture.errors else gender.errors[0]
+            error = name.errors[0] if name.errors else picture.errors[0] if picture.errors else phone_number.errors[0]
             flash(error, "error")
         else:
             # Flash success message
@@ -381,39 +385,27 @@ def account():
 
             # Extract email and password from sign up form
             name = " ".join(account_page_form.name.data.split())
-            gender = account_page_form.gender.data
+            phone_number = account_page_form.phone_number.data
+            profile_pic_filename = user.profile_pic
 
             # Check files submitted for profile pic
             if "picture" in request.files:
-                file = request.files["picture"]
-                if file and allowed_file(file.filename):
-                    file.save(os.path.join(PROFILE_PIC_UPLOAD_FOLDER, user.get_user_id() + ".png"))
-                else:
-                    file = None
-            else:
-                file = None
+                profile_pic = request.files["picture"]
+                if profile_pic and allowed_file(profile_pic.filename):
+                    profile_pic_filename = f"{user.user_id}_{profile_pic.filename}"
+                    profile_pic.save(os.path.join(app.config['PROFILE_PIC_UPLOAD_FOLDER'], profile_pic_filename))
 
-            with shelve.open("database") as db:
-                # Get Customers
-                customers_db = retrieve_db("Customers", db)
-                user = customers_db[session["UserID"]]
-
-                # Set name and gender
-                user.set_name(name)
-                user.set_gender(gender)
-
-                # If image uploaded, set profile pic
-                if file is not None:
-                    user.set_profile_pic()
-
-                # Save changes to database
-                db["Customers"] = customers_db
+            # Apparently account details were needed to be split because profile picture is in user table
+            account_details = (name, int(phone_number), user.user_id)
+            account_details2 = (profile_pic_filename, user.user_id)
+            dbf.update_customer_account(account_details, account_details2)
 
         # Redirect to prevent form resubmission
         return redirect(url_for("account"))
 
     # Set username and gender to display
     account_page_form.name.data = user.name
+    account_page_form.phone_number.data = user.phone_no
     return render_template("user/account.html",
                            form=account_page_form,
                            display_name=user.name,
@@ -705,16 +697,17 @@ def book_info2(book_id):
 
     # Get book details
     book:Book = dbf.retrieve_book(book_id)
+    print(book)
 
     # Get specified book
     if not dbf.retrieve_book(book_id):
         abort(404)
 
+    currentbook = []
+
     book.set_book_id(book.get_book_id())
     book.set_language(book.get_language())
     book.set_category(book.get_category())
-    book.set_age(book.get_age())
-    book.set_action(book.get_action())
     book.set_title(book.get_title())
     book.set_author(book.get_author())
     book.set_price(book.get_price())

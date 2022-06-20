@@ -17,11 +17,10 @@ function selectAccount(userID, username, buttonID) {
     clickButton(buttonID);
 }
 
-function viewUser(username, name, email, gender, profilePic) {
+function viewUser(username, name, email, profilePic) {
     getElement("viewUserUsername").innerText = username;
     getElement("viewUserName").innerText = name;
     getElement("viewUserEmail").innerText = email;
-    getElement("viewUserGender").innerText = {"M":"Male", "F":"Female", "O":"Others", "-":"-"}[gender];
     getElement("viewUserProfilePic").src = profilePic;
     clickButton("viewUserButton");
 }
