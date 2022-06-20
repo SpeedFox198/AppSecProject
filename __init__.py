@@ -177,6 +177,13 @@ def sign_up():
             errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
+        
+        # check if the password has more than 2 of the same character in a row
+        for i in range(len(password) - 2):
+            if password[i] == password[i+1] == password[i+2]:
+                errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
+                flash("Password cannot contain more than 2 of the same character in a row", "sign-up-password-error")
+                return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
         user_id = generate_uuid5(username)  # Generate new unique user id for customer
