@@ -355,6 +355,8 @@ def account():
     if not user:
         return redirect(url_for("login"))
 
+    if user.is_admin:
+        abort(404)
 
     # Get account page form
     account_page_form = AccountPageForm(request.form)
