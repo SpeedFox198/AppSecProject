@@ -405,6 +405,7 @@ def account():
 
     # Set username and gender to display
     account_page_form.name.data = user.name
+    account_page_form.phone_number.data = user.phone_no
     return render_template("user/account.html",
                            form=account_page_form,
                            display_name=user.name,
