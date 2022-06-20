@@ -779,6 +779,7 @@ def search_result(sort_this):
 
     return render_template("all_books.html", books_dict=books_dict, sort_dict=sort_dict, language_list=language_list)
 
+
 def filter_language(language):
     books = {}
     books_dict = {}
@@ -788,6 +789,7 @@ def filter_language(language):
         if inventory_data[book].get_language() == language:
             books.update({book: inventory_data[book]})
     return books
+
 
 # Sort name from a to z
 def name_a_to_z(inventory_data):
@@ -806,6 +808,7 @@ def name_a_to_z(inventory_data):
                 sort_dict.update({id: inventory_data[id]})
     return sort_dict
 
+
 # Sort name from z to a
 def name_z_to_a(inventory_data):
     sort_dict = {}
@@ -823,6 +826,7 @@ def name_z_to_a(inventory_data):
                 sort_dict.update({id: inventory_data[id]})
     return sort_dict
 
+
 # Sort price from low to high
 def price_low_to_high(inventory_data):
     sort_dict = {}
@@ -839,6 +843,7 @@ def price_low_to_high(inventory_data):
             if id in inventory_data:
                 sort_dict.update({id: inventory_data[id]})
     return sort_dict
+
 
 # Sort price from high to low
 def price_high_to_low(inventory_data):
