@@ -126,7 +126,11 @@ def home():
     #     book = books_dict.get(key)
     #     books_list.append(book)
 
-    return render_template("home.html", english=[], chinese=[])  # optional: books_list=books_list
+    english_books_data = dbf.retrieve_books_by_language("English")
+    chinese_books_data = dbf.retrieve_books_by_language("Chinese")
+    english = [Book(*data) for data in english_books_data]
+    chinese = [Book(*data) for data in chinese_books_data]
+    return render_template("home.html", english=english, chinese=chinese)  # optional: books_list=books_list
 
 
 """    Login/Sign-up Pages    """
@@ -177,13 +181,6 @@ def sign_up():
             errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
-        
-        # check if the password has more than 2 of the same character in a row
-        for i in range(len(password) - 2):
-            if password[i] == password[i+1] == password[i+2]:
-                errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
-                flash("Password cannot contain more than 2 of the same character in a row", "sign-up-password-error")
-                return render_template("user/sign_up.html", form=sign_up_form)
 
         # Create new customer
         user_id = generate_uuid5(username)  # Generate new unique user id for customer
@@ -398,8 +395,8 @@ def account():
                     profile_pic.save(os.path.join(app.config['PROFILE_PIC_UPLOAD_FOLDER'], profile_pic_filename))
 
             # Apparently account details were needed to be split because profile picture is in user table
-            account_details = (name, int(phone_number), user.user_id)
-            account_details2 = (profile_pic_filename, user.user_id)
+            account_details = (name, phone_number)
+            account_details2 = (profile_pic_filename,)
             dbf.update_customer_account(account_details, account_details2)
 
         # Redirect to prevent form resubmission
@@ -407,12 +404,14 @@ def account():
 
     # Set username and gender to display
     account_page_form.name.data = user.name
+    account_page_form.phone_number.data = user.phone_no
     return render_template("user/account.html",
                            form=account_page_form,
                            display_name=user.name,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=user.email)
+                           email=user.email,
+                           phone_no=user.phone_no)
 
 
 """    Admin Pages    """
@@ -786,6 +785,7 @@ def search_result(sort_this):
 
     return render_template("all_books.html", books_dict=books_dict, sort_dict=sort_dict, language_list=language_list)
 
+
 def filter_language(language):
     books = {}
     books_dict = {}
@@ -795,6 +795,7 @@ def filter_language(language):
         if inventory_data[book].get_language() == language:
             books.update({book: inventory_data[book]})
     return books
+
 
 # Sort name from a to z
 def name_a_to_z(inventory_data):
@@ -813,6 +814,7 @@ def name_a_to_z(inventory_data):
                 sort_dict.update({id: inventory_data[id]})
     return sort_dict
 
+
 # Sort name from z to a
 def name_z_to_a(inventory_data):
     sort_dict = {}
@@ -830,6 +832,7 @@ def name_z_to_a(inventory_data):
                 sort_dict.update({id: inventory_data[id]})
     return sort_dict
 
+
 # Sort price from low to high
 def price_low_to_high(inventory_data):
     sort_dict = {}
@@ -846,6 +849,7 @@ def price_low_to_high(inventory_data):
             if id in inventory_data:
                 sort_dict.update({id: inventory_data[id]})
     return sort_dict
+
 
 # Sort price from high to low
 def price_high_to_low(inventory_data):
@@ -869,9 +873,9 @@ def price_high_to_low(inventory_data):
 
 
 # Add to cart
-@app.route("/addtocart/<int:user_id>", methods=['GET', 'POST'])
+@app.route("/add-to-cart", methods=['GET', 'POST']) # should there be a GET here?
 @limiter.limit("100/minute", override_defaults=False)
-def add_to_cart(user_id, book_id):
+def add_to_cart(book_id):
 
     # User is a Class
     user:User = flask_global.user
@@ -879,59 +883,46 @@ def add_to_cart(user_id, book_id):
     if user is None or not user.is_admin:
         abort(403)
 
-
     # Get book from database
     book:Book = dbf.retrieve_book(book_id)
 
-    # Add to cart
-    user_id = user.get_user_id
-    book_id = book.get_book_id()
-    buying_quantity = int(request.form['quantity'])
+    if request.method == 'POST':
 
-    dbf.add_to_shopping_cart(user_id, book_id, buying_quantity)
+        user_id = user.get_user_id()
+        # Getting book_id and quantity to add
+        book_id = request.form['book_id']
+        buying_quantity = request.form['quantity']
+        
+        # Checking if book_id is in inventory
+        try:
+            buying_quantity = int(buying_quantity)
+        except:
+            buying_quantity = 1
+        if buying_quantity < 1:
+            buying_quantity = 1
+        
+        if book_id == dbf.retrieve_db("Books", book_id="book_id"):
+            # if book_id is found
+            # Checking if book_id is already in cart
+            cartItems = dbf.get_shopping_cart(user_id)
+            for bookID, quantity in cartItems:
+                if bookID == book_id:
+                    # if book_id is already in cart
+                    # Update quantity
+                    user.add_existing_to_shopping_cart(user_id, book_id, buying_quantity)
+                    flash("Book already exists, adding quantity only.")
 
-    
-    pass
+                    return redirect(url_for('home'))
 
+                elif bookID != book_id:
+                    # if book_id is not in cart
+                    # Add to cart
+                    user.add_to_shopping_cart(user_id, book_id, buying_quantity)
+                    flash("Book has been added to your cart.")
 
-# def add_to_buy(id):
-#     user_id = get_user().get_user_id()
-#     buy_quantity = int(request.form['quantity'])
-#     cart_dict = {}
-#     cart_db = shelve.open('database', 'c')
-#     msg = ""
-#     try:
-#         cart_dict = cart_db['Cart']
-#         print(cart_dict, "original database")
-#     except:
-#         print("Error while retrieving data from cart.db")
-
-#     book = c.AddtoBuy(id, buy_quantity)
-#     if user_id in cart_dict:
-#         book_dict = cart_dict[user_id]
-#         print(book_dict)
-#         book_dict = book_dict[0]
-#         if book_dict == '':
-#             print("This user does not has anything in buying cart")
-#             cart_dict[user_id].pop(0)
-#             cart_dict[user_id].insert(0, {id:buy_quantity})
-#         else:
-#             if book.get_book_id() in book_dict:
-#                 book_dict[book.get_book_id()] += buy_quantity
-#                 print("This user has the book in cart")
-#                 cart_dict[user_id][0] = book_dict
-#                 msg = "Added to cart"
-#             else:
-#                 print('This user does not has this book in cart')
-#                 book_dict[id] = buy_quantity
-#                 cart_dict[user_id][0] = book_dict
-#     else:
-#         print("This user has nothing in cart")
-#         cart_dict[user_id] = [{id:buy_quantity}]
-#     flash("Book has been added to your cart for you to buy.")
-#     cart_db['Cart'] = cart_dict
-#     print(cart_dict, "final database")
-#     return redirect(request.referrer)
+                    return redirect(url_for('home'))
+        else:
+            return redirect(url_for('home')) # Return to catalogue if book_id is not in inventory
 
 
 """ View Shopping Cart"""
