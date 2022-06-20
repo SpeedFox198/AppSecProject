@@ -174,6 +174,11 @@ def sign_up():
             flash("Email already registered", "sign-up-email-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
+        if username == password:
+            errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
+            flash("Username and password cannot be the same", "sign-up-password-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
+
         # Create new customer
         user_id = generate_uuid5(username)  # Generate new unique user id for customer
         dbf.create_customer(user_id, username, email, password)
