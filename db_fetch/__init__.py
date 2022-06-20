@@ -49,7 +49,7 @@ def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: 
     if columns:  # If columns were specified
 
         # Construct projection statement
-        projection = ", ".join(columns)
+        projection = ",".join(columns)
 
     if attributes:  # If attributes were specified
 
@@ -72,10 +72,26 @@ def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: 
         limit_offset = f" LIMIT {int(limit)} OFFSET {int(offset)}"
 
     # Create query
-    query = f"""SELECT {projection} FROM {table}{selection}{limit_offset};"""
+    query = f"""SELECT {projection} FROM {table} {selection} {limit_offset};"""
 
     # Fetch and return results of the query
     return execute_db(query, tuple(attributes.values()))
+
+
+def insert_row(table: str, values) -> None:
+    """ Inserts new row with values into table """
+
+    # Values shouldn't be empty
+    assert values, "I'm guessing that you are inserting values, right?"
+
+    # Generate question marks used for parameterised query
+    question_marks = ",".join("?"*len(values))
+
+    # Format query statement
+    query = f"""INSERT INTO {table} VALUES({question_marks});"""
+
+    # Execute parameterised SQL query 
+    execute_db(query, values)
 
 
 def delete_rows(table: str, or_and: int=0, **attributes) -> None:
@@ -172,12 +188,7 @@ def retrieve_customer_details(user_id: str):
 
 
 def create_admin(admin_id, username, email, password):
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""INSERT INTO Users VALUES('{admin_id}', '{username}', '{email}', '{password}', NULL, 1);"""
-    cur.execute(query)
-    con.commit()
-    con.close()
+    insert_row("Users", (admin_id, username, email, password, None, 1))
 
 
 def update_customer_account(details1, details2):
