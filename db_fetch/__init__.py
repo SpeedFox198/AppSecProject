@@ -162,7 +162,7 @@ def retrieve_customer_details(user_id: str):
     # Retrieve customer details from database
     customer_details = retrieve_db(
         "Customers",
-        "name", "redit_card_no", "address", "phone_no",
+        "name", "credit_card_no", "address", "phone_no",
         user_id=user_id
     )
 

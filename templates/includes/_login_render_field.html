@@ -1,5 +1,5 @@
 {% macro render_field(field, message) %}
-  {% set display_error = field.errors and session.pop("DisplayFieldError", False) %}
+  {% set display_error = field.errors and g.errors.pop("DisplayFieldError", False) %}
   {% if display_error %}<span class="d-none display-invalid"></span>{% endif %}
   {{ field(**kwargs)|safe }}
   {% if message %}

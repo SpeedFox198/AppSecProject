@@ -152,7 +152,6 @@ def sign_up():
     # Validate sign up form if request is post
     if request.method == "POST":
         if not sign_up_form.validate():
-            if DEBUG: print("Sign-up: form field invalid")
             errors["DisplayFieldError"] = True
             return render_template("user/sign_up.html", form=sign_up_form)
 
