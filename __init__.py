@@ -389,8 +389,8 @@ def account():
                     profile_pic.save(os.path.join(app.config['PROFILE_PIC_UPLOAD_FOLDER'], profile_pic_filename))
 
             # Apparently account details were needed to be split because profile picture is in user table
-            account_details = (name, phone_number)
-            account_details2 = (profile_pic_filename,)
+            account_details = (name, int(phone_number), user.user_id)
+            account_details2 = (profile_pic_filename, user.user_id)
             dbf.update_customer_account(account_details, account_details2)
 
         # Redirect to prevent form resubmission
@@ -403,8 +403,7 @@ def account():
                            display_name=user.name,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=user.email,
-                           phone_no=user.phone_no)
+                           email=user.email)
 
 
 """    Admin Pages    """
