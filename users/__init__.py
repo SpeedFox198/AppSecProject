@@ -8,7 +8,6 @@ class User:
     password: str
     profile_pic: str
     is_admin: int
-    login_attempts: int
     name: str = None
     credit_card_no: str = None
     address: str = None

@@ -13,7 +13,6 @@ CREATE TABLE Users (
     password TEXT NOT NULL,
     profile_pic TEXT,
     is_admin INTEGER NOT NULL,
-    attempts INTEGER NOT NULL,
     PRIMARY KEY (user_id)
 );
 
