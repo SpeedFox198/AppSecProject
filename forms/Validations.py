@@ -52,12 +52,12 @@ class ContainsNumSymbol(Regexp):
 
     def __init__(self, message=None):
         # numbers:      [0-9]
-        # symbols: [ -/]     [:-@]     [\[-1]     [{-~]
+        # symbols: [ -/]     [:-@]     [\[-`]     [{-~]
         # letters:                [A-Z]      [a-z]
-        # num&sym: [      -     @]     [\[-1]     [{-~]
+        # num&sym: [      -     @]     [\[-`]     [{-~]
         pattern = r".*[ -@\[-`{-~].*"
         super().__init__(pattern, message=message)
-    
+
     def __call__(self, form, field):
         message = self.message
         if message is None:

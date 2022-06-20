@@ -2,7 +2,6 @@ from contextlib import closing
 import sqlite3
 
 DATABASE = r"database.db"
-MAX_ALLOWED_ATTEMPTS = 5
 
 
 def execute_db(query: str, parameters) -> list:
@@ -28,7 +27,7 @@ def execute_db(query: str, parameters) -> list:
     raise RuntimeError("unknown critical error")
 
 
-def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list:
+def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list[tuple]:
     """
     Retrieve rows from table
 
@@ -105,7 +104,7 @@ def create_customer(user_id, username, email, password):
     """ Creates a new customer account in the database """
 
     # Insert user data into Users table
-    query = f"""INSERT INTO Users VALUES (?, ?, ?, ?, NULL, 0, 0);"""
+    query = f"""INSERT INTO Users VALUES (?, ?, ?, ?, NULL, 0);"""
     execute_db(query, (user_id, username, email, password))
 
     # Insert customer details into Customers table
@@ -129,14 +128,6 @@ def email_exists(email):
 
 def username_exists(username):
     return _exists("Users", username=username)
-
-
-def retrieve_user_attempts(credentials):
-    results = retrieve_db("Users", "attempts", email=credentials, username=credentials)
-    if results:
-        return results[0][0]
-    else:
-        return None
 
 
 def admin_exists():
@@ -165,22 +156,25 @@ def retrieve_user(user_id):
     return user_data
 
 
-def retrieve_customer_details(user_id):
+def retrieve_customer_details(user_id: str):
     """ Returns details of customer """
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""SELECT * FROM Customers WHERE user_id = '{user_id}';"""
-    customer_details = cur.execute(query).fetchone()
-    con.close()
+
+    # Retrieve customer details from database
+    customer_details = retrieve_db(
+        "Customers",
+        "name", "redit_card_no", "address", "phone_no",
+        user_id=user_id
+    )
 
     # Returns a tuple if found else None
-    return customer_details
+    if customer_details:
+        return customer_details[0]
 
 
 def create_admin(admin_id, username, email, password):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""INSERT INTO Users VALUES('{admin_id}', '{username}', '{email}', '{password}', NULL, 1, {MAX_ALLOWED_ATTEMPTS});"""
+    query = f"""INSERT INTO Users VALUES('{admin_id}', '{username}', '{email}', '{password}', NULL, 1);"""
     cur.execute(query)
     con.commit()
     con.close()
@@ -306,12 +300,4 @@ def get_shopping_cart(user_id):
 
 """ Royston :D """
 
-
-def decrease_login_attempts(credentials, attempts):
-    """ Decrease user's login attempts and return attempts left """
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""UPDATE Users SET attempts = {attempts - 1} WHERE user_id = '{credentials}' OR email = '{credentials}';"""
-    cur.execute(query)
-    con.commit()
-    con.close()
+# Nothing here yet?

@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g as flask_global, \
-    abort
+from flask import (
+    Flask, render_template, request, redirect, url_for, flash,
+    make_response, g as flask_global, abort
+)
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
@@ -211,20 +213,8 @@ def login():
             # Check username/email
             user_data = dbf.user_auth(username, password)
 
-            # Check if user exists
-            user_attempts = dbf.retrieve_user_attempts(username)
-
-            # Check if account still has attempts left
-            if user_attempts == 0:
-                flash("Max login attempts has been reached, account has been locked", "form-error")
-                return render_template("user/login.html", form=login_form)
-
             # If user_data is not succesfully retrieved (username/email/password is/are wrong)
-            elif user_data is None:
-
-                # If username / email is correct (failed password attempt)
-                if user_attempts is not None:
-                    dbf.decrease_login_attempts(username, user_attempts)
+            if user_data is None:
 
                 # Flash login error message
                 flash("Your account and/or password is incorrect, please try again", "form-error")
@@ -347,7 +337,7 @@ def verify_send():
 
 """    User Pages    """
 
-""" View account page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO TODO
+""" View account page """  ### TODO: work on this TODO TODO TODO TODO TODO TODO TODO TODO
 # TODO Chung Wai do hehe
 
 
