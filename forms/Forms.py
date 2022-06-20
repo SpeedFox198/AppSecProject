@@ -8,7 +8,7 @@ from wtforms import Form, validators, StringField, RadioField,\
                     SelectField, IntegerField, DecimalField
 
 # Import custom validations (for password field)
-from .Validations import ContainsLower, ContainsUpper, ContainsNumSymbol, ValidUsername, NoMoreThanTwoCharacters
+from .Validations import ContainsLower, ContainsUpper, ContainsNumSymbol, ValidUsername
 
 # Import validation for file upload
 from flask_wtf.file import FileAllowed
@@ -32,8 +32,7 @@ class SignUpForm(Form):
                                           validators.Length(min=8, max=80, message=""),
                                           ContainsLower(message="Password must contain at least one lowercase letter"),
                                           ContainsUpper(message="Password must contain at least one uppercase letter"),
-                                          ContainsNumSymbol(message="Password must contain at least one symbol or number"),
-                                          NoMoreThanTwoCharacters(message="Password must not contain more than two of the same character in sequence")])
+                                          ContainsNumSymbol(message="Password must contain at least one symbol or number")])
 
     # Confirm password
     confirm = PasswordField("Confirm Password", [validators.InputRequired(message=""),
@@ -108,7 +107,7 @@ class AccountPageForm(Form):
                                 validators.Length(min=2, max=26, message="Name should be 2-26 characters long")])
 
     # Gender
-    phone_number = IntegerField("Phone number", [validators.Optional(),
+    phone_number = StringField("Phone number", [validators.Optional(),
                                                  validators.Length(min=8, max=8, message="Phone number should be 8 characters long")])
 
 

@@ -59,22 +59,6 @@ class ContainsNumSymbol(Regexp):
 
         super().__call__(form, field, message)
 
-class NoMoreThanTwoCharacters(Regexp):
-    """
-    Validates if incoming data contains more than two of the same character in sequence
-    """
-
-    def __init__(self, message=None):
-        pattern = r".*(?=.{0,2}[^\w\s]).*"
-        super().__init__(pattern, message=message)
-
-    def __call__(self, form, field):
-        message = self.message
-        if message is None:
-            message = field.gettext("Field must not contain more than two of the same character in sequence.")
-
-        super().__call__(form, field, message)
-
 class ValidUsername(Regexp):
     """
     Validates if incoming data is a valid format for username

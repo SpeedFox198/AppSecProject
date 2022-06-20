@@ -194,8 +194,8 @@ def create_admin(admin_id, username, email, password):
 def update_customer_account(details1, details2):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""INSERT INTO Customers (name, phone_no) VALUES (?,?);"""
-    query2 = f"""INSERT INTO Users (profile_pic) VALUES (?);"""
+    query = f"""UPDATE Customers SET name = ?, phone_no = ? where user_id = ?;"""
+    query2 = f"""UPDATE Users SET profile_pic = ? where user_id = ?;"""
     cur.execute(query, details1)
     cur.execute(query2, details2)
     con.commit()
