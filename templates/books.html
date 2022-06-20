@@ -22,18 +22,22 @@
 <!-- Search Bar -->
 <form class="d-flex" method="GET">
   <div class="input-group">
-    <input name="q" class="form-control" type="search" placeholder="Search for books here..." aria-label="Search">
+    <input name="q" class="form-control" type="search" placeholder="Search for books here..." aria-label="Search" required>
     <button class="btn btn-primary why-kelly" type="submit"><i class="fa fa-search"></i></button>
   </div>
 </form>
 
-<!-- ----------------------------- Filter ----------------------------- -->
 <div class="row justify-content-center">
 
-  <!-- ----------------------- Hide filters and sort by button ----------------------- -->
   <div  id="expand">
-    <div class="right-filter">
-      <div class="dropdown" style="float:right;">
+    <!-- ----------------------------- Filter ----------------------------- -->
+    <div class="filters">
+      {% if query %}
+      <div class="results-yielded float-left">
+        Your search for "{{ query }}" yielded {{ books_list|length }} results
+      </div>
+      {% endif %}
+      <div class="dropdown float-right">
         <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">Sort By</button>
         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
           <li><a class="dropdown-item" href="/books/latest">Latest</a></li>
@@ -43,7 +47,7 @@
           <li><a class="dropdown-item" href="/books/price_high_to_low">Price (High to Low)</a></li>
         </ul>
       </div>
-      <div class="dropdown" style="float:right;">
+      <div class="dropdown float-right">
         <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton3" data-bs-toggle="dropdown" aria-expanded="false">Filter Language</button>
         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
             {% if language_list|length == 0 %}
@@ -63,8 +67,8 @@
     <div class="row justify-content-center">
       <div class="col-12">
           {% if books_list|length == 0 %}
-          <h2><center>Oops..</center></h2>
-          <h3><center>There is no books for sale at the moment.</center></h3>
+          <h3><center>Oops...</center></h3>
+          <h3><center>Try searching for something else.</center></h3>
           {% else %}
           <div class="row row-cols-2 row-cols-md-4 g-4">
             {% for book in books_list %}

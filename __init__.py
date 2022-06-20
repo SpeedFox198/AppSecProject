@@ -766,7 +766,7 @@ def books(sort_this):
             if not any([s.lower() in book.get_title().lower() for s in q.split()]):
                 sort_dict.pop(book_id, None)
 
-    return render_template("books.html", books_list=sort_dict.values(), language_list=language_list)
+    return render_template("books.html", query=q, books_list=sort_dict.values(), language_list=language_list)
 
 
 def filter_language(language):

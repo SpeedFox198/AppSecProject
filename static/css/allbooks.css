@@ -14,10 +14,6 @@
   display: none;
 }
 
-.left-filter{
-    margin-top: 50px;
-}
-
 h5{
   cursor: pointer;
 }
@@ -30,18 +26,27 @@ hr{
   margin-top: 0;
 }
 
-.left-filter h5 i{
-  float: right;
+h5 i:hover, .filters button:hover{
+  color: #5ca8a8 !important;
 }
 
-h5 i:hover{
-  color: #4b8282 !important;
-}
-
-.right-filter button{
+.filters button {
   color: #4b8282;
   float: right;
   font-size: 1.1em;
   padding: 0;
   margin-left: 20px;
+}
+
+.filters .results-yielded {
+  color: #4b8282;
+  font-size: 1.1em;
+}
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
 }
