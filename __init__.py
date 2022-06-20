@@ -705,16 +705,17 @@ def book_info2(book_id):
 
     # Get book details
     book:Book = dbf.retrieve_book(book_id)
+    print(book)
 
     # Get specified book
     if not dbf.retrieve_book(book_id):
         abort(404)
 
+    currentbook = []
+
     book.set_book_id(book.get_book_id())
     book.set_language(book.get_language())
     book.set_category(book.get_category())
-    book.set_age(book.get_age())
-    book.set_action(book.get_action())
     book.set_title(book.get_title())
     book.set_author(book.get_author())
     book.set_price(book.get_price())
