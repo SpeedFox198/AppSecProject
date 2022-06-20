@@ -28,7 +28,7 @@ def execute_db(query: str, parameters) -> list:
     raise RuntimeError("unknown critical error")
 
 
-def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list:
+def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list[tuple]:
     """
     Retrieve rows from table
 
