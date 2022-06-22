@@ -76,3 +76,5 @@ class ValidUsername(Regexp):
             message = field.gettext("Username can only contain letters, numbers, and underscores.")
 
         super().__call__(form, field, message)
+
+

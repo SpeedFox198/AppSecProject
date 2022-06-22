@@ -93,6 +93,8 @@ def before_request():
 
 
 """ After request """
+
+
 @app.after_request
 def after_request(response):
     user:User = flask_global.user
