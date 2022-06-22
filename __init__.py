@@ -23,7 +23,7 @@ from forms import (
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
-SESSION_COOKIE = "user_session"
+SESSION_NAME = "user_session"
 
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
@@ -44,11 +44,11 @@ def get_user():
     """ Returns user if cookie is correct, else returns None """
 
     # Get session cookie from request
-    session_cookie = request.cookies.get(SESSION_COOKIE)
+    session_cookie = request.cookies.get(SESSION_NAME)
     user_session = retrieve_user_session(session_cookie)
 
     # Return None
-    if user_session is not None:
+    if user_session is not None and not user_session.is_expired():
 
         # Retrieve user id from session
         user_id = user_session.user_id
@@ -66,8 +66,6 @@ def get_user():
             # Return user object
             return User(*user_data)
 
-
-"""    Before Request    """
 
 """ Before first request """
 
@@ -92,6 +90,21 @@ def before_first_request():
 @app.before_request
 def before_request():
     flask_global.user = get_user()  # Get user
+
+
+""" After request """
+@app.after_request
+def after_request(response):
+    user:User = flask_global.user
+
+    if user is not None:
+        renewed_session = create_user_session(user.user_id, user.is_admin)
+        response.set_cookie(SESSION_NAME, renewed_session)
+    else:
+        # Remove session cookie
+        response.set_cookie(SESSION_NAME, "", expires=0)
+
+    return response
 
 
 """    Home Page    """
@@ -186,13 +199,11 @@ def sign_up():
         user_id = generate_uuid5(username)  # Generate new unique user id for customer
         dbf.create_customer(user_id, username, email, password)
 
-        # Create session to login
-        new_session = create_user_session(user_id)
-        response = make_response(redirect(url_for("verify_send")))
-        response.set_cookie(SESSION_COOKIE, new_session)
+        # Create new user session to login (placeholder values were used to create user object)
+        flask_global.user = User(user_id, "", "", "", "", 0)
 
         # Return redirect with session cookie
-        return response
+        return redirect(url_for("verify_send"))
 
     # Render page
     return render_template("user/sign_up.html", form=sign_up_form)
@@ -232,15 +243,12 @@ def login():
             else:
                 #Google Authentication insert here -Royston
 
-                # Get user id
+                # Get user object
                 user = User(*user_data)
-                user_id = user.user_id
 
                 # Create session to login
-                new_session = create_user_session(user_id, user.is_admin)
-                response = make_response(redirect(url_for("home")))
-                response.set_cookie(SESSION_COOKIE, new_session)
-                return response
+                flask_global.user = user
+                return redirect(url_for("home"))
 
     # Render page
     return render_template("user/login.html", form=login_form)
@@ -252,11 +260,9 @@ def login():
 @app.route("/user/logout")
 @limiter.limit("100/minute", override_defaults=False)
 def logout():
-    response = make_response(redirect(url_for("home")))
-    if flask_global.user is not None:
-        # Remove session cookie
-        response.set_cookie(SESSION_COOKIE, "", expires=0)
-    return response
+    flask_global.user = None
+    response = make_response()
+    return redirect(url_for("home"))
 
 
 """ Forgot password page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO
@@ -590,14 +596,15 @@ def add_book():
             return redirect(request.url)
 
         if book_img and allowed_file(book_img.filename):
-            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            book_id = generate_uuid4()
+            book_img_filename = f"{book_id}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
             path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
             book_img.save(path)
             image = Image.open(path)
             resized_image = image.resize((259, 371))
             resized_image.save(path)
 
-            book_details = (generate_uuid4(),
+            book_details = (book_id,
                             add_book_form.language.data,
                             add_book_form.category.data,
                             add_book_form.title.data,
@@ -674,10 +681,10 @@ def delete_book(book_id):
 
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
-    book_cover_img = selected_book.img
-    cover_img_path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_cover_img)
-    if os.path.isfile(cover_img_path):
-        os.remove(cover_img_path)
+    book_cover_img = selected_book.img[1:]  # Strip the leading slash for relative path
+    print(book_cover_img)
+    if os.path.isfile(book_cover_img):
+        os.remove(book_cover_img)
     else:
         print("Book cover does not exist.")
     dbf.delete_book(book_id)
@@ -736,6 +743,8 @@ def books(sort_this):
     books_dict = {}
     language_list = []
     inventory_data = dbf.retrieve_inventory()
+
+    sort_by = request.args.get("sort-by", default="", type=str)
 
     for data in inventory_data:
         book = Book(*data)
