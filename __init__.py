@@ -274,10 +274,9 @@ def logout():
 @limiter.limit("100/minute", override_defaults=False)
 def password_forget():
     # Get user
-    user = get_user()
+    user:User = flask_global.user
 
-    # Only Guest will forget password
-    if session["UserType"] != "Guest":
+    if user is not None:
         return redirect(url_for("home"))
 
     # Create form
@@ -618,7 +617,7 @@ def account():
             # Extract email and password from sign up form
             name = " ".join(account_page_form.name.data.split())
             phone_number = account_page_form.phone_number.data
-            profile_pic_filename = user.profile_pic
+            profile_pic_filename = user._profile_pic
 
             # Check files submitted for profile pic
             if "picture" in request.files:

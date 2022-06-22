@@ -10,7 +10,7 @@ class User:
     username: str
     email: str
     password: str
-    profile_pic: str
+    _profile_pic: str
     is_admin: int
     name: str = None
     credit_card_no: str = None
@@ -18,4 +18,8 @@ class User:
     phone_no: int = None
 
     def __post_init__(self):
-        self.profile_pic = _UPLOAD_FOLDER + (self.profile_pic or _DEFAULT_PIC_NAME)
+        self._profile_pic = self.profile_pic or _DEFAULT_PIC_NAME
+
+    @property
+    def profile_pic(self):
+        return _UPLOAD_FOLDER + self._profile_pic
