@@ -738,6 +738,8 @@ def books(sort_this):
     language_list = []
     inventory_data = dbf.retrieve_inventory()
 
+    sort_by = request.args.get("sort-by", default="", type=str)
+
     for data in inventory_data:
         book = Book(*data)
         books_dict[book.get_book_id()] = book
