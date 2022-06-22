@@ -18,7 +18,7 @@ class User:
     phone_no: int = None
 
     def __post_init__(self):
-        self._profile_pic = self.profile_pic or _DEFAULT_PIC_NAME
+        self._profile_pic = self._profile_pic or _DEFAULT_PIC_NAME
 
     @property
     def profile_pic(self):
