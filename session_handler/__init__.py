@@ -5,18 +5,18 @@ from typing import Union
 from os import environ
 
 # Get secret key (you ain't gonna see it in plain text lol)
-_SECRET_KEY = environ.get("VERY_SECRET_KEY").encode()
-assert _SECRET_KEY, "Secret key must be set in OS System environment variable"
+SECRET_KEY = environ.get("VERY_SECRET_KEY").encode()
+assert SECRET_KEY, "Secret key must be set in OS System environment variable"
 
 # Character for separating session data and signature
-_SEPARATOR = b"."
+SEPARATOR = b"."
 
 
 class UserSession:
     def __init__(self, user_id:str, is_admin:bool=False) -> None:
         self.user_id = user_id
         self.is_admin = is_admin
-
+        
 
 def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
     """ Creates and returns user session cookie """
@@ -25,10 +25,10 @@ def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
     session = b64encode(dumps(UserSession(user_id, bool(is_admin))))
 
     # Generate signature
-    signature = b64encode(digest(_SECRET_KEY, session, "sha256"))
+    signature = b64encode(digest(SECRET_KEY, session, "sha256"))
 
     # Return user session cookie
-    return session + _SEPARATOR + signature
+    return session + SEPARATOR + signature
 
 
 def retrieve_user_session(session:str) -> Union[UserSession, None]:
@@ -38,8 +38,8 @@ def retrieve_user_session(session:str) -> Union[UserSession, None]:
 
         # Get session values (session and signature)
         try:
-            values = session.encode().split(_SEPARATOR)
-            a = digest(_SECRET_KEY, values[0], "sha256")
+            values = session.encode().split(SEPARATOR)
+            a = digest(SECRET_KEY, values[0], "sha256")
             b = b64decode(values[-1])
 
             # Check for integrity of session
