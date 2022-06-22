@@ -34,7 +34,7 @@
     <div class="filters">
       {% if query %}
       <div class="results-yielded float-left">
-        Your search for "{{ query }}" yielded {{ books_list|length }} results
+        Your search for "{{ query }}" yielded {{ books_list|length or "no" }} results
       </div>
       {% endif %}
       <div class="dropdown float-right">
