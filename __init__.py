@@ -590,14 +590,15 @@ def add_book():
             return redirect(request.url)
 
         if book_img and allowed_file(book_img.filename):
-            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            book_id = generate_uuid4()
+            book_img_filename = f"{book_id}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
             path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
             book_img.save(path)
             image = Image.open(path)
             resized_image = image.resize((259, 371))
             resized_image.save(path)
 
-            book_details = (generate_uuid4(),
+            book_details = (book_id,
                             add_book_form.language.data,
                             add_book_form.category.data,
                             add_book_form.title.data,
@@ -674,10 +675,10 @@ def delete_book(book_id):
 
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
-    book_cover_img = selected_book.img
-    cover_img_path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_cover_img)
-    if os.path.isfile(cover_img_path):
-        os.remove(cover_img_path)
+    book_cover_img = selected_book.img[1:]  # Strip the leading slash for relative path
+    print(book_cover_img)
+    if os.path.isfile(book_cover_img):
+        os.remove(book_cover_img)
     else:
         print("Book cover does not exist.")
     dbf.delete_book(book_id)
