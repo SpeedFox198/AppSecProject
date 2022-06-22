@@ -352,6 +352,231 @@ def verify_send():
     flash(f"Verification email sent to {email}")
     return redirect(url_for("account"))
 
+#"""2FA by Jason"""
+#
+#@app.route('/2FA', methods=['GET', 'POST'])
+#@limiter.limit("10/second") # to prevent attackers from trying to crack passwords or doing enumeration attacks by sending too many automated requests from their ip address
+#def twoFactorAuthenticationSetup():
+#    if "userSession" in session:
+#        userSession = session["userSession"]
+#        userDict = {}
+#        db = shelve.open(app.config["DATABASE_FOLDER"] + "\\user", "c")
+#        try:
+#            if 'Users' in db:
+#                userDict = db['Users']
+#            else:
+#                db.close()
+#                print("User data in shelve is empty.")
+#                session.clear()
+#                return redirect(url_for("home"))
+#        except:
+#            db.close()
+#            print("Error in retrieving Users from user.db")
+#            return redirect(url_for("home"))
+#
+#        # retrieving the object based on the shelve files using the user's user ID
+#        userKey, userFound, accGoodStatus, accType = get_key_and_validate(userSession, userDict)
+#
+#        if userFound and accGoodStatus:
+#            create_2fa_form = Forms.twoFAForm(request.form)
+#            qrCodePath = "".join(["static/images/qrcode/", userSession, ".png"])
+#            qrCodeFullPath = Path(app.root_path).joinpath(qrCodePath)
+#            if request.method == "POST" and create_2fa_form.validate():
+#                secret = request.form.get("secret")
+#                otpInput = sanitise(create_2fa_form.twoFAOTP.data)
+#                isValid = pyotp.TOTP(secret).verify(otpInput)
+#                print(pyotp.TOTP(secret).now())
+#                if isValid:
+#                    userKey.set_otp_setup_key(secret)
+#                    flash(Markup("2FA setup was successful!<br>You will now be prompted to enter your Google Authenticator's time-based OTP every time you login."), "2FA setup successful!")
+#                    db["Users"] = userDict
+#                    db.close()
+#                    qrCodeFullPath.unlink(missing_ok=True) # missing_ok argument is set to True as the file might not exist (>= Python 3.8)
+#                    return redirect(url_for("userProfile"))
+#                else:
+#                    db.close()
+#                    flash("Invalid OTP Entered! Please try again!")
+#                    return redirect(url_for("twoFactorAuthenticationSetup"))
+#            else:
+#                db.close()
+#                secret = pyotp.random_base32() # for google authenticator setup key
+#
+#                imagesrcPath = retrieve_user_profile_pic(userKey)
+#
+#                if accType == "Teacher":
+#                    teacherUID = userSession
+#                else:
+#                    teacherUID = ""
+#
+#                # Get shopping cart len
+#                shoppingCartLen = len(userKey.get_shoppingCart())
+#
+#                qrCodeForOTP = pyotp.totp.TOTP(s=secret, digits=6).provisioning_uri(name=userKey.get_username(), issuer_name='CourseFinity')
+#                img = qrcode.make(qrCodeForOTP)
+#                qrCodeFullPath.unlink(missing_ok=True) # missing_ok argument is set to True as the file might not exist (>= Python 3.8)
+#                img.save(qrCodeFullPath)
+#                return render_template('users/loggedin/2fa.html', shoppingCartLen=shoppingCartLen, accType=accType, imagesrcPath=imagesrcPath, teacherUID=teacherUID, form=create_2fa_form, secret=secret, qrCodePath=qrCodePath)
+#        else:
+#            db.close()
+#            print("User not found or is banned")
+#            session.clear()
+#            return redirect(url_for("userLogin"))
+#    else:
+#        if "adminSession" in session:
+#            return redirect(url_for("home"))
+#        else:
+#            return redirect(url_for("userLogin"))
+#
+#@app.route('/2FA_disable')
+#@limiter.limit("10/second") # to prevent attackers from trying to crack passwords or doing enumeration attacks by sending too many automated requests from their ip address
+#def removeTwoFactorAuthentication():
+#    if "userSession" in session:
+#        userSession = session["userSession"]
+#        userDict = {}
+#        db = shelve.open(app.config["DATABASE_FOLDER"] + "\\user", "c")
+#        try:
+#            if 'Users' in db:
+#                userDict = db['Users']
+#            else:
+#                db.close()
+#                print("User data in shelve is empty.")
+#                session.clear()
+#                return redirect(url_for("home"))
+#        except:
+#            db.close()
+#            print("Error in retrieving Users from user.db")
+#            return redirect(url_for("home"))
+#
+#        # retrieving the object based on the shelve files using the user's user ID
+#        userKey, userFound, accGoodStatus, accType = get_key_and_validate(userSession, userDict)
+#
+#        if userFound and accGoodStatus:
+#            userKey.set_otp_setup_key("")
+#            flash(Markup("2FA has been disabled.<br>You will no longer be prompted to enter your Google Authenticator's time-based OTP upon loggin in."), "2FA disabled!")
+#            db["Users"] = userDict
+#            db.close()
+#            return redirect(url_for("userProfile"))
+#        else:
+#            db.close()
+#            print("User not found or is banned")
+#            session.clear()
+#            return redirect(url_for("userLogin"))
+#    else:
+#        if "adminSession" in session:
+#            return redirect(url_for("home"))
+#        else:
+#            return redirect(url_for("userLogin"))
+#
+#@app.route('/2FA_required', methods=['GET', 'POST'])
+#@limiter.limit("10/second") # to prevent attackers from trying to bruteforce the 2FA
+#def twoFactorAuthentication():
+#    # checks if the user is not logged in
+#    if "userSession" not in session and "adminSession" not in session:
+#        # for admin login
+#        if "adminOTPSession" in session:
+#            userID, originFeature = session["adminOTPSession"]
+#            adminDict = {}
+#            db = shelve.open(app.config["DATABASE_FOLDER"] + "\\admin", "c")
+#            try:
+#                if 'Admins' in db:
+#                    adminDict = db['Admins']
+#                    db.close()
+#                else:
+#                    db.close()
+#                    print("User data in shelve is empty.")
+#                    session.clear()
+#                    return redirect(url_for("home"))
+#            except:
+#                db.close()
+#                print("Error in retrieving Users from user.db")
+#                return redirect(url_for("home"))
+#
+#            userKey, userFound, accActive = admin_get_key_and_validate(userID, adminDict)
+#
+#            if userFound and accActive:
+#                if bool(userKey.get_otp_setup_key()):
+#                    create_2fa_form = Forms.twoFAForm(request.form)
+#                    if request.method == "POST" and create_2fa_form.validate():
+#                        otpInput = sanitise(create_2fa_form.twoFAOTP.data)
+#                        secret = userKey.get_otp_setup_key()
+#                        isValid = pyotp.TOTP(secret).verify(otpInput)
+#                        if isValid:
+#                            # requires 2FA time-based OTP to be entered when user is logging in
+#                            if originFeature == "adminLogin":
+#                                session.pop("2FAUserSession", None)
+#                                session["adminSession"] = userID
+#                                return redirect(url_for("home"))
+#                            else:
+#                                session.clear()
+#                                return redirect(url_for("home"))
+#                        else:
+#                            flash("Invalid OTP Entered! Please try again!")
+#                            return render_template("users/guest/enter_2fa.html", form=create_2fa_form)
+#                    else:
+#                        return render_template("users/guest/enter_2fa.html", form=create_2fa_form)
+#                else:
+#                    print("Unexpected Error: User had disabled 2FA.")
+#                    return redirect(url_for("userLogin"))
+#            else:
+#                print("User not found or is inactive")
+#                session.clear()
+#                return redirect(url_for("adminLogin"))
+#
+#        # for user login
+#        elif "2FAUserSession" in session:
+#            userID, originFeature = session["2FAUserSession"]
+#            userDict = {}
+#            db = shelve.open(app.config["DATABASE_FOLDER"] + "\\user", "c")
+#            try:
+#                if 'Users' in db:
+#                    userDict = db['Users']
+#                    db.close()
+#                else:
+#                    db.close()
+#                    print("User data in shelve is empty.")
+#                    session.clear()
+#                    return redirect(url_for("home"))
+#            except:
+#                db.close()
+#                print("Error in retrieving Users from user.db")
+#                return redirect(url_for("home"))
+#
+#            userKey, userFound, accGoodStatus, accType = get_key_and_validate(userID, userDict)
+#
+#            if userFound and accGoodStatus:
+#                if bool(userKey.get_otp_setup_key()):
+#                    create_2fa_form = Forms.twoFAForm(request.form)
+#                    if request.method == "POST" and create_2fa_form.validate():
+#                        otpInput = sanitise(create_2fa_form.twoFAOTP.data)
+#                        secret = userKey.get_otp_setup_key()
+#                        isValid = pyotp.TOTP(secret).verify(otpInput)
+#                        if isValid:
+#                            # requires 2FA time-based OTP to be entered when user is logging in
+#                            if originFeature == "login":
+#                                session.pop("2FAUserSession", None)
+#                                session["userSession"] = userID
+#                                return redirect(url_for("home"))
+#                            else:
+#                                session.clear()
+#                                return redirect(url_for("home"))
+#                        else:
+#                            flash("Invalid OTP Entered! Please try again!")
+#                            return render_template("users/guest/enter_2fa.html", form=create_2fa_form)
+#                    else:
+#                        return render_template("users/guest/enter_2fa.html", form=create_2fa_form)
+#                else:
+#                    print("Unexpected Error: User had disabled 2FA.")
+#                    return redirect(url_for("userLogin"))
+#            else:
+#                print("User not found or is banned")
+#                session.clear()
+#                return redirect(url_for("userLogin"))
+#        else:
+#            return redirect(url_for("home"))
+#    else:
+#        return redirect(url_for("home"))
+#
+#"""End of 2FA by Jason"""
 
 """    User Pages    """
 
