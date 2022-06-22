@@ -1,6 +1,7 @@
 from pickle import dumps, loads
 from base64 import b64encode, b64decode
 from hmac import digest, compare_digest
+from datetime import datetime, timedelta
 from typing import Union
 from os import environ
 
@@ -11,11 +12,20 @@ assert _SECRET_KEY, "Secret key must be set in OS System environment variable"
 # Character for separating session data and signature
 _SEPARATOR = b"."
 
+# Max duration user can stay logged in for (since last active)
+_MAX_TIME = timedelta(hours=3)
+
 
 class UserSession:
+    """ Defines a user session """
     def __init__(self, user_id:str, is_admin:bool=False) -> None:
         self.user_id = user_id
         self.is_admin = is_admin
+        self.last_active = datetime.now()
+
+    def is_expired(self):
+        """ Checks if session has expired (last active 3 hours ago) """
+        return datetime.now() - self.last_active >= _MAX_TIME
 
 
 def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
