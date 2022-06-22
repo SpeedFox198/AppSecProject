@@ -133,8 +133,10 @@ class AddBookForm(Form):
     category = SelectField('Category', [validators.Optional()], default='')
     title = StringField('Title', [validators.InputRequired("Title is required")])
     author = StringField('Author', [validators.InputRequired("Author is required")])
-    price = DecimalField('Price', [validators.InputRequired("Price is required")], places=2, rounding=None)
-    qty = IntegerField('Quantity', [validators.InputRequired("Quantity is required")])
+    price = IntegerField('Price', [validators.InputRequired("Price is required"),
+                                   validators.NumberRange(min=1, message="Price cannot be lower than 1")])
+    qty = IntegerField('Quantity', [validators.InputRequired("Quantity is required"),
+                                    validators.NumberRange(min=1, message="Quantity cannot be lower than 1")])
     desc = TextAreaField('Description', [validators.Length(min=1), validators.InputRequired("Description is required")])
 
     def validate(self, extra_validators=None):
