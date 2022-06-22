@@ -16,7 +16,7 @@ class UserSession:
     def __init__(self, user_id:str, is_admin:bool=False) -> None:
         self.user_id = user_id
         self.is_admin = is_admin
-
+        
 
 def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
     """ Creates and returns user session cookie """
