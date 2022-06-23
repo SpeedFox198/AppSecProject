@@ -99,7 +99,7 @@ def before_request():
 def after_request(response):
     user:User = flask_global.user
 
-    if user is not None:
+    if isinstance(user, User):
         renewed_session = create_user_session(user.user_id, user.is_admin)
         response.set_cookie(SESSION_NAME, renewed_session)
     else:
