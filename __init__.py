@@ -153,7 +153,6 @@ def home():
 """ Sign up page """
 
 
-## TODO TODO TODO TODO TODO TODO TODO TODO TODO remove session TODO TODO TODO TODO TODO TODO TODO TODO 
 @app.route("/user/sign-up", methods=["GET", "POST"])
 @limiter.limit("100/minute", override_defaults=False)
 def sign_up():
@@ -165,8 +164,7 @@ def sign_up():
     sign_up_form = SignUpForm(request.form)
 
     # Flask global error variable for css
-    flask_global.errors = {}
-    errors = flask_global.errors
+    errors = flask_global.errors = {}
 
     # Validate sign up form if request is post
     if request.method == "POST":
@@ -267,7 +265,7 @@ def logout():
     return redirect(url_for("home"))
 
 
-""" Forgot password page """  ### TODO: work on this SpeedFox198 TODO TODO TODO TODO TODO TODO TODO
+""" Forgot password page """  ### TODO: work on this SpeedFox198
 
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
@@ -316,6 +314,122 @@ def password_forget():
             return redirect(url_for("login"))
 
     return render_template("user/password/password_forget.html", form=forget_password_form)
+
+
+""" Reset password page """  ### TODO: work on this SpeedFox198
+
+
+@app.route("/user/password/reset/<token>", methods=["GET", "POST"])
+def password_reset(token):
+
+    # Get user
+    guest = get_user()
+
+    # Only Guest will forget password
+    if session["UserType"] != "Guest":
+        return redirect(url_for("home"))
+
+    # Get email from token
+    try:
+        email = url_serialiser.loads(token, salt=app.config["PASSWORD_FORGET_SALT"], max_age=TOKEN_MAX_AGE)
+    except BadData as err:  # Token expired or Bad Signature
+        if DEBUG: print("Invalid Token:", repr(err))  # print captured error (for debugging)
+        return redirect(url_for("invalid_link"))
+
+    with shelve.open("database") as db:
+        email_to_user_id = retrieve_db("EmailToUserID", db)
+        customers_db = retrieve_db("Customers", db)
+        guests_db = retrieve_db("Guests", db)
+
+        # Get user
+        try:
+            customer = customers_db[email_to_user_id[email]]
+        except KeyError:
+            if DEBUG: print("No user with email:", email)  # Account was deleted
+            return redirect(url_for("invalid_link"))
+
+        # Render form
+        reset_password_form = ResetPasswordForm(request.form)
+        if request.method == "POST":
+            if not reset_password_form.validate():
+                session["DisplayFieldError"] = True
+            else:
+                # Extract password
+                new_password = reset_password_form.new_password.data
+
+                # Reset Password
+                customer.set_password(new_password)
+                if DEBUG: print(f"Reset password for: {customer}")
+
+                # Delete guest account
+                guests_db.remove(guest.get_user_id())
+                if DEBUG: print(f"Deleted: {guest}")
+
+                # Log in customer
+                session["UserID"] = customer.get_user_id()
+                session["UserType"] = "Customer"
+                if DEBUG: print(f"Logged in: {customer}")
+
+                # Safe changes to database
+                db["Customers"] = customers_db
+                db["Guests"] = guests_db
+
+                # Flash message and redirect to account page
+                flash("Password has been successfully set")
+                return redirect(url_for("account"))
+
+    return render_template("user/password/password_reset.html", form=reset_password_form, email=email)
+
+
+""" Change password page """
+## TODO: Template (html) not written yet (dying) ~ @SpeedFox198
+## TODO: Run and see if working (check if got bugs)
+## NOTE: too tired to check for bugs, someone help me pls ~ @SpeedFox198
+
+
+@app.route("/user/password/change", methods=["GET", "POST"])
+def password_change():
+
+    # Get current user
+    user:User = flask_global.user
+
+    # If user is not logged in
+    if user is None:
+        return redirect(url_for("login"))
+
+    # Flask global error variable for css
+    errors = flask_global.errors = {}
+
+    # Get change password form
+    change_password_form = ChangePasswordForm(request.form)
+
+    # Validate sign up form if request is post
+    if request.method == "POST":
+        if not change_password_form.validate():
+            errors["DisplayFieldError"] = True
+        else:
+            # Extract data from sign up form
+            current_password = change_password_form.current_password.data
+            new_password = change_password_form.new_password.data
+
+            # Password (current) was incorrect, disallow change
+            if not dbf.user_auth(user.username, current_password):
+                flash("Your password is incorrect, please try again", "form-error")
+
+            # Password (current) was correct, change to new password
+            else:
+                # Change user password
+                dbf.change_password(user.user_id, new_password)
+
+                # Sign user out (proccess will be done in @app.after_request)
+                flask_global.user = None
+
+                # Flash success message and redirect
+                flash("Password has been changed successfully, please login again with your new password.")
+                return redirect(url_for("login"))
+
+    return render_template("user/password/password_change.html", form=change_password_form)
+
 
 #Needs to be changed
 """Verification page in case"""
@@ -579,7 +693,7 @@ def verify_send():
 
 """    User Pages    """
 
-""" View account page """  ### TODO: work on this TODO TODO TODO TODO TODO TODO TODO TODO
+""" View account page """
 # TODO Chung Wai do hehe
 
 
@@ -658,7 +772,6 @@ def admin_check():
 
 
 # Manage accounts page
-# TODO TODO TODO TODO TODO TODO TODO TODO continue work (SpeedFox198) TODO TODO TODO TODO TODO TODO
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
 def manage_accounts():
     admin_check()
