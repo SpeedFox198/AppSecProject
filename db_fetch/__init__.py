@@ -4,7 +4,10 @@ import sqlite3
 DATABASE = r"database.db"
 
 
-def execute_db(query: str, parameters) -> list:
+""" General Operations Functions """
+
+
+def execute_db(query: str, parameters) -> list[tuple]:
     """ Execute sql query with parameters """
 
     # Ensure that query statement ends properly
@@ -24,21 +27,23 @@ def execute_db(query: str, parameters) -> list:
             return data
 
     # Code should never reach here, raise error just in case
-    raise RuntimeError("unknown critical error")
+    raise RuntimeError("Unknown critical error!")
 
 
-def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list[tuple]:
+def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list[tuple]:
     """
     Retrieve rows from table
 
     Args:
         table (str): Table to be retrieved.
-        *columns: Columns to be projected.
-        or_and(:obj:`int`, optional): 0 for OR, 1 for AND.
+        columns (:obj:`list`, optional): Columns to be projected.
+        or_and (:obj:`int`, optional): 0 for OR, 1 for AND.
+        limit (:obj:`int`, optional): Limits the number of rows retrieved
+        offset (:obj:`int`, optional): Offset of index to start retrieving from
         **attributes: Attributes to be selected.
 
     Returns:
-        list: A list of retrieved rows
+        list[tuple]: A list of retrieved rows
     """
 
     # Default values of statements
@@ -78,27 +83,34 @@ def retrieve_db(table: str, *columns: str, or_and: int=0, limit: int=0, offset: 
     return execute_db(query, tuple(attributes.values()))
 
 
-def insert_row(table: str, values) -> None:
-    """ Inserts new row with values into table """
+def insert_row(table: str, values: list, columns: list=None) -> None:
+    """ Inserts new row with values into, columns of table """
 
     # Values shouldn't be empty
-    assert values, "I'm guessing that you are inserting values, right?"
+    if not values:
+        raise ValueError("Must specify at least one value to be inserted")
 
     # Generate question marks used for parameterised query
     question_marks = ",".join("?"*len(values))
 
+    # Format column names (default nothing)
+    column_names = ",".join(columns)
+    if column_names:
+        column_names = f"({column_names})"
+
     # Format query statement
-    query = f"""INSERT INTO {table} VALUES({question_marks});"""
+    query = f"""INSERT INTO {table} {column_names} VALUES ({question_marks});"""
 
     # Execute parameterised SQL query 
     execute_db(query, values)
 
 
 def delete_rows(table: str, or_and: int=0, **attributes) -> None:
-    """ Deletes rows from database """
+    """ Deletes rows from table """
 
-    # At least 1 attribute needs to be specified
-    assert attributes, "Must specify at least one attribute"
+    # At least one attribute needs to be specified
+    if not attributes:
+        raise ValueError("Must specify at least one attribute")
 
     # Selection statements
     selection = []
@@ -116,16 +128,49 @@ def delete_rows(table: str, or_and: int=0, **attributes) -> None:
     execute_db(query, tuple(attributes.values()))
 
 
-def create_customer(user_id, username, email, password):
+def update_rows(table: str, columns: list[str], values: list, or_and: int=0, **attributes) -> None:
+    """ Updates rows of table """
+
+    # At least one column should be updated
+    if not columns:
+        raise ValueError("Must specify at least column to be updated.")
+
+    # Each column needs a corresponding value
+    elif len(columns) != len(values):
+        raise ValueError("Columns and values must be of same length.")
+
+    # At least one attribute needs to be specified
+    elif not attributes:
+        raise ValueError("Must specify at least one attribute")
+
+    # Format columns
+    temp = []  # Temp 
+    for column in columns:
+        temp.append(f"{column} = ?")
+    columns_str = ",".join(temp)
+
+    # Selection statements
+    selection = []
+    # Loop through attributes and add parameterised statements
+    for attribute in attributes:
+        selection.append(f"{attribute} = ?")
+    selection = (" OR ", " AND ")[or_and].join(selection)
+
+    query = f"""UPDATE {table} SET {columns_str} WHERE {selection};"""
+
+    params = tuple(values) + tuple(attributes.values())
+
+    execute_db(query, params)
+
+
+def create_customer(user_id, username, email, password) -> None:
     """ Creates a new customer account in the database """
 
     # Insert user data into Users table
-    query = f"""INSERT INTO Users VALUES (?, ?, ?, ?, NULL, 0);"""
-    execute_db(query, (user_id, username, email, password))
+    insert_row("Users", (user_id, username, email, password, None, 0))
 
     # Insert customer details into Customers table
-    query = f"""INSERT INTO Customers (user_id) VALUES (?);"""
-    execute_db(query, (user_id,))
+    insert_row("Customers", (user_id,), ("user_id",))
 
 
 def _exists(table, **kwargs):
@@ -168,6 +213,7 @@ def retrieve_user(user_id):
     user_data = cur.execute(query, (user_id,)).fetchone()
     con.close()
 
+    user_data = retrieve_db("Users", user_id=user_id)
     # Returns a tuple if found else None
     return user_data
 
@@ -178,7 +224,7 @@ def retrieve_customer_details(user_id: str):
     # Retrieve customer details from database
     customer_details = retrieve_db(
         "Customers",
-        "name", "credit_card_no", "address", "phone_no",
+        columns=("name", "credit_card_no", "address", "phone_no"),
         user_id=user_id
     )
 
@@ -204,6 +250,14 @@ def update_customer_account(details1, details2):
 
 def retrieve_books_by_language(book_language):
     return retrieve_db("Books", language=book_language)
+
+
+""" Customer-triggered Fuctions """
+
+
+def change_password(user_id: str, password: str) -> None:
+    """ Updates user's password to new value """
+    update_rows("Users", ("password"), (password,), user_id=user_id)
 
 
 """ Admin Functions """
@@ -251,7 +305,7 @@ def retrieve_these_customers(limit:int, offset: int):
 
 def number_of_customers() -> int:
     """ Returns count of number of customers """
-    return retrieve_db("Customers", "COUNT(*)")[0][0]
+    return retrieve_db("Customers", columns=("COUNT(*)",))[0][0]
 
 
 def delete_customer(user_id: str):
@@ -333,4 +387,4 @@ def get_shopping_cart(user_id):
 
 """ Royston :D """
 
-# Nothing here yet?
+# Nothing here for now...?
