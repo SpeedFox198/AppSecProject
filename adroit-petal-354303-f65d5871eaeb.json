@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "adroit-petal-354303",
+  "private_key_id": "f65d5871eaebe8e0f5223e4073e30c22ca9402ae",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC6PbJ9vHWB2W09\nMbsjBy7W/DHDY9Sk08iNxXxPbgZ1uiME4NbB/s4Kha7b4qT9oBcOGR5jlVRb1PQ6\nZoQw1bpkRFUDJukjZWUn4rIo1IjwRLkPVQZNcTg7UU68UnohazG0z6vVpc/Xl1Rh\nHXE9L4tXibfzjc9Pl/vPX4cLdId32io3MR0uejJRSKC31+WWonlkfX+ZFF3U6vQV\nzQO1x8Xu7pUzip/LPVv7OKVk9/V80TLu53n9BqZ9x6lSf5QlpABfmlG0fBMc8InA\nPVzUaidilabQPMZRfJBGjkBO8kExvWh/OTxbzN9kpbCNaURLw/zar8G8nntrVnAl\nW5OLvljfAgMBAAECggEAAscfzetNL2IgVHzU5zlYtAEv9tOa3NiB0ceDyqV/+CqO\nEikOWvdjeFm1GXeAcX39SgsK3n5gMzxyZhqYVygg7xTr1a+zY4FEKHujn6NH5ZmI\nzxc8EFSje5MDYyCxzKTOKX29eOLPvk32BrrLMRfv8p7NvRa85FmGennYyE11Jc73\nLZfETQGxL4iMHdbxouYfXxUUV38HqtsI8bhdiJ5As985CfadOOl7fsW7gmUwNNYd\nsvZ9tuyYgKyDHPeWKOB4k8kU8p0ReJ1UKtfqpOkXA0djkl9yFsH8vmWop5k+poVd\n9ejO+V7ih7Dj095tLu2aJa4huJygbd2Ya4YGV/ZeWQKBgQDxBYEa5Kc2wrSfNxnR\n7BHogDjg58NZpldtDXOUIUtq8cH2G5XaOi5T0uBM9NhT9lNGZgXo7rzKi4dnkt0m\nSk+Uw79qIk0d73jl2bwf7XwjDf9tW/LWM8bVAMOOPflT/UeDAZiPRpkHYXdNsAtW\nw2wJIvTm7wiWyc6seZCSZZVU2QKBgQDF0Ku3Lz5wbtP/1IhDoj9O+NboIjnLxii6\nS/eu9lvL9oP8aNdCnQ1alkfFvqO6qRu0eBH4ZQZPXs01+AUhIb6hOsg/xxTgkjeq\nJAcReSKtapyMiV3aEFVay6T4L6PgkILdbjyIXvZTNoh47UabExJmWkrKXvnLXEDY\n+/JSu2IodwKBgCWkAWysxvyDXef7l/mzz3wrAjcFmvmWQ9MRJbq9lGSoSu1fk4CY\nU4Hdzg/WsS4zqv+0kTm2hx9uuP/Q7N68/j6yb2No5fhF3PCwl3O5CAkFd52hnYQc\nY/ICA4hkX1rhlFh+WFAP63g+nX4xfyPWszmeDvc9326FJ9TBy3VBjhfJAoGAcnc8\nViUFaYQIMtql+xUQsz71BKCBdzP0b1D0Qw8VsWG1oEJ+hXJhvtCFOZ0GG0Yt3PE5\n3NWAoD8IWjlppnFjYOKl65nkr8qMYWy1llvVQCoX6o62ey/GZGLA1Eik+JZG06Et\nb/Abc61zrR4IJEYV+Jo4+v+YZh+8+pJX952swCMCgYBf1qTVkX7iwiT1A62q2b4/\nNI1OJLhvHo1EhIXLqGUzZ0asVUV28kKQyvVn8k0ZBoOpIqd6bLHJh0fJm6gU/CgD\npGNeMU82fjLXtO3kFnCncmWraTYvH1hu6DrjJnP0CzoymQmgwlNYFGHOxSeT1VA2\nGrdz82agF3J4T/HH0m48Dw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "bras-basah-test-account@adroit-petal-354303.iam.gserviceaccount.com",
+  "client_id": "114078930260487590997",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/bras-basah-test-account%40adroit-petal-354303.iam.gserviceaccount.com"
+}
