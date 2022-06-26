@@ -174,7 +174,7 @@ def create_customer(user_id, username, email, password) -> None:
     insert_row("Customers", (user_id,), ("user_id",))
 
 
-def _exists(table, **attributes):
+def _exists(table: str, **attributes) -> bool:
     """ Checks if attribute value pair exists in the table """
 
     # Can't check if exists if there's no attribute
@@ -185,22 +185,22 @@ def _exists(table, **attributes):
     return bool(retrieve_db(table, **attributes))
 
 
-def email_exists(email):
+def email_exists(email: str) -> bool:
     """ Checks if email exists """
     return _exists("Users", email=email)
 
 
-def username_exists(username):
+def username_exists(username: str) -> bool:
     """ Checks if username exists """
     return _exists("Users", username=username)
 
 
-def admin_exists():
+def admin_exists() -> bool:
     """ Checks if admin account exists """
     return username_exists("admin")
 
 
-def user_auth(username, password) -> Union[list, None]:
+def user_auth(username: str, password: str) -> Union[list, None]:
     """ Authenticates password for username/email """
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
@@ -211,7 +211,7 @@ def user_auth(username, password) -> Union[list, None]:
     return user_data
 
 
-def retrieve_user(user_id):
+def retrieve_user(user_id: str) -> Union[tuple, None]:
     """ Returns user_data using user_id """
     user_data = retrieve_db("Users", user_id=user_id)
 
@@ -220,7 +220,7 @@ def retrieve_user(user_id):
         return user_data[0]
 
 
-def retrieve_customer_details(user_id: str):
+def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
     """ Returns details of customer """
 
     # Retrieve customer details from database
@@ -235,7 +235,8 @@ def retrieve_customer_details(user_id: str):
         return customer_details[0]
 
 
-def create_admin(admin_id, username, email, password):
+def create_admin(admin_id: str, username: str, email: str, password: str) -> None:
+    """ Creates an admin account """
     insert_row("Users", (admin_id, username, email, password, None, 1))
 
 
@@ -300,7 +301,7 @@ def delete_book(id_of_book: str):
     con.close()
 
 
-def retrieve_these_customers(limit:int, offset: int):
+def retrieve_these_customers(limit:int, offset: int) -> list[tuple]:
     """ Retrieves and returns a list of max 10 customers starting from offset """
     return retrieve_db("Users NATURAL JOIN Customers", limit=limit, offset=offset, is_admin=0)
 
@@ -310,7 +311,7 @@ def number_of_customers() -> int:
     return retrieve_db("Customers", columns=("COUNT(*)",))[0][0]
 
 
-def delete_customer(user_id: str):
+def delete_customer(user_id: str) -> Union[tuple, None]:
     """ Deletes and returns customer from database """
     customer_data = retrieve_user(user_id)
     if customer_data:
@@ -386,7 +387,3 @@ def get_shopping_cart(user_id):
 
 
 """ End of Shopping Cart functions """
-
-""" Royston :D """
-
-# Nothing here for now...?
