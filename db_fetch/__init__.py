@@ -200,7 +200,7 @@ def admin_exists() -> bool:
     return username_exists("admin")
 
 
-def user_auth(username: str, password: str) -> Union[list, None]:
+def user_auth(username: str, password: str) -> Union[tuple, None]:
     """ Authenticates password for username/email """
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
