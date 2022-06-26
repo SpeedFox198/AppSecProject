@@ -213,15 +213,11 @@ def user_auth(username, password) -> Union[list, None]:
 
 def retrieve_user(user_id):
     """ Returns user_data using user_id """
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE user_id = ?;"""
-    user_data = cur.execute(query, (user_id,)).fetchone()
-    con.close()
-
     user_data = retrieve_db("Users", user_id=user_id)
+
     # Returns a tuple if found else None
-    return user_data
+    if user_data:
+        return user_data[0]
 
 
 def retrieve_customer_details(user_id: str):
