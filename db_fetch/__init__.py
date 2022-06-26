@@ -110,7 +110,7 @@ def delete_rows(table: str, or_and: int=0, **attributes) -> None:
 
     # At least one attribute needs to be specified
     if not attributes:
-        raise ValueError("Must specify at least one attribute")
+        raise TypeError("Must specify at least one attribute")
 
     # Selection statements
     selection = []
@@ -133,15 +133,15 @@ def update_rows(table: str, columns: list[str], values: list, or_and: int=0, **a
 
     # At least one column should be updated
     if not columns:
-        raise ValueError("Must specify at least column to be updated.")
+        raise ValueError("Must specify at least column to be updated")
 
     # Each column needs a corresponding value
     elif len(columns) != len(values):
-        raise ValueError("Columns and values must be of same length.")
+        raise ValueError("Columns and values must be of same length")
 
     # At least one attribute needs to be specified
     elif not attributes:
-        raise ValueError("Must specify at least one attribute")
+        raise TypeError("Must specify at least one attribute")
 
     # Format columns
     temp = []  # Temp 
@@ -177,7 +177,8 @@ def _exists(table, **kwargs):
     """ Checks if attribute value pair exists in the table """
 
     # Can't check if exists if there's no attribute
-    assert kwargs, "Must check at least one attribute"
+    if not kwargs:
+        raise TypeError("Must check at least one attribute")
 
     # Return True non-empty tuple is return
     return bool(retrieve_db(table, **kwargs))
