@@ -39,7 +39,6 @@ limiter = Limiter(
     default_limits=["30 per second"]
 )
 
-
 def get_user():
     """ Returns user if cookie is correct, else returns None """
 
@@ -1039,14 +1038,15 @@ def manage_orders():
 
 
 @app.route('/book/<int:id>', methods=['GET', 'POST'])
-def book_info2(book_id):
+def book_info2(id):
 
     # Get book details
-    book:Book = dbf.retrieve_book(book_id)
+    book:Book = dbf.retrieve_book(id)[0]
     print(book)
 
     # Get specified book
-    if not dbf.retrieve_book(book_id):
+    if not dbf.retrieve_book(id)[0]:
+        print(book)
         abort(404)
 
     currentbook = []
