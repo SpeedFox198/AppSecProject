@@ -1,4 +1,5 @@
 from contextlib import closing
+from typing import Union
 import sqlite3
 
 DATABASE = r"database.db"
@@ -7,7 +8,7 @@ DATABASE = r"database.db"
 """ General Operations Functions """
 
 
-def execute_db(query: str, parameters) -> list[tuple]:
+def execute_db(query: str, parameters, fetchone=False) -> Union[list[tuple], tuple, None]:
     """ Execute sql query with parameters """
 
     # Ensure that query statement ends properly
@@ -21,7 +22,12 @@ def execute_db(query: str, parameters) -> list[tuple]:
             cursor = connection.cursor()
 
             # Execute parameterised queries
-            data = cursor.execute(query, parameters).fetchall()
+            retrieved = cursor.execute(query, parameters)
+
+            if fetchone:
+                data = retrieved.fetchone()
+            else:
+                data = retrieved.fetchall()
 
             # Return fetched data (if any)
             return data
@@ -30,7 +36,7 @@ def execute_db(query: str, parameters) -> list[tuple]:
     raise RuntimeError("Unknown critical error!")
 
 
-def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, offset: int=0, **attributes) -> list[tuple]:
+def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, offset: int=0, fetchone=False, **attributes) -> Union[list[tuple], tuple, None]:
     """
     Retrieve rows from table
 
@@ -40,10 +46,11 @@ def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, off
         or_and (:obj:`int`, optional): 0 for OR, 1 for AND.
         limit (:obj:`int`, optional): Limits the number of rows retrieved
         offset (:obj:`int`, optional): Offset of index to start retrieving from
+        fetchone (:obj:`bool`, optional): Fetches one row only if set to True
         **attributes: Attributes to be selected.
 
     Returns:
-        list[tuple]: A list of retrieved rows
+        list[tuple] | tuple | None: Data retrieved
     """
 
     # Default values of statements
@@ -80,7 +87,7 @@ def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, off
     query = f"""SELECT {projection} FROM {table} {selection} {limit_offset};"""
 
     # Fetch and return results of the query
-    return execute_db(query, tuple(attributes.values()))
+    return execute_db(query, tuple(attributes.values()), fetchone)
 
 
 def insert_row(table: str, values: list, columns: list=None) -> None:
@@ -110,7 +117,7 @@ def delete_rows(table: str, or_and: int=0, **attributes) -> None:
 
     # At least one attribute needs to be specified
     if not attributes:
-        raise ValueError("Must specify at least one attribute")
+        raise TypeError("Must specify at least one attribute")
 
     # Selection statements
     selection = []
@@ -133,15 +140,15 @@ def update_rows(table: str, columns: list[str], values: list, or_and: int=0, **a
 
     # At least one column should be updated
     if not columns:
-        raise ValueError("Must specify at least column to be updated.")
+        raise ValueError("Must specify at least column to be updated")
 
     # Each column needs a corresponding value
     elif len(columns) != len(values):
-        raise ValueError("Columns and values must be of same length.")
+        raise ValueError("Columns and values must be of same length")
 
     # At least one attribute needs to be specified
     elif not attributes:
-        raise ValueError("Must specify at least one attribute")
+        raise TypeError("Must specify at least one attribute")
 
     # Format columns
     temp = []  # Temp 
@@ -173,75 +180,66 @@ def create_customer(user_id, username, email, password) -> None:
     insert_row("Customers", (user_id,), ("user_id",))
 
 
-def _exists(table, **kwargs):
+def _exists(table: str, **attributes) -> bool:
     """ Checks if attribute value pair exists in the table """
 
     # Can't check if exists if there's no attribute
-    assert kwargs, "Must check at least one attribute"
+    if not attributes:
+        raise TypeError("Must check at least one attribute")
 
     # Return True non-empty tuple is return
-    return bool(retrieve_db(table, **kwargs))
+    return bool(retrieve_db(table, **attributes))
 
 
-def email_exists(email):
+def email_exists(email: str) -> bool:
+    """ Checks if email exists """
     return _exists("Users", email=email)
 
 
-def username_exists(username):
+def username_exists(username: str) -> bool:
+    """ Checks if username exists """
     return _exists("Users", username=username)
 
 
-def admin_exists():
+def admin_exists() -> bool:
+    """ Checks if admin account exists """
     return username_exists("admin")
 
 
-def user_auth(username, password):
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE (username = ? OR email = ?) AND password = ?;"""
-    creds = (username, username, password)  # 2 usernames looks odd, but it's needed for username and email lol
-    user_data = cur.execute(query, creds).fetchone()
-    con.close()
-    return user_data
-
-
-def retrieve_user(user_id):
-    """ Returns user_data using user_id """
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = f"""SELECT * FROM Users WHERE user_id = ?;"""
-    user_data = cur.execute(query, (user_id,)).fetchone()
-    con.close()
-
-    user_data = retrieve_db("Users", user_id=user_id)
-    # Returns a tuple if found else None
-    return user_data
-
-
-def retrieve_customer_details(user_id: str):
-    """ Returns details of customer """
-
-    # Retrieve customer details from database
-    customer_details = retrieve_db(
-        "Customers",
-        columns=("name", "credit_card_no", "address", "phone_no"),
-        user_id=user_id
+def user_auth(username: str, password: str) -> Union[tuple, None]:
+    """ Authenticates password for username/email """
+    return execute_db(
+        """SELECT * FROM Users WHERE (username = ? OR email = ?) AND password = ?;""",
+        (username, username, password),  # 2 usernames looks odd, but it's needed for username and email lol
+        fetchone=True
     )
 
-    # Returns a tuple if found else None
-    if customer_details:
-        return customer_details[0]
+
+def retrieve_user(user_id: str) -> Union[tuple, None]:
+    """ Returns user_data using user_id """
+    return retrieve_db("Users", user_id=user_id, fetchone=True)
 
 
-def create_admin(admin_id, username, email, password):
+def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
+    """ Returns details of customer """
+    return retrieve_db(
+        "Customers",
+        columns=("name", "credit_card_no", "address", "phone_no"),
+        user_id=user_id,
+        fetchone=True
+    )
+
+
+def create_admin(admin_id: str, username: str, email: str, password: str) -> None:
+    """ Creates an admin account """
     insert_row("Users", (admin_id, username, email, password, None, 1))
 
 
 def update_customer_account(details1, details2):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    query = f"""UPDATE Customers SET name = ?, phone_no = ? where user_id = ?;"""
-    query2 = f"""UPDATE Users SET profile_pic = ? where user_id = ?;"""
+    query = """UPDATE Customers SET name = ?, phone_no = ? where user_id = ?;"""
+    query2 = """UPDATE Users SET profile_pic = ? where user_id = ?;"""
     cur.execute(query, details1)
     cur.execute(query2, details2)
     con.commit()
@@ -298,7 +296,7 @@ def delete_book(id_of_book: str):
     con.close()
 
 
-def retrieve_these_customers(limit:int, offset: int):
+def retrieve_these_customers(limit:int, offset: int) -> list[tuple]:
     """ Retrieves and returns a list of max 10 customers starting from offset """
     return retrieve_db("Users NATURAL JOIN Customers", limit=limit, offset=offset, is_admin=0)
 
@@ -308,7 +306,7 @@ def number_of_customers() -> int:
     return retrieve_db("Customers", columns=("COUNT(*)",))[0][0]
 
 
-def delete_customer(user_id: str):
+def delete_customer(user_id: str) -> Union[tuple, None]:
     """ Deletes and returns customer from database """
     customer_data = retrieve_user(user_id)
     if customer_data:
@@ -384,7 +382,3 @@ def get_shopping_cart(user_id):
 
 
 """ End of Shopping Cart functions """
-
-""" Royston :D """
-
-# Nothing here for now...?

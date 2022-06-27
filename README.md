@@ -36,6 +36,10 @@ Our web application is an online bookstore. It provides the service of purchasin
 **7. argon2-cffi** | `pip install argon2-cffi`  
 **8. stripe** | `pip install stripe`  
 **9. Pillow** | `pip install pillow`  
+**10. google-api-python-client** | `pip install google-api-python-client`  
+**11. google-auth-httplib2** | `pip install google-auth-httplib2`  
+**12. google-auth-oauthlib** | `pip install google-auth-oauthlib`  
+**13. google-auth** | `pip install google-auth`  
 
 You may install all using: `pip3 install -r requirements.txt`
 
