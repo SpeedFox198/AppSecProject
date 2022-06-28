@@ -13,6 +13,8 @@ import os  # For saving and deleting images
 from PIL import Image
 from Book import Book
 from math import ceil
+from OTP import generateOTP
+from GoogleEmailSend import gmail_send
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -194,15 +196,31 @@ def sign_up():
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
-        # Create new customer
-        user_id = generate_uuid5(username)  # Generate new unique user id for customer
-        dbf.create_customer(user_id, username, email, password)
+        #generateOTP
 
-        # Create new user session to login (placeholder values were used to create user object)
-        flask_global.user = User(user_id, "", "", "", "", 0)
+        oneTimePass = generateOTP()
+        print(oneTimePass)
+        # Send email with OTP
+        subject = "OTP for registration"
+        message = "Do not reply to this email. Please enter" + oneTimePass + " as your OTP to complete your registration."
+        gmail_send(email, subject, message)
 
-        # Return redirect with session cookie
-        return redirect(url_for("verify_send"))
+        OTPinput = request.form.get("OTP")
+
+        if oneTimePass == OTPinput:
+            # Create new customer
+            user_id = generate_uuid5(username)  # Generate new unique user id for customer
+            dbf.create_customer(user_id, username, email, password)
+
+            # Create new user session to login (placeholder values were used to create user object)
+            flask_global.user = User(user_id, "", "", "", "", 0)
+
+            # Return redirect with session cookie
+            return redirect(url_for("verify_send"))
+        else:
+            errors["DisplayFieldError"] = errors["SignUpOTPError"] = True
+            flash("OTP incorrect", "sign-up-otp-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
 
     # Render page
     return render_template("user/sign_up.html", form=sign_up_form)
