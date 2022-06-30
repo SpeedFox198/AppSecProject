@@ -1,11 +1,6 @@
 from flask import (
-<<<<<<< Updated upstream
     Flask, render_template, request, redirect, url_for, flash,
-    make_response, g as flask_global, abort, jsonify, Response
-=======
-    Flask, render_template, request, redirect, url_for, flash, session,
-    make_response, g as flask_global, abort
->>>>>>> Stashed changes
+    make_response, g as flask_global, abort, jsonify, session  # TODO: session to be removed
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
