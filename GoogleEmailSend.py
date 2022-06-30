@@ -42,6 +42,3 @@ def gmail_send(email, subject, content):
         print(F'An error occurred: {error}')
         send_message = None
     return send_message
-
-if __name__ == '__main__':
-    gmail_send()

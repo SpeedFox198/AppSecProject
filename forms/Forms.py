@@ -39,11 +39,11 @@ class SignUpForm(Form):
                                                  validators.Length(min=8, max=80, message=""),
                                                  validators.EqualTo("password", message="Password entered is different")])
 
-class OTP(Form):
+class OTPForm(Form):
     """ OTP form used when signing up """
 
     # OTP
-    otp = StringField("OTP", [validators.InputRequired(message=""),
+    otp = StringField("Enter your OTP", [validators.InputRequired(message=""),
                               validators.Length(min=6, max=6, message="")])
 
 class LoginForm(Form):
