@@ -1,6 +1,6 @@
 from flask import (
     Flask, render_template, request, redirect, url_for, flash,
-    make_response, g as flask_global, abort
+    make_response, g as flask_global, abort, jsonify, Response
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -100,9 +100,12 @@ def before_request():
 def after_request(response):
     user:User = flask_global.user
 
+    # Only renew session if login
     if isinstance(user, User):
         renewed_session = create_user_session(user.user_id, user.is_admin)
         response.set_cookie(SESSION_NAME, renewed_session)
+
+    # Default log user out
     else:
         # Remove session cookie
         response.set_cookie(SESSION_NAME, "", expires=0)
@@ -198,29 +201,29 @@ def sign_up():
 
         #generateOTP
 
-        #oneTimePass = generateOTP()
-        #print(oneTimePass)
+        oneTimePass = generateOTP()
+        print(oneTimePass)
         # Send email with OTP
-        #subject = "OTP for registration"
-        #message = "Do not reply to this email. Please enter" + oneTimePass + " as your OTP to complete your registration."
-        #gmail_send(email, subject, message)
+        subject = "OTP for registration"
+        message = "Do not reply to this email.\n Please enter " + oneTimePass + " as your OTP to complete your registration."
+        gmail_send(email, subject, message)
 
-        #OTPinput = request.form.get("OTP")
+        OTPinput = request.form.get("OTP")
 
-        #if oneTimePass == OTPinput:
+        if oneTimePass == OTPinput:
             # Create new customer
-            #user_id = generate_uuid5(username)  # Generate new unique user id for customer
-            #dbf.create_customer(user_id, username, email, password)
+            user_id = generate_uuid5(username)  # Generate new unique user id for customer
+            dbf.create_customer(user_id, username, email, password)
 
             # Create new user session to login (placeholder values were used to create user object)
-            #flask_global.user = User(user_id, "", "", "", "", 0)
+            flask_global.user = User(user_id, "", "", "", "", 0)
 
             # Return redirect with session cookie
-            #return redirect(url_for("verify_send"))
-        #else:
-            #errors["DisplayFieldError"] = errors["SignUpOTPError"] = True
-            #flash("OTP incorrect", "sign-up-otp-error")
-            #return render_template("user/sign_up.html", form=sign_up_form)
+            return redirect(url_for("verify_send"))
+        else:
+            errors["DisplayFieldError"] = errors["SignUpOTPError"] = True
+            flash("OTP incorrect", "sign-up-otp-error")
+            return render_template("user/sign_up.html", form=sign_up_form)
 
     # Render page
     return render_template("user/sign_up.html", form=sign_up_form)
@@ -424,6 +427,7 @@ def password_change():
     if request.method == "POST":
         if not change_password_form.validate():
             errors["DisplayFieldError"] = True
+
         else:
             # Extract data from sign up form
             current_password = change_password_form.current_password.data
@@ -431,7 +435,8 @@ def password_change():
 
             # Password (current) was incorrect, disallow change
             if not dbf.user_auth(user.username, current_password):
-                flash("Your password is incorrect, please try again", "form-error")
+                errors["CurrentPasswordError"] = True
+                flash("Your password is incorrect, please try again", "current-password-error")
 
             # Password (current) was correct, change to new password
             else:
@@ -448,7 +453,9 @@ def password_change():
     return render_template("user/password/password_change.html", form=change_password_form)
 
 
-#Needs to be changed
+# Needs to be changed
+# TODO: needs to change
+# NOTE: sending email is done by Royston
 """Verification page in case"""
 # Send verification link page
 @app.route("/user/verify")
@@ -770,7 +777,7 @@ def account():
     account_page_form.phone_number.data = user.phone_no
     return render_template("user/account.html",
                            form=account_page_form,
-                           display_name=user.name,
+                           display_name=user.display_name,
                            picture_path=user.profile_pic,
                            username=user.username,
                            email=user.email,
@@ -1250,7 +1257,6 @@ def add_to_cart(book_id):
         if buying_quantity < 1:
             buying_quantity = 1
         
-        
         if book_id == dbf.retrieve_db("Books", book_id="book_id"):
             # if book_id is found
             # Checking if book_id is already in cart
@@ -1278,75 +1284,55 @@ def add_to_cart(book_id):
 """ View Shopping Cart"""
 
 
-@app.route('/cart')
+@app.route('/shopping-cart')
 @limiter.limit("100/minute", override_defaults=False)
 def cart():
-
-    # User is a Class
-    user:User = flask_global.user
-
-    if user is None or not user.is_admin:
-        abort(403)
-
-    # Get user_id
-    user_id = user.get_user_id()
-
-    # Get cart items
-    cart_items = dbf.get_shopping_cart(user_id)
-    buy_count = len(cart_items)
-
-    # Get total price
+    user_id = get_user().get_user_id()
+    cart_dict = {}
+    books_dict = {}
+    cart_db = None  # shelve.open('database', 'c')
+    book_db = None  # shelve.open('database')
+    try:
+        books_dict = book_db['Books']
+        book_db.close()
+    except:
+        print("There is no books in the database currently.")
+    buy_count = 0
+    rent_count = 0
     total_price = 0
-    for book_id, quantity in cart_items:
-        total_price += dbf.retrieve_book(book_id).get_price() * quantity
+    buy_cart = {}
+    rent_cart = []
+    try:
+        cart_dict = cart_db['Cart']
+        print(cart_dict)
+        books_dict = book_db['Books']
+        book_db.close()
+    except:
+        print("Error while retrieving data from cart.db")
 
-    return render_template('cart.html', cart_items=cart_items, buy_count=buy_count, total_price=total_price)
-    # user_id = get_user().get_user_id()
-    # cart_dict = {}
-    # books_dict = {}
-    # cart_db = None  # shelve.open('database', 'c')
-    # book_db = None  # shelve.open('database')
-    # try:
-    #     books_dict = book_db['Books']
-    #     book_db.close()
-    # except:
-    #     print("There is no books in the database currently.")
-    # buy_count = 0
-    # rent_count = 0
-    # total_price = 0
-    # buy_cart = {}
-    # rent_cart = []
-    # try:
-    #     cart_dict = cart_db['Cart']
-    #     print(cart_dict)
-    #     books_dict = book_db['Books']
-    #     book_db.close()
-    # except:
-    #     print("Error while retrieving data from cart.db")
+    if user_id in cart_dict:
+        user_cart = cart_dict[user_id]
+        if user_cart[0] == '':
+            print('This user has nothing in the buying cart')
+        else:
+            buy_cart = user_cart[0]
+            # buy_count = len(user_cart[0])
+            for key in buy_cart:
+                buy_count += buy_cart[key]
+                total_price = float(total_price)
+                total_price += float(buy_cart[key] * books_dict[key].get_price())
+                total_price = float(("%.2f" % round(total_price, 2)))
+        if len(user_cart) == 1:
+            print('This user has nothing in the renting cart')
+        else:
+            rent_cart = user_cart[1]
+            rent_count = len(user_cart[1])
+            for book in rent_cart:
+                total_price += float(books_dict[book].get_price()) * 0.1
+                total_price = float(("%.2f" % round(total_price, 2)))
+    return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
+                           rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
 
-    # if user_id in cart_dict:
-    #     user_cart = cart_dict[user_id]
-    #     if user_cart[0] == '':
-    #         print('This user has nothing in the buying cart')
-    #     else:
-    #         buy_cart = user_cart[0]
-    #         # buy_count = len(user_cart[0])
-    #         for key in buy_cart:
-    #             buy_count += buy_cart[key]
-    #             total_price = float(total_price)
-    #             total_price += float(buy_cart[key] * books_dict[key].get_price())
-    #             total_price = float(("%.2f" % round(total_price, 2)))
-    #     if len(user_cart) == 1:
-    #         print('This user has nothing in the renting cart')
-    #     else:
-    #         rent_cart = user_cart[1]
-    #         rent_count = len(user_cart[1])
-    #         for book in rent_cart:
-    #             total_price += float(books_dict[book].get_price()) * 0.1
-    #             total_price = float(("%.2f" % round(total_price, 2)))
-
-    # return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
-    #                        rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
 
 """ Update Shopping Cart """
 @app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
@@ -1455,6 +1441,74 @@ def my_orders():
 @app.route("/home2")
 def about():
     return render_template("about.html")
+
+
+""" API Routes"""
+
+
+@app.route('/api', methods=["GET"])
+def api_home():
+    return jsonify(message="BrasBasahBooks API")
+
+
+@app.route('/api/login', methods=["POST"])
+def api_login():
+    username = request.json.get("username")
+    password = request.json.get("password")
+
+    if username is None:
+        return jsonify(message="Please enter a username or email"), 400
+    if password is None:
+        return jsonify(message="Please enter a password"), 400
+
+    user_data = dbf.user_auth(username, password)
+    if user_data is None:
+        return jsonify(message="Your username and/or password is incorrect, please try again"), 400
+
+    user = User(*user_data)
+    flask_global.user = user
+
+    return jsonify(message="Login success!")
+
+
+@app.route('/api/books/all', methods=["GET"])
+def api_all_books():
+    books_data = dbf.retrieve_inventory()
+    if not books_data:
+        return jsonify(message="There are no books."), 404
+
+    output = [dict(book_id=row[0],
+                   language=row[1],
+                   genre=row[2],
+                   title=row[3],
+                   quantity=row[4],
+                   price=row[5],
+                   author=row[6],
+                   description=row[7],
+                   image=row[8]
+                   )
+              for row in books_data]
+    return jsonify(output)
+
+
+@app.route('/api/books/<book_id>', methods=["GET"])
+def api_single_book(book_id):
+    if request.method == "GET":
+        book_data = dbf.retrieve_book(book_id)
+        if not book_data:
+            return jsonify(message=f"There are no such books with id of {book_id}"), 404
+
+        output = dict(book_id=book_data[0],
+                      language=book_data[1],
+                      genre=book_data[2],
+                      title=book_data[3],
+                      quantity=book_data[4],
+                      price=book_data[5],
+                      author=book_data[6],
+                      description=book_data[7],
+                      image=book_data[8]
+                      )
+        return jsonify(output)
 
 
 """    Error Handlers    """

@@ -1,19 +1,11 @@
-from __future__ import print_function
-
 import base64
 from email.message import EmailMessage
 
-import google.auth
+from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-import os.path
+from Google import get_service
 
 def gmail_send(email, subject, content):
     """Create and send an email message
@@ -24,10 +16,9 @@ def gmail_send(email, subject, content):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    creds, _ = google.auth.default()
+    service = get_service()
 
     try:
-        service = build('gmail', 'v1', credentials=creds)
         message = EmailMessage()
 
         message.set_content(content)
@@ -51,3 +42,6 @@ def gmail_send(email, subject, content):
         print(F'An error occurred: {error}')
         send_message = None
     return send_message
+
+if __name__ == '__main__':
+    gmail_send()

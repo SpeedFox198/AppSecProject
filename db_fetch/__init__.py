@@ -255,7 +255,7 @@ def retrieve_books_by_language(book_language):
 
 def change_password(user_id: str, password: str) -> None:
     """ Updates user's password to new value """
-    update_rows("Users", ("password"), (password,), user_id=user_id)
+    update_rows("Users", ("password",), (password,), user_id=user_id)
 
 
 """ Admin Functions """
@@ -275,7 +275,7 @@ def book_add(details: tuple):
 
 
 def retrieve_book(id_of_book):
-    return retrieve_db("Books", book_id=id_of_book)
+    return retrieve_db("Books", book_id=id_of_book, fetchone=True)
 
 
 def book_update(details: tuple):
