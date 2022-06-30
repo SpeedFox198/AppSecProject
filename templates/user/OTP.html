@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/css/login.css">
+<link rel="stylesheet" href="/static/css/OTP.css">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'includes/_login_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+{% from "includes/_login_render_field.html" import render_field %}
+{# Displays flash sign up error #}
+
+<div class="box">
+    <h2>OTP</h2>
+    <div>
+        <form method="POST">
+            {{ render_field(form.otp, class="form-control") }}
+            <button type="submit" class="btn btn-primary mb-2" style="margin-top:20px;">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+{% endblock %}
