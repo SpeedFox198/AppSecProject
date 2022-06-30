@@ -255,7 +255,7 @@ def retrieve_books_by_language(book_language):
 
 def change_password(user_id: str, password: str) -> None:
     """ Updates user's password to new value """
-    update_rows("Users", ("password"), (password,), user_id=user_id)
+    update_rows("Users", ("password",), (password,), user_id=user_id)
 
 
 """ Admin Functions """
