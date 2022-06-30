@@ -1,6 +1,6 @@
 from flask import (
     Flask, render_template, request, redirect, url_for, flash,
-    make_response, g as flask_global, abort, jsonify
+    make_response, g as flask_global, abort, jsonify, Response
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -1400,9 +1400,18 @@ def api_home():
     return jsonify(message="BrasBasahBooks API")
 
 
-@app.route('/api/all-books', methods=["GET"])
+@app.route('/api/login', methods=["POST"])
+def api_login():
+    username = request.json.get("username")
+    password = request.json.get("password")
+
+
+@app.route('/api/books/all', methods=["GET"])
 def api_all_books():
     books_data = dbf.retrieve_inventory()
+    if not books_data:
+        return Response("There are no books.", status=404)
+
     output = [dict(book_id=row[0],
                    language=row[1],
                    genre=row[2],
@@ -1415,6 +1424,26 @@ def api_all_books():
                    )
               for row in books_data]
     return jsonify(output)
+
+
+@app.route('/api/books/<book_id>', methods=["GET"])
+def api_single_book(book_id):
+    if request.method == "GET":
+        book_data = dbf.retrieve_book(book_id)
+        if not book_data:
+            return Response(f"There are no such books with id of {book_id}", status=404)
+
+        output = dict(book_id=book_data[0],
+                      language=book_data[1],
+                      genre=book_data[2],
+                      title=book_data[3],
+                      quantity=book_data[4],
+                      price=book_data[5],
+                      author=book_data[6],
+                      description=book_data[7],
+                      image=book_data[8]
+                      )
+        return jsonify(output)
 
 
 """    Error Handlers    """
