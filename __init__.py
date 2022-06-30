@@ -1,6 +1,6 @@
 from flask import (
     Flask, render_template, request, redirect, url_for, flash,
-    make_response, g as flask_global, abort, jsonify
+    make_response, g as flask_global, abort, jsonify, Response
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -1344,6 +1344,52 @@ def cart():
                            rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
 
 
+""" Update Shopping Cart """
+@app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
+@limiter.limit("100/minute", override_defaults=False)
+def update_cart(user_id):
+    # User is a Class
+    user: User = flask_global.user
+
+    if user is None or not user.is_admin:
+        abort(403)
+
+    # get book_id
+    book_id = user.get_book_id()
+
+    # Update quantity
+    book_quantity = int(request.form['quantity'])
+    if book_quantity == 0:
+        # No books in cart, delete cart
+        delete_buying_cart(user_id)
+    else:
+        # update book quantity
+        print('Update book quantity: ', str(book_quantity))
+
+    return redirect(request.referrer)
+    # cart_dict = cart_db['Cart']
+    # buy_cart = cart_dict[user_id][0]
+    # book_quantity = int(request.form['quantity'])
+    # if book_quantity == 0:
+    #     print('Oh no need to delete')
+    #     delete_buying_cart(id)
+    # else:
+    #     buy_cart[id] = book_quantity
+    #     print(buy_cart)
+    #     cart_dict[user_id][0] = buy_cart
+    #     cart_db['Cart'] = cart_dict
+    #     print(cart_dict, 'updated database')
+    #     cart_db.close()
+    # return redirect(request.referrer)
+
+
+""" Delete Cart """
+@app.route("/delete-buying-cart/<user_id>", methods=['GET', 'POST'])
+@limiter.limit("100/minute", override_defaults=False)
+def delete_buying_cart(user_id):
+    dbf.delete_shopping_cart(user_id)
+    return redirect(request.referrer)
+
 """    Order Pages    """
 
 """ Customer Orders Page """
@@ -1415,9 +1461,32 @@ def api_home():
     return jsonify(message="BrasBasahBooks API")
 
 
-@app.route('/api/all-books', methods=["GET"])
+@app.route('/api/login', methods=["POST"])
+def api_login():
+    username = request.json.get("username")
+    password = request.json.get("password")
+
+    if username is None:
+        return jsonify(message="Please enter a username or email"), 400
+    if password is None:
+        return jsonify(message="Please enter a password"), 400
+
+    user_data = dbf.user_auth(username, password)
+    if user_data is None:
+        return jsonify(message="Your username and/or password is incorrect, please try again"), 400
+
+    user = User(*user_data)
+    flask_global.user = user
+
+    return jsonify(message="Login success!")
+
+
+@app.route('/api/books/all', methods=["GET"])
 def api_all_books():
     books_data = dbf.retrieve_inventory()
+    if not books_data:
+        return jsonify(message="There are no books."), 404
+
     output = [dict(book_id=row[0],
                    language=row[1],
                    genre=row[2],
@@ -1430,6 +1499,26 @@ def api_all_books():
                    )
               for row in books_data]
     return jsonify(output)
+
+
+@app.route('/api/books/<book_id>', methods=["GET"])
+def api_single_book(book_id):
+    if request.method == "GET":
+        book_data = dbf.retrieve_book(book_id)
+        if not book_data:
+            return jsonify(message=f"There are no such books with id of {book_id}"), 404
+
+        output = dict(book_id=book_data[0],
+                      language=book_data[1],
+                      genre=book_data[2],
+                      title=book_data[3],
+                      quantity=book_data[4],
+                      price=book_data[5],
+                      author=book_data[6],
+                      description=book_data[7],
+                      image=book_data[8]
+                      )
+        return jsonify(output)
 
 
 """    Error Handlers    """

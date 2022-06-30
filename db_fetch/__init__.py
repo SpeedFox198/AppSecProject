@@ -275,7 +275,7 @@ def book_add(details: tuple):
 
 
 def retrieve_book(id_of_book):
-    return retrieve_db("Books", book_id=id_of_book)
+    return retrieve_db("Books", book_id=id_of_book, fetchone=True)
 
 
 def book_update(details: tuple):
@@ -362,7 +362,7 @@ def add_to_shopping_cart(user_id, book_id, quantity):
     con.commit()
     con.close()
 
-def add_existing_to_shopping_cart(user_id, book_id, quantity):
+def update_shopping_cart(user_id, book_id, quantity):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
     query = f"""UPDATE CartItems SET quantity = quantity + {quantity} WHERE user_id = '{user_id}' AND book_id = '{book_id}';"""
@@ -380,5 +380,12 @@ def get_shopping_cart(user_id):
 
     return cart_data
 
+def delete_shopping_cart(user_id):
+    """ Deletes user's shopping cart"""
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = f"""DELETE FROM CartItems WHERE user_id = '{user_id}';"""
+    cur.execute(query)
+    con.close() 
 
 """ End of Shopping Cart functions """
