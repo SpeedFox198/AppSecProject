@@ -16,9 +16,9 @@ from googleapiclient.errors import HttpError
 import os.path
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
-def main():
+def get_service():
     """Shows basic usage of the Gmail API.
     Lists the user's Gmail labels.
     """
@@ -43,19 +43,10 @@ def main():
     try:
         # Call the Gmail API
         service = build('gmail', 'v1', credentials=creds)
-        results = service.users().labels().list(userId='me').execute()
-        labels = results.get('labels', [])
-
-        if not labels:
-            print('No labels found.')
-            return
-        print('Labels:')
-        for label in labels:
-            print(label['name'])
-
+        return service
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
         print(f'An error occurred: {error}')
 
 if __name__ == '__main__':
-    main()
+    get_service()

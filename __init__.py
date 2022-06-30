@@ -202,7 +202,7 @@ def sign_up():
         print(oneTimePass)
         # Send email with OTP
         subject = "OTP for registration"
-        message = "Do not reply to this email. Please enter" + oneTimePass + " as your OTP to complete your registration."
+        message = "Do not reply to this email.\n Please enter " + oneTimePass + " as your OTP to complete your registration."
         gmail_send(email, subject, message)
 
         OTPinput = request.form.get("OTP")
