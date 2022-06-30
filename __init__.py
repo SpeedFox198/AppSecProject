@@ -1,6 +1,11 @@
 from flask import (
+<<<<<<< Updated upstream
     Flask, render_template, request, redirect, url_for, flash,
     make_response, g as flask_global, abort, jsonify, Response
+=======
+    Flask, render_template, request, redirect, url_for, flash, session,
+    make_response, g as flask_global, abort
+>>>>>>> Stashed changes
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -18,7 +23,7 @@ from GoogleEmailSend import gmail_send
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
-    AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm
+    AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm
 )
 
 # CONSTANTS
@@ -198,18 +203,38 @@ def sign_up():
             errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
-
-        #generateOTP
+        
+        session["Username"] = username
+        session["Email"] = email
+        session["Password"] = password
 
         oneTimePass = generateOTP()
         print(oneTimePass)
         # Send email with OTP
         subject = "OTP for registration"
-        message = "Do not reply to this email.\n Please enter " + oneTimePass + " as your OTP to complete your registration."
+        message = "Do not reply to this email.\nPlease enter " + oneTimePass + " as your OTP to complete your registration."
+
         gmail_send(email, subject, message)
+        session["OTP"] = oneTimePass
+        return redirect(url_for("OTPverification"))
 
-        OTPinput = request.form.get("OTP")
 
+    # Render sign up page
+    return render_template("user/sign_up.html", form=sign_up_form)
+
+@app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
+@limiter.limit("100/minute", override_defaults=False)
+def OTPverification():
+    email = session.get("Email")
+    username = session.get("Username")
+    password = session.get("Password")
+    oneTimePass = session.get("OTP")
+
+    OTPformat = OTPForm(request.form)
+    print(request.method)
+    if request.method == "POST":
+        OTPinput = OTPformat.otp.data
+        print(OTPinput)
         if oneTimePass == OTPinput:
             # Create new customer
             user_id = generate_uuid5(username)  # Generate new unique user id for customer
@@ -218,16 +243,14 @@ def sign_up():
             # Create new user session to login (placeholder values were used to create user object)
             flask_global.user = User(user_id, "", "", "", "", 0)
 
-            # Return redirect with session cookie
-            return redirect(url_for("verify_send"))
+            #Return redirect with session cookie
+            return redirect(url_for("home"))
+
         else:
-            errors["DisplayFieldError"] = errors["SignUpOTPError"] = True
-            flash("OTP incorrect", "sign-up-otp-error")
-            return render_template("user/sign_up.html", form=sign_up_form)
-
-    # Render page
-    return render_template("user/sign_up.html", form=sign_up_form)
-
+            flash("Invalid OTP Entered! Please try again!")
+            return redirect(url_for("OTPverification"))
+    else:
+        return render_template("user/OTP.html", form=OTPformat)
 
 """ Login page """
 
@@ -1267,6 +1290,7 @@ def add_to_cart(book_id):
         if buying_quantity < 1:
             buying_quantity = 1
         
+        
         if book_id == dbf.retrieve_db("Books", book_id="book_id"):
             # if book_id is found
             # Checking if book_id is already in cart
@@ -1294,55 +1318,75 @@ def add_to_cart(book_id):
 """ View Shopping Cart"""
 
 
-@app.route('/shopping-cart')
+@app.route('/cart')
 @limiter.limit("100/minute", override_defaults=False)
 def cart():
-    user_id = get_user().get_user_id()
-    cart_dict = {}
-    books_dict = {}
-    cart_db = None  # shelve.open('database', 'c')
-    book_db = None  # shelve.open('database')
-    try:
-        books_dict = book_db['Books']
-        book_db.close()
-    except:
-        print("There is no books in the database currently.")
-    buy_count = 0
-    rent_count = 0
+
+    # User is a Class
+    user:User = flask_global.user
+
+    if user is None or not user.is_admin:
+        abort(403)
+
+    # Get user_id
+    user_id = user.get_user_id()
+
+    # Get cart items
+    cart_items = dbf.get_shopping_cart(user_id)
+    buy_count = len(cart_items)
+
+    # Get total price
     total_price = 0
-    buy_cart = {}
-    rent_cart = []
-    try:
-        cart_dict = cart_db['Cart']
-        print(cart_dict)
-        books_dict = book_db['Books']
-        book_db.close()
-    except:
-        print("Error while retrieving data from cart.db")
+    for book_id, quantity in cart_items:
+        total_price += dbf.retrieve_book(book_id).get_price() * quantity
 
-    if user_id in cart_dict:
-        user_cart = cart_dict[user_id]
-        if user_cart[0] == '':
-            print('This user has nothing in the buying cart')
-        else:
-            buy_cart = user_cart[0]
-            # buy_count = len(user_cart[0])
-            for key in buy_cart:
-                buy_count += buy_cart[key]
-                total_price = float(total_price)
-                total_price += float(buy_cart[key] * books_dict[key].get_price())
-                total_price = float(("%.2f" % round(total_price, 2)))
-        if len(user_cart) == 1:
-            print('This user has nothing in the renting cart')
-        else:
-            rent_cart = user_cart[1]
-            rent_count = len(user_cart[1])
-            for book in rent_cart:
-                total_price += float(books_dict[book].get_price()) * 0.1
-                total_price = float(("%.2f" % round(total_price, 2)))
-    return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
-                           rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
+    return render_template('cart.html', cart_items=cart_items, buy_count=buy_count, total_price=total_price)
+    # user_id = get_user().get_user_id()
+    # cart_dict = {}
+    # books_dict = {}
+    # cart_db = None  # shelve.open('database', 'c')
+    # book_db = None  # shelve.open('database')
+    # try:
+    #     books_dict = book_db['Books']
+    #     book_db.close()
+    # except:
+    #     print("There is no books in the database currently.")
+    # buy_count = 0
+    # rent_count = 0
+    # total_price = 0
+    # buy_cart = {}
+    # rent_cart = []
+    # try:
+    #     cart_dict = cart_db['Cart']
+    #     print(cart_dict)
+    #     books_dict = book_db['Books']
+    #     book_db.close()
+    # except:
+    #     print("Error while retrieving data from cart.db")
 
+    # if user_id in cart_dict:
+    #     user_cart = cart_dict[user_id]
+    #     if user_cart[0] == '':
+    #         print('This user has nothing in the buying cart')
+    #     else:
+    #         buy_cart = user_cart[0]
+    #         # buy_count = len(user_cart[0])
+    #         for key in buy_cart:
+    #             buy_count += buy_cart[key]
+    #             total_price = float(total_price)
+    #             total_price += float(buy_cart[key] * books_dict[key].get_price())
+    #             total_price = float(("%.2f" % round(total_price, 2)))
+    #     if len(user_cart) == 1:
+    #         print('This user has nothing in the renting cart')
+    #     else:
+    #         rent_cart = user_cart[1]
+    #         rent_count = len(user_cart[1])
+    #         for book in rent_cart:
+    #             total_price += float(books_dict[book].get_price()) * 0.1
+    #             total_price = float(("%.2f" % round(total_price, 2)))
+
+    # return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
+    #                        rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
 
 """ Update Shopping Cart """
 @app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
