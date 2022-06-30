@@ -101,9 +101,7 @@ def insert_row(table: str, values: list, columns: list=None) -> None:
     question_marks = ",".join("?"*len(values))
 
     # Format column names (default nothing)
-    column_names = ",".join(columns)
-    if column_names:
-        column_names = f"({column_names})"
+    column_names = f"({','.join(columns)})" if columns else ""
 
     # Format query statement
     query = f"""INSERT INTO {table} {column_names} VALUES ({question_marks});"""
