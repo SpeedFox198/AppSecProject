@@ -431,7 +431,9 @@ def password_change():
     return render_template("user/password/password_change.html", form=change_password_form)
 
 
-#Needs to be changed
+# Needs to be changed
+# TODO: needs to change
+# NOTE: sending email is done by Royston
 """Verification page in case"""
 # Send verification link page
 @app.route("/user/verify")
@@ -753,7 +755,7 @@ def account():
     account_page_form.phone_number.data = user.phone_no
     return render_template("user/account.html",
                            form=account_page_form,
-                           display_name=user.name,
+                           display_name=user.display_name,
                            picture_path=user.profile_pic,
                            username=user.username,
                            email=user.email,
