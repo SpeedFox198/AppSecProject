@@ -30,6 +30,9 @@
   // Iterate through inputs and validate
   Array.prototype.filter.call(inputs, input => {
 
+    // Error messages of the input
+    let error_msgs = document.querySelectorAll(".display-feedback")
+
     // Validator function
     function validator() {
       // Reset classes
@@ -44,8 +47,16 @@
       }
     }
 
-    // Calll validator on blur and input event
+    // Hide function
+    const hideErorrMsg = () => {
+      // Hide error by adding css
+      // The css will handle the hiding of the .display-feedback element
+      input.classList.add("hide-error");
+    }
+
+    // Call validator on blur and input event
     input.addEventListener("blur", validator, false);
+    input.addEventListener("blur", hideErorrMsg, false);
     input.addEventListener("input", validator, false);
   });
 })();

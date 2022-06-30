@@ -463,7 +463,8 @@ button.nav-link:focus {
   display: block;
 }
 .form-control.is-valid ~ .display-feedback, .was-validated .form-control:valid ~ .display-feedback,
-.form-select.is-valid ~ .display-feedback, .was-validated .form-select:valid ~ .display-feedback {
+.form-select.is-valid ~ .display-feedback, .was-validated .form-select:valid ~ .display-feedback,
+.form-control.hide-error ~ .display-feedback{
   display: none !important;
 }
 

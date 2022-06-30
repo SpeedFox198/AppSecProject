@@ -194,7 +194,7 @@ def sign_up():
             flash("Email already registered", "sign-up-email-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
-        elif username in password:
+        elif username.lower() in password.lower():
             errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
@@ -435,8 +435,18 @@ def password_change():
 
             # Password (current) was incorrect, disallow change
             if not dbf.user_auth(user.username, current_password):
-                errors["CurrentPasswordError"] = True
+                errors["DisplayFieldError"] = errors["CurrentPasswordError"] = True
                 flash("Your password is incorrect, please try again", "current-password-error")
+
+            # Current and new passwords are the same, disallow change
+            elif current_password == new_password:
+                errors["DisplayFieldError"] = errors["NewPasswordError"] = True
+                flash("New password should not be the same as current password", "new-password-error")
+
+            # Username is inside new password (insecure), disallow change
+            elif user.username.lower() in new_password.lower():
+                errors["DisplayFieldError"] = errors["NewPasswordError"] = True
+                flash("Password cannot contain username", "new-password-error")
 
             # Password (current) was correct, change to new password
             else:
