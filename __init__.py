@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_user_session, retrieve_cookie_value, retrieve_user_session, SESSION_NAME
+from session_handler import create_user_session, get_cookie_value, retrieve_user_session, SESSION_NAME
 from users import User
 import db_fetch as dbf
 import os  # For saving and deleting images
@@ -111,9 +111,13 @@ def after_request(response):
 
     # It needs to be a list form for me to iterate through
     assert isinstance(flask_global.expired_cookies, list), "Only lists pls"
+    assert isinstance(flask_global.new_cookies, dict), "Only dict pls"
 
     for delete_this in flask_global.expired_cookies:
         response.set_cookie(delete_this, "", expires=0)
+
+    for name, value in flask_global.new_cookies.items():
+        response.set_cookie(name, value)
 
     return response
 

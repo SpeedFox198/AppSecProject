@@ -48,6 +48,6 @@ def retrieve_session(session:str) -> Union[Any, None]:
             return None
 
 
-def retrieve_cookie_value(request, name:str) -> Union[Any, None]:
+def get_cookie_value(request, name:str) -> Union[Any, None]:
     """ Retrieve cookie with name from request """
     return retrieve_session(request.cookies.get(name))

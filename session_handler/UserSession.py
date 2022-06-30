@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Union
-from .session_handler import create_session as _cs, retrieve_cookie_value as _rcv
+from .session_handler import create_session as _cs, get_cookie_value as _gcv
 
 SESSION_NAME = "user_session"
 
@@ -26,4 +26,4 @@ def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
 
 def retrieve_user_session(request) -> Union[UserSession, None]:
     """ Retrieve user session from request """
-    return _rcv(request, SESSION_NAME)
+    return _gcv(request, SESSION_NAME)
