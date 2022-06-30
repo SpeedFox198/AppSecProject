@@ -45,9 +45,7 @@
               <th>Author</th>
               <th>Price($)</th>
               <th>Quantity</th>
-              <th></th>
-              <th></th>
-              <th></th>
+              <th colspan="3">Actions</th>
             </tr>
           </thead>
 
@@ -56,7 +54,7 @@
             <tr>
               <td>{{ book.get_book_id() }}</td>
               <td>
-                <img src="/static/img/books/{{ book.get_img() }}" alt="{{ book.get_title() }}" style="width:40px;height:60px;">
+                <img src="{{ book.get_img() }}" alt="{{ book.get_title() }}" style="width:40px;height:60px;">
               </td>
               <td>{{ book.get_language() }}</td>
               <td>{{ book.get_title() }}</td>

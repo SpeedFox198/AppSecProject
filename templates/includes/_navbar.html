@@ -38,7 +38,7 @@
           <a class="nav-link" href="/all_books/Chinese">Chinese Books</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/all_books/all">All Books</a>
+          <a class="nav-link" href="{{ url_for('books', sort_this='all') }}">All Books</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('about') }}">About</a>
@@ -48,9 +48,9 @@
 
       <ul class="nav justify-content-end">
         {% if not is_admin %}
-        <form class="d-flex" method="GET" action="{{ url_for('search_result', sort_this='all') }}">
+        <form class="d-flex" method="GET" action="{{ url_for('books', sort_this='all') }}">
           <li class="">
-            <input name="q" class="form-control" type="search" placeholder="Search..." aria-label="Search" id="search-field">
+            <input name="q" class="form-control" type="search" placeholder="Search..." aria-label="Search" id="search-field" required>
           </li>
           <li class="">
             <button class="btn nav-link" type="submit"><i class="fa fa-search"></i></button>
