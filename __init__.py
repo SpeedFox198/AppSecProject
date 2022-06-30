@@ -1410,12 +1410,26 @@ def api_login():
     username = request.json.get("username")
     password = request.json.get("password")
 
+    if username is None:
+        return jsonify(message="Please enter a username or email"), 400
+    if password is None:
+        return jsonify(message="Please enter a password"), 400
+
+    user_data = dbf.user_auth(username, password)
+    if user_data is None:
+        return jsonify(message="Your username and/or password is incorrect, please try again"), 400
+
+    user = User(*user_data)
+    flask_global.user = user
+
+    return jsonify(message="Login success!")
+
 
 @app.route('/api/books/all', methods=["GET"])
 def api_all_books():
     books_data = dbf.retrieve_inventory()
     if not books_data:
-        return Response("There are no books.", status=404)
+        return jsonify(message="There are no books."), 404
 
     output = [dict(book_id=row[0],
                    language=row[1],
@@ -1436,7 +1450,7 @@ def api_single_book(book_id):
     if request.method == "GET":
         book_data = dbf.retrieve_book(book_id)
         if not book_data:
-            return Response(f"There are no such books with id of {book_id}", status=404)
+            return jsonify(message=f"There are no such books with id of {book_id}"), 404
 
         output = dict(book_id=book_data[0],
                       language=book_data[1],
