@@ -1348,6 +1348,52 @@ def cart():
     # return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
     #                        rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
 
+""" Update Shopping Cart """
+@app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
+@limiter.limit("100/minute", override_defaults=False)
+def update_cart(user_id):
+    # User is a Class
+    user: User = flask_global.user
+
+    if user is None or not user.is_admin:
+        abort(403)
+
+    # get book_id
+    book_id = user.get_book_id()
+
+    # Update quantity
+    book_quantity = int(request.form['quantity'])
+    if book_quantity == 0:
+        # No books in cart, delete cart
+        delete_buying_cart(user_id)
+    else:
+        # update book quantity
+        print('Update book quantity: ', str(book_quantity))
+
+    return redirect(request.referrer)
+    # cart_dict = cart_db['Cart']
+    # buy_cart = cart_dict[user_id][0]
+    # book_quantity = int(request.form['quantity'])
+    # if book_quantity == 0:
+    #     print('Oh no need to delete')
+    #     delete_buying_cart(id)
+    # else:
+    #     buy_cart[id] = book_quantity
+    #     print(buy_cart)
+    #     cart_dict[user_id][0] = buy_cart
+    #     cart_db['Cart'] = cart_dict
+    #     print(cart_dict, 'updated database')
+    #     cart_db.close()
+    # return redirect(request.referrer)
+
+
+""" Delete Cart """
+@app.route("/delete-buying-cart/<user_id>", methods=['GET', 'POST'])
+@limiter.limit("100/minute", override_defaults=False)
+def delete_buying_cart(user_id):
+    dbf.delete_shopping_cart(user_id)
+    return redirect(request.referrer)
+
 """    Order Pages    """
 
 """ Customer Orders Page """
