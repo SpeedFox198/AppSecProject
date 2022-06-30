@@ -1,8 +1,7 @@
 from pickle import dumps, loads
 from base64 import b64encode, b64decode
 from hmac import digest, compare_digest
-from datetime import datetime, timedelta
-from typing import Union
+from typing import Union, Any
 from os import environ
 
 # Get secret key (you ain't gonna see it in plain text lol)
@@ -12,37 +11,22 @@ assert _SECRET_KEY, "Secret key must be set in OS System environment variable"
 # Character for separating session data and signature
 _SEPARATOR = b"."
 
-# Max duration user can stay logged in for (since last active)
-_MAX_TIME = timedelta(hours=3)
 
+def create_session(data) -> bytes:
+    """ Creates and returns a regular session cookie """
 
-class UserSession:
-    """ Defines a user session """
-    def __init__(self, user_id:str, is_admin:bool=False) -> None:
-        self.user_id = user_id
-        self.is_admin = is_admin
-        self.last_active = datetime.now()
-
-    def is_expired(self):
-        """ Checks if session has expired (last active 3 hours ago) """
-        return datetime.now() - self.last_active >= _MAX_TIME
-
-
-def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
-    """ Creates and returns user session cookie """
-
-    # Serialise user session object
-    session = b64encode(dumps(UserSession(user_id, bool(is_admin))))
+    # Serialise data
+    session = b64encode(dumps(data))
 
     # Generate signature
     signature = b64encode(digest(_SECRET_KEY, session, "sha256"))
 
-    # Return user session cookie
+    # Return session cookie
     return session + _SEPARATOR + signature
 
 
-def retrieve_user_session(session:str) -> Union[UserSession, None]:
-    """ Retrieve user session object from session cookie """
+def retrieve_session(session:str) -> Union[Any, None]:
+    """ Retrieve object from session cookie """
 
     if session:  # If session is not empty
 
@@ -62,3 +46,8 @@ def retrieve_user_session(session:str) -> Union[UserSession, None]:
         # Bad session was provided, return None
         except Exception:
             return None
+
+
+def retrieve_cookie_value(request, name:str) -> Union[Any, None]:
+    """ Retrieve cookie with name from request """
+    return retrieve_session(request.cookies.get(name))

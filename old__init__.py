@@ -12,7 +12,7 @@ import stripe
 import datetime
 import db_fetch as dbf
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
-from session_handler import create_user_session, retrieve_user_session
+from session_handler import create_user_session, retrieve_session
 from users import Admin
 
 # Import classes
@@ -79,7 +79,7 @@ def get_user():
 
     # Get session cookie from request
     session_cookie = request.cookies.get("session")
-    user_session = retrieve_user_session(session_cookie)
+    user_session = retrieve_session(session_cookie)
 
     # Return None
     if user_session is None:
