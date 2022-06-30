@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "citric-banner-354321",
+  "private_key_id": "b3260b75cfeff642123f7be085863d3af0aeb7d1",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDSWED+8WOdnU9F\nnnSbG0TQTfmmDTwktG5gDdxy27F60aJ+JRkLeE5x9Y4xaAqh9jNH4ufl7NBp8M+F\nrQbuXEwpowK2fsrvhy3fqlA/S1R6IKECR3IhnWKWBDbDN5qXPJQw+vi5YIXMOx78\n3SXxSLnEIdLnSbLcWWrLGEvPNJP2OpzwbxqtsNtIDLPV5S+BR6NmRQb52KprbZ7v\nwfUx0wtToZqs6V2kYuwGHO/Ss0UiqrP6hwum+o6HeWD2BYJJPCoO9Qv1INphGv+W\nUfwn77Aer49wVIOfTFZni8TlJerfl+dphPU71veSpkPeVBLwWyBkcAEN27JfvbR0\nLseOMsN/AgMBAAECggEAMqTDCV7PECzG4Ek1Y/7dw5VyjRNUrrWueXv83r6cbai5\nicueyw8tO+zWTnjxTmt7j0xHbylkSI2NOW8eYxdf0wqHZa8DZ0ZRui9EYOjfLwRa\nH7VZ+lPtX5cmJDxoAQ+50k0qw19E95YocNNCBmTvLRTDtaId6UWyG7H+1qWfFkI4\nNpf3lVgYbpfPfhw9+O/Kylt2BafXxgx+Ns7u27BHpERGxtGrYj6cd1q7ZUSGLbKz\niiakBhecAGxFy9OPFK4nkVJlf3h7WJMFwcDtKJxZeWKvNeuf/nsviGN73flaUaHy\nNdw3YSjtveYMGe6q5YzMuqVL3uIBSrLWuN2pL5ed4QKBgQD/HdiuE/50v/adN4f/\nE+81j4JX7b/SO7HEIgYpXfxl6E+Luer56++8kiIj4L2FY2IXtqZqtnF+k2RB4M9Y\nTH+zqls/7beYXq1duZYnIZQMGVuo5W5ZGSy5FBpXPrxt+1RFwoI84unL5iKuSmam\no/DQfIYplhHtimKVXcXnWiq+rwKBgQDTErfwuW+5HgaDB4AeSSMWsmXw0V42NPQh\nvyl11Gdw3EpNdYaJ8iSVlZOZaDf8GOQpxiuUxp5IK16pZEQNp/YilnlmgC8ELbVJ\n6kDnUSBnuFuph7jJ6F+qxDNFCKERHX+dTrZRI8mb5hScic6uYC5gNDLfybjLr07u\nKRPP4LD8MQKBgQDH1hFNCsxfl58ON9mHrY3LXsazKcEAZVIyWJSLAtwa14a35MJz\nUqVQCQhFIl5Shi7odGKXZKIyjDIUiIzilcnSardftE4EROV4bU95B4x4jcSG4HE3\nyciGkYCwpqvjWuQAYQSzvOt2lKbF7/HIxtJz/Zb6LFuOvr/KUNIdDzw8cQKBgQCm\n1/kGE864aX+EO32OcwmFe2cRQK5T8u+3bT/8n/VURQ2GxQugJwO8KgwOC0+VuqdA\nTiFM7ONY8M9W3qbclJP/KyqzV0fS6b6PuterAXm4AwaRr3LmRwS4G3bbbsLCoKqr\nUfjTkpJe5TQNuPDi7aw654f/VZj5iI2/vECo5VeBQQKBgBvfmrYiVM2ed468x5ta\nNdIZC5h3GXnOzeVHvAhZbFQFbOvi8i4JsymOQLFit2XCser0OZZqb5V0LvuqPoCq\nhzupR4Rd0Iz+T2EEsgfeerCGv2CiC1mgBxkHaKSgtALZ1tvmZWtY6iU8C7h8epwB\neu5FCl/l1/ERMVbI5tsv0ayP\n-----END PRIVATE KEY-----\n",
+  "client_email": "bras-basah-test@citric-banner-354321.iam.gserviceaccount.com",
+  "client_id": "108866679580872225358",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/bras-basah-test%40citric-banner-354321.iam.gserviceaccount.com"
+}
