@@ -24,11 +24,11 @@
         <div class="card">
           <div class="card-header">
             <p>Order Summary
-            <span>{{ (buy_count)+(rent_count) }} item(s)</span></p>
+            <span>{{ buy_count }} item(s)</span></p>
           </div>
           <div class="card-body">
             <p class="card-text">Subtotal<span>${{ total_price }}</span></p>
-            {% if (buy_count + rent_count) == 0 %}
+            {% if buy_count == 0 %}
              <p class="card-text">Shipping <span>-</span></p>
               <p class="card-text bolder">Estimated Total <span>-</span></p>
             {% else %}
@@ -37,15 +37,9 @@
             {% endif %}
           </div>
         </div>
-        {% if (buy_count + rent_count) == 0 %}
-                <button type="submit" disabled class="check-out-button btn" name="button">Check Out</button>
-        {% else %}
           <div>
             <form action="/checkout" method="POST">
               <button type="submit" class="check-out-button btn" name="button">Check Out</button>
-            </form>
-            <form action="/apply-coupon" method="POST">
-              <button type="submit" class="check-out-button btn" name="button">Apply Coupon</button>
             </form>
           </div>
         {% endif %}
