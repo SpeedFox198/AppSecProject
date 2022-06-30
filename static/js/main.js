@@ -35,6 +35,11 @@
 
     // Validator function
     function validator() {
+      // Hide .display-feedback error msg
+      // Hide error by adding css
+      // The css will handle the hiding of the element
+      input.classList.add("hide-error");
+
       // Reset classes
       input.classList.remove("is-valid");
       input.classList.remove("is-invalid");
@@ -47,16 +52,8 @@
       }
     }
 
-    // Hide function
-    const hideErorrMsg = () => {
-      // Hide error by adding css
-      // The css will handle the hiding of the .display-feedback element
-      input.classList.add("hide-error");
-    }
-
     // Call validator on blur and input event
     input.addEventListener("blur", validator, false);
-    input.addEventListener("blur", hideErorrMsg, false);
     input.addEventListener("input", validator, false);
   });
 })();
