@@ -100,9 +100,12 @@ def before_request():
 def after_request(response):
     user:User = flask_global.user
 
+    # Only renew session if login
     if isinstance(user, User):
         renewed_session = create_user_session(user.user_id, user.is_admin)
         response.set_cookie(SESSION_NAME, renewed_session)
+
+    # Default log user out
     else:
         # Remove session cookie
         response.set_cookie(SESSION_NAME, "", expires=0)
@@ -424,6 +427,7 @@ def password_change():
     if request.method == "POST":
         if not change_password_form.validate():
             errors["DisplayFieldError"] = True
+
         else:
             # Extract data from sign up form
             current_password = change_password_form.current_password.data
@@ -431,7 +435,8 @@ def password_change():
 
             # Password (current) was incorrect, disallow change
             if not dbf.user_auth(user.username, current_password):
-                flash("Your password is incorrect, please try again", "form-error")
+                errors["CurrentPasswordError"] = True
+                flash("Your password is incorrect, please try again", "current-password-error")
 
             # Password (current) was correct, change to new password
             else:
