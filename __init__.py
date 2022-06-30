@@ -1,6 +1,6 @@
 from flask import (
     Flask, render_template, request, redirect, url_for, flash,
-    make_response, g as flask_global, abort
+    make_response, g as flask_global, abort, jsonify
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -1395,6 +1395,31 @@ def my_orders():
 @app.route("/home2")
 def about():
     return render_template("about.html")
+
+
+""" API Routes"""
+
+
+@app.route('/api', methods=["GET"])
+def api_home():
+    return jsonify(message="BrasBasahBooks API")
+
+
+@app.route('/api/all-books', methods=["GET"])
+def api_all_books():
+    books_data = dbf.retrieve_inventory()
+    output = [dict(book_id=row[0],
+                   language=row[1],
+                   genre=row[2],
+                   title=row[3],
+                   quantity=row[4],
+                   price=row[5],
+                   author=row[6],
+                   description=row[7],
+                   image=row[8]
+                   )
+              for row in books_data]
+    return jsonify(output)
 
 
 """    Error Handlers    """
