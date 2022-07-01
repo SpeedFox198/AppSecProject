@@ -147,30 +147,6 @@ def after_request(response):
 @app.route("/")
 @limiter.limit("100/minute", override_defaults=False)
 def home():
-    # Old code
-    # try:
-    #     books_dict = {}
-    #     db = shelve.open('database', 'r')
-    #     books_dict = db['Books']
-    #     db.close()
-
-    # except:
-    #     print("There are no books")
-
-    # english = []
-    # chinese = []
-    # for key in books_dict:
-    #     book = books_dict.get(key)
-    #     if book.get_language() == "English":
-    #         english.append(book)
-    #     elif book.get_language() == "Chinese":
-    #         chinese.append(book)
-
-    # books_list = []
-    # for key in books_dict:
-    #     book = books_dict.get(key)
-    #     books_list.append(book)
-
     english_books_data = dbf.retrieve_books_by_language("English")
     chinese_books_data = dbf.retrieve_books_by_language("Chinese")
     english = [Book(*data) for data in english_books_data]
