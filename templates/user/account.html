@@ -53,7 +53,7 @@
         <div class="mb-3 row">
           <label for="email" class="col-md-2 col-form-label text-md-end">Email</label>
           <div class="col-md-10">
-            <div class="form-control no-format-form" id="email">{{ email }} <a href="{{ url_for('verify_send') }}">Verify Email</a></div>
+            <div class="form-control no-format-form" id="email">{{ email }}</a></div>
           </div>
         </div>
         <div class="mb-3 row">
@@ -66,6 +66,16 @@
           <label for="phone-no" class="col-md-2 col-form-label text-md-end">Phone Number</label>
           <div class="col-md-10">
             {{ render_field(form.phone_number, class="form-control", id="phone-no") }}
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label for="phone-no" class="col-md-2 col-form-label text-md-end">2FA</label>
+          <div class="col-md-10">
+            {% if two_factor_enabled == True %}
+              <div class="form-control no-format-form" id="phone-no">Enabled</div><a href="">Disable</a>
+            {% else %}
+              <div class="form-control no-format-form" id="phone-no">Disabled</div><a href="">Enable</a>
+            {% endif %}
           </div>
         </div>
         <div class="mb-3 row">
