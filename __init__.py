@@ -145,7 +145,7 @@ def after_request(response):
 
 
 @app.route("/")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def home():
     english_books_data = dbf.retrieve_books_by_language("English")
     chinese_books_data = dbf.retrieve_books_by_language("Chinese")
@@ -160,7 +160,7 @@ def home():
 
 
 @app.route("/user/sign-up", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def sign_up():
     # If user is already logged in
     if flask_global.user is not None:
@@ -220,7 +220,7 @@ def sign_up():
     return render_template("user/sign_up.html", form=sign_up_form)
 
 @app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def OTPverification():
     email = session.get("Email")
     username = session.get("Username")
@@ -253,7 +253,7 @@ def OTPverification():
 
 
 @app.route("/user/login", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def login():
     # If user is already logged in
     if flask_global.user is not None:
@@ -298,7 +298,7 @@ def login():
 
 
 @app.route("/user/logout")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def logout():
     flask_global.user = None
     response = make_response()
@@ -309,7 +309,7 @@ def logout():
 
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def password_forget():
     # Get user
     user:User = flask_global.user
@@ -360,6 +360,7 @@ def password_forget():
 
 
 @app.route("/user/password/reset/<token>", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
 def password_reset(token):
 
     # Get user
@@ -428,6 +429,7 @@ def password_reset(token):
 
 
 @app.route("/user/password/change", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
 def password_change():
 
     # Get current user
@@ -484,6 +486,7 @@ def password_change():
 
 
 @app.route("/user/account/2FA")
+@limiter.limit("10/second", override_defaults=False)
 def account_2FA():
     user: User = flask_global.user
 
@@ -769,7 +772,7 @@ def verify_send():
 
 
 @app.route("/user/account", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def account():
     # Get current user
     user: User = flask_global.user
@@ -1115,6 +1118,7 @@ def manage_orders():
 
 
 @app.route('/book/<int:id>', methods=['GET', 'POST'])
+@limiter.limit("10/second", override_defaults=False)
 def book_info2(id):
 
     # Get book details
@@ -1153,7 +1157,7 @@ def book_reviews(id, reviewPageNumber):
 
 
 @app.route("/books/<sort_this>")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def books(sort_this):
     sort_dict = {}
     books_dict = {}
@@ -1282,7 +1286,7 @@ def price_high_to_low(inventory_data):
 
 # Add to cart
 @app.route("/add-to-cart", methods=['GET', 'POST']) # should there be a GET here?
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def add_to_cart(book_id):
 
     # User is a Class
@@ -1338,7 +1342,7 @@ def add_to_cart(book_id):
 
 
 @app.route('/cart')
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def cart():
 
     # User is a Class
@@ -1409,7 +1413,7 @@ def cart():
 
 """ Update Shopping Cart """
 @app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def update_cart(user_id):
     # User is a Class
     user: User = flask_global.user
@@ -1459,7 +1463,7 @@ def delete_buying_cart(user_id):
 
 
 @app.route("/my-orders")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def my_orders():
     db_order = []
     new_order = []
@@ -1631,12 +1635,6 @@ def page_not_found(e):
 @app.errorhandler(429)
 def too_many_request(e):
     return render_template("error/429.html")
-
-
-@app.route("/medium")
-@limiter.limit("100/minute", override_defaults=False)
-def medium():
-    return ":|"
 
 
 """    Main    """
