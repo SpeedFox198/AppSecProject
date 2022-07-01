@@ -1,12 +1,12 @@
 from flask import (
     Flask, render_template, request, redirect, url_for, flash,
-    make_response, g as flask_global, abort, jsonify, Response, session
+    make_response, g as flask_global, abort, jsonify, session  # TODO: session to be removed
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_user_session, retrieve_user_session
+from session_handler import create_user_session, get_cookie_value, retrieve_user_session, SESSION_NAME
 from users import User
 import db_fetch as dbf
 import os  # For saving and deleting images
@@ -27,16 +27,16 @@ from forms import (
 # CONSTANTS
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
-ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
-SESSION_NAME = "user_session"
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+
 
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
-BOOK_IMG_UPLOAD_FOLDER = 'static/img/books'
-PROFILE_PIC_UPLOAD_FOLDER = 'static/img/profile-pic'
-app.config['BOOK_UPLOAD_FOLDER'] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
-app.config['PROFILE_PIC_UPLOAD_FOLDER'] = PROFILE_PIC_UPLOAD_FOLDER
+BOOK_IMG_UPLOAD_FOLDER = "static/img/books"
+PROFILE_PIC_UPLOAD_FOLDER = "static/img/profile-pic"
+app.config["BOOK_UPLOAD_FOLDER"] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
+app.config["PROFILE_PIC_UPLOAD_FOLDER"] = PROFILE_PIC_UPLOAD_FOLDER
 
 limiter = Limiter(
     app,
@@ -48,8 +48,7 @@ def get_user():
     """ Returns user if cookie is correct, else returns None """
 
     # Get session cookie from request
-    session_cookie = request.cookies.get(SESSION_NAME)
-    user_session = retrieve_user_session(session_cookie)
+    user_session = retrieve_user_session(request)
 
     # Return None
     if user_session is not None and not user_session.is_expired():
@@ -112,6 +111,18 @@ def after_request(response):
     else:
         # Remove session cookie
         response.set_cookie(SESSION_NAME, "", expires=0)
+
+    # It needs to be a list form for me to iterate through
+    expired_cookies = flask_global.get("expired_cookies", default=[])
+    new_cookies = flask_global.get("new_cookies", default={})
+    assert isinstance(expired_cookies, list), "Only lists pls"
+    assert isinstance(new_cookies, dict), "Only dict pls"
+
+    for delete_this in expired_cookies:
+        response.set_cookie(delete_this, "", expires=0)
+
+    for name, value in new_cookies.items():
+        response.set_cookie(name, value)
 
     return response
 
