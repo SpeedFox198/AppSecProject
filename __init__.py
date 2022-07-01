@@ -112,13 +112,13 @@ def after_request(response):
     # It needs to be a list form for me to iterate through
     expired_cookies = flask_global.get("expired_cookies", default=[])
     new_cookies = flask_global.get("new_cookies", default={})
-    assert isinstance(flask_global.expired_cookies, list), "Only lists pls"
-    assert isinstance(flask_global.new_cookies, dict), "Only dict pls"
+    assert isinstance(expired_cookies, list), "Only lists pls"
+    assert isinstance(new_cookies, dict), "Only dict pls"
 
-    for delete_this in flask_global.expired_cookies:
+    for delete_this in expired_cookies:
         response.set_cookie(delete_this, "", expires=0)
 
-    for name, value in flask_global.new_cookies.items():
+    for name, value in new_cookies.items():
         response.set_cookie(name, value)
 
     return response
