@@ -482,7 +482,8 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
-@app.route("user/account/2FA")
+
+@app.route("/user/account/2FA")
 def account_2FA():
     user: User = flask_global.user
 
@@ -833,12 +834,17 @@ def account():
 """    Admin Pages    """
 
 
-def admin_check():
+def admin_check(mode="regular"):
     user: User = flask_global.user
-
-    # If user is not admin
-    if user is None or not user.is_admin:
-        abort(403)  # Forbidden, go away D:
+    """ 2 modes for admin check
+        regular (Regular) - normal routes with the HTML, default option
+        api (API) - API routes
+    """
+    if not isinstance(user, User) or not user.is_admin: # Check if no cookie and if user is not admin
+        if mode == "regular":
+            abort(403)
+        elif mode == "api":
+            return jsonify(message="The resource you requested does not exist."), 404
 
 
 # Manage accounts page
@@ -1520,13 +1526,18 @@ def api_home():
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    username = request.json.get("username")
-    password = request.json.get("password")
+    try:  # Error handle if user never put username and password key in json body
+        username = request.json.get("username")
+        password = request.json.get("password")
+    except AttributeError:
+        return jsonify(message="Please enter username or email, and password"), 400
 
     if username is None:
         return jsonify(message="Please enter a username or email"), 400
-    if password is None:
+    elif password is None:
         return jsonify(message="Please enter a password"), 400
+    elif username is None and password is None:
+        return jsonify(message="Please enter username or email, and password"), 400
 
     user_data = dbf.user_auth(username, password)
     if user_data is None:
@@ -1560,6 +1571,7 @@ def api_all_books():
 
 @app.route("/api/books/<book_id>", methods=["GET"])
 def api_single_book(book_id):
+    # WIP add more methods e.g. POST, PUT, DELETE
     if request.method == "GET":
         book_data = dbf.retrieve_book(book_id)
         if not book_data:
@@ -1576,6 +1588,30 @@ def api_single_book(book_id):
                       image=book_data[8]
                       )
         return jsonify(output)
+
+
+@app.route('/api/admin/users/all', methods=["GET"])
+def api_all_users():
+    users_data = dbf.retrieve_these_customers(limit=0, offset=0)
+
+    if not users_data:
+        return jsonify(message="There are currently no users.")
+
+    # Comment out personal info in case of excessive data exposure
+    output = [dict(user_id=row[0],
+                   username=row[1],
+                   email=row[2],
+                   # password=row[3],
+                   profile_pic=row[4],
+                   is_admin=row[5],
+                   name=row[6],
+                   # credit_card_no=row[7],
+                   # address=row[8],
+                   # phone_no=row[9],
+                   )
+              for row in users_data]
+
+    return admin_check("api") or jsonify(output)
 
 
 """    Error Handlers    """
