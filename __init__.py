@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_user_session, get_cookie_value, retrieve_user_session, SESSION_NAME
+from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME
 from users import User
 import db_fetch as dbf
 import os  # For saving and deleting images
@@ -15,6 +15,7 @@ from Book import Book
 from math import ceil
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
+from csp import CSP
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -99,27 +100,38 @@ def before_request():
 def after_request(response):
     user:User = flask_global.user
 
+    # Get expired cookies to be deleted and new cookies to be set
+    expired_cookies = flask_global.get("expired_cookies", default=[])
+    new_cookies = flask_global.get("new_cookies", default={})
+
+    # It needs to be a list for me to iterate through
+    if not isinstance(expired_cookies, list):
+        raise TypeError("Expired cookies should be stored in a list")
+
+    # I need name value and value for each new cookie
+    if not isinstance(new_cookies, dict):
+        raise TypeError("New cookies should be stored in a dictionary")
+
     # Only renew session if login
     if isinstance(user, User):
-        renewed_session = create_user_session(user.user_id, user.is_admin)
-        response.set_cookie(SESSION_NAME, renewed_session)
+        renewed_user_session = create_user_session(user.user_id, user.is_admin)
+        new_cookies[USER_SESSION_NAME] = renewed_user_session
 
     # Default log user out
     else:
         # Remove session cookie
-        response.set_cookie(SESSION_NAME, "", expires=0)
+        expired_cookies.append(USER_SESSION_NAME)
 
-    # It needs to be a list form for me to iterate through
-    expired_cookies = flask_global.get("expired_cookies", default=[])
-    new_cookies = flask_global.get("new_cookies", default={})
-    assert isinstance(expired_cookies, list), "Only lists pls"
-    assert isinstance(new_cookies, dict), "Only dict pls"
-
+    # Delete expired cookies
     for delete_this in expired_cookies:
         response.set_cookie(delete_this, "", expires=0)
 
+    # Set new cookies
     for name, value in new_cookies.items():
         response.set_cookie(name, value)
+
+    # Set CSP to prevent XSS
+    response.headers["Content-Security-Policy"] = CSP
 
     return response
 
@@ -1506,12 +1518,12 @@ def about():
 """ API Routes"""
 
 
-@app.route('/api', methods=["GET"])
+@app.route("/api", methods=["GET"])
 def api_home():
     return jsonify(message="BrasBasahBooks API")
 
 
-@app.route('/api/login', methods=["POST"])
+@app.route("/api/login", methods=["POST"])
 def api_login():
     username = request.json.get("username")
     password = request.json.get("password")
@@ -1531,7 +1543,7 @@ def api_login():
     return jsonify(message="Login success!")
 
 
-@app.route('/api/books/all', methods=["GET"])
+@app.route("/api/books/all", methods=["GET"])
 def api_all_books():
     books_data = dbf.retrieve_inventory()
     if not books_data:
@@ -1551,7 +1563,7 @@ def api_all_books():
     return jsonify(output)
 
 
-@app.route('/api/books/<book_id>', methods=["GET"])
+@app.route("/api/books/<book_id>", methods=["GET"])
 def api_single_book(book_id):
     if request.method == "GET":
         book_data = dbf.retrieve_book(book_id)
