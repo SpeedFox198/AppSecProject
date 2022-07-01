@@ -110,6 +110,8 @@ def after_request(response):
         response.set_cookie(SESSION_NAME, "", expires=0)
 
     # It needs to be a list form for me to iterate through
+    expired_cookies = flask_global.get("expired_cookies", default=[])
+    new_cookies = flask_global.get("new_cookies", default={})
     assert isinstance(flask_global.expired_cookies, list), "Only lists pls"
     assert isinstance(flask_global.new_cookies, dict), "Only dict pls"
 
