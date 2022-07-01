@@ -16,11 +16,14 @@ from math import ceil
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
 from csp import CSP
+import pyotp
+import time
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm
 )
+
 
 # CONSTANTS
 DEBUG = True  # Debug flag (True when debugging)
@@ -503,6 +506,22 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
+@app.route("user/account/2FA")
+def account_2FA():
+    user: User = flask_global.user
+
+    if user is None or not user.is_admin:
+        abort(403)
+    
+    totp = pyotp.TOTP('base32secret3232')
+    totp.now() # => '492039'
+
+    # OTP verified for current time
+    totp.verify('492039') # => True
+    time.sleep(30)
+    totp.verify('492039') # => False
+    pyotp.random_hex() 
+    return render_template("user/account/2FA.html")
 
 # Needs to be changed
 # TODO: needs to change
