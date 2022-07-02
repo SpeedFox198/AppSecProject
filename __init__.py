@@ -423,9 +423,6 @@ def password_reset(token):
 
 
 """ Change password page """
-## TODO: Template (html) not written yet (dying) ~ @SpeedFox198
-## TODO: Run and see if working (check if got bugs)
-## NOTE: too tired to check for bugs, someone help me pls ~ @SpeedFox198
 
 
 @app.route("/user/password/change", methods=["GET", "POST"])
