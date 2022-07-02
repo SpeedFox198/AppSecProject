@@ -1084,7 +1084,7 @@ def update_book(book_id):
         return redirect(url_for('inventory'))
     else:
         update_book_form.language.data = selected_book.language
-        update_book_form.category.data = selected_book.category
+        update_book_form.category.data = selected_book.genre
         update_book_form.title.data = selected_book.title
         update_book_form.author.data = selected_book.author
         update_book_form.price.data = selected_book.price
@@ -1117,35 +1117,20 @@ def manage_orders():
 """    Books Pages    """
 
 
-@app.route('/book/<id>', methods=['GET', 'POST'])
+@app.route('/book/<book_id>', methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
 def book_info2(book_id):
 
     # Get book details
-    book:Book = dbf.retrieve_book(book_id)[0]
-    print(book)
+    book_data = dbf.retrieve_book(book_id)
 
     # Get specified book
-    if not dbf.retrieve_book(book_id)[0]:
-        print(book)
+    if book_data is None:
         abort(404)
 
-    currentbook = []
+    book = Book(*book_data)
 
-    book.set_book_id(book.get_book_id())
-    book.set_language(book.get_language())
-    book.set_category(book.get_category())
-    book.set_title(book.get_title())
-    book.set_author(book.get_author())
-    book.set_price(book.get_price())
-    book.set_qty(book.get_qty())
-    book.set_desc(book.get_desc())
-    book.set_img(book.get_img())
-
-    currentbook.append(book)
-    print(currentbook, book.get_title())
-
-    return render_template('book_info2.html', currentbook=currentbook)
+    return render_template('book_info2.html', book=book)
 
 
 @app.route('/book/<int:id>/reviews/page_<int:reviewPageNumber>')
@@ -1284,53 +1269,69 @@ def price_high_to_low(inventory_data):
 """    Start of Cart Pages    """
 
 
+# TODO: SpeedFox198 Marence: maybe shldn't abort 400, and shld reply with {"error":1}
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-def add_to_cart(book_id):
+def add_to_cart():
 
     # User is a Class
     user:User = flask_global.user
 
-    if not isinstance(user, User) or not user.is_admin:
+    if not isinstance(user, User):
+        return redirect(url_for("login"))
+    elif user.is_admin:
         abort(403)
 
     user_id = user.user_id
+
     # Getting book_id and quantity to add
     book_id = request.form['book_id']
     buying_quantity = request.form['quantity']
-    
-    # Checking if book_id is in inventory
+
+    # Check if quantity enterred is valid
     try:
         buying_quantity = int(buying_quantity)
     except:
-        abort(400) # Bad Request
-        
-    if buying_quantity < 1:
-        buying_quantity = 1
-    
-    if book_id == dbf.retrieve_db("Books", book_id=book_id):
-        # if book_id is found
-        # Checking if book_id is already in cart
-        cartItems = dbf.get_shopping_cart(user_id)
-        for bookID, quantity in cartItems:
-            if bookID == book_id:
-                # if book_id is already in cart
-                # Update quantity
-                user.add_existing_to_shopping_cart(user_id, book_id, buying_quantity)
-                flash("Book already exists, adding quantity only.")
+        abort(400)  # Bad Request
 
-                return redirect(request.referrer)
+    # Ensure quantity is within correct range
+    if buying_quantity < 0 or buying_quantity > 10000:
+        abort(400)  # Bad Request
 
-            elif bookID != book_id:
-                # if book_id is not in cart
-                # Add to cart
-                user.add_to_shopping_cart(user_id, book_id, buying_quantity)
-                flash("Book has been added to your cart.")
 
-                return redirect(request.referrer)
+    book_data = dbf.retrieve_book(book_id)
+
+    # Check if book exists in database
+    if book_data is None:
+        abort(400)  # Bad Request
+
+    book = Book(*book_data)
+
+    # if book_id is found
+    # Checking if book_id is already in cart
+    cart_item = dbf.get_cart_item(user_id, book_id)
+
+    # stock left inside (basically customer can't buy more than this)
+    max_quantity = book.qty
+
+    # If book is not in customer's cart
+    if cart_item is None:
+        buying_quantity = min(max_quantity, buying_quantity)
+        # Add to cart
+        dbf.add_to_shopping_cart(user_id, book_id, buying_quantity)
+
+    # Else book is already added in customer's cart
     else:
-        return redirect(request.referrer) # Return to catalogue if book_id is not in inventory
+        # Update quantity
+        buying_quantity += cart_item[2]
+        buying_quantity = min(max_quantity, buying_quantity)
+        dbf.update_shopping_cart(user_id, book_id, buying_quantity)
+
+    # Flash success message to user
+    flash("Book has been added to your cart")
+
+    return redirect(request.referrer) # Return to catalogue if book_id is not in inventory
 
 
 """ View Shopping Cart"""

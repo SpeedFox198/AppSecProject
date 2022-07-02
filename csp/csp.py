@@ -23,7 +23,8 @@ csp = {
         "https://code.jquery.com"       # For jQuery
     ],
     "img-src": [
-        "\'self\'"
+        "\'self\'",
+        "data:"
     ],
     "font-src": [
         "\'self\'",

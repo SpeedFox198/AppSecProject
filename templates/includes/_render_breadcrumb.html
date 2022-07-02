@@ -1,5 +1,5 @@
 {% macro render_breadcrumb(name_to_target_dict) %}
-  <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+  <nav class="breadcrumb-divider-style" aria-label="breadcrumb">
     <ol class="breadcrumb">
       {% for name, target in name_to_target_dict.items() %}
         {% if target == "#" %}

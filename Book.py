@@ -39,10 +39,10 @@ class Book:
         img (str): path of book cover image
     """
 
-    def __init__(self, book_id, language, category, title, qty, price, author, desc, img):
+    def __init__(self, book_id, language, genre, title, qty, price, author, desc, img):
         self.book_id = book_id
         self.language = language
-        self.category = category
+        self.genre = genre
         self.title = title
         self.author = author
         self.price = price
@@ -59,7 +59,7 @@ class Book:
         self.language = language
 
     def set_category(self, category):
-        self.category = category
+        self.genre = category
 
     def set_title(self, title):
         self.title = title
@@ -87,7 +87,7 @@ class Book:
         return self.language
 
     def get_category(self):
-        return self.category
+        return self.genre
 
     def get_title(self):
         return self.title
