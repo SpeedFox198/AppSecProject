@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 BOOK_IMG_UPLOAD_FOLDER = r"/static/img/books/"
 
-## TODO: refactor `href`, `src`
 
 @dataclass
 class Book:
+    """ Defines a Book object """
     book_id: str
     language: str
     genre: str
