@@ -26,6 +26,7 @@ from forms import (
 
 
 # CONSTANTS
+# TODO @everyone: set to False when deploying
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
@@ -34,8 +35,8 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
-BOOK_UPLOAD_FOLDER = _BOOK_IMG_UPLOAD_FOLDER[1:]
-PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_UPLOAD_FOLDER[1:]
+BOOK_UPLOAD_FOLDER = _BOOK_IMG_UPLOAD_FOLDER[1:]            # Book image upload folder
+PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_UPLOAD_FOLDER[1:]  # Profile pic upload folder
 
 limiter = Limiter(
     app,
