@@ -1023,10 +1023,10 @@ def add_book():
                             add_book_form.language.data,
                             add_book_form.category.data,
                             add_book_form.title.data,
-                            int(add_book_form.qty.data),  # int for sqlite
+                            int(add_book_form.stock.data),  # int for sqlite
                             int(add_book_form.price.data),  # int for sqlite
                             add_book_form.author.data,
-                            add_book_form.desc.data,
+                            add_book_form.description.data,
                             book_img_filename)
 
             dbf.book_add(book_details)
@@ -1055,7 +1055,7 @@ def update_book(book_id):
         book_img = request.files['bookimg']
 
         # If no selected book cover
-        book_img_filename = selected_book.img
+        book_img_filename = selected_book.cover_img
 
         if book_img and allowed_file(book_img.filename):
             book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
@@ -1069,10 +1069,10 @@ def update_book(book_id):
             update_book_form.language.data,
             update_book_form.category.data,
             update_book_form.title.data,
-            int(update_book_form.qty.data),
+            int(update_book_form.stock.data),
             int(update_book_form.price.data),
             update_book_form.author.data,
-            update_book_form.desc.data,
+            update_book_form.description.data,
             book_img_filename,
             selected_book.book_id  # book id here for WHERE statement in query
         )
@@ -1085,8 +1085,8 @@ def update_book(book_id):
         update_book_form.title.data = selected_book.title
         update_book_form.author.data = selected_book.author
         update_book_form.price.data = selected_book.price
-        update_book_form.qty.data = selected_book.qty
-        update_book_form.desc.data = selected_book.desc
+        update_book_form.stock.data = selected_book.stock
+        update_book_form.description.data = selected_book.descriptionription
         return render_template('admin/update_book.html', form=update_book_form)
 
 
@@ -1096,7 +1096,7 @@ def delete_book(book_id):
 
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
-    book_cover_img = selected_book.img[1:]  # Strip the leading slash for relative path
+    book_cover_img = selected_book.cover_img[1:]  # Strip the leading slash for relative path
     print(book_cover_img)
     if os.path.isfile(book_cover_img):
         os.remove(book_cover_img)
@@ -1114,9 +1114,9 @@ def manage_orders():
 """    Books Pages    """
 
 
-@app.route('/book/<book_id>', methods=['GET', 'POST'])
+@app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-def book_info2(book_id):
+def book_info(book_id):
 
     # Get book details
     book_data = dbf.retrieve_book(book_id)
@@ -1127,10 +1127,10 @@ def book_info2(book_id):
 
     book = Book(*book_data)
 
-    return render_template('book_info2.html', book=book)
+    return render_template("book_info.html", book=book)
 
 
-@app.route('/book/<int:id>/reviews/page_<int:reviewPageNumber>')
+@app.route("/book/<int:id>/reviews/page_<int:reviewPageNumber>")
 def book_reviews(id, reviewPageNumber):
     pass
 
@@ -1143,15 +1143,15 @@ def book_reviews(id, reviewPageNumber):
 def books(sort_this):
     sort_dict = {}
     books_dict = {}
-    language_list = []
+    language_list = set()
     inventory_data = dbf.retrieve_inventory()
 
     sort_by = request.args.get("sort-by", default="", type=str)
 
     for data in inventory_data:
         book = Book(*data)
-        books_dict[book.get_book_id()] = book
-        language_list.append(book.get_language())
+        books_dict[book.book_id] = book
+        language_list.add(book.language)
 
     if books_dict != {}:
          if sort_this == 'latest':
@@ -1174,7 +1174,7 @@ def books(sort_this):
 
     if q:
         for book_id, book in sort_dict.copy().items():
-            if not any([s.lower() in book.get_title().lower() for s in q.split()]):
+            if not any([s.lower() in book.title.lower() for s in q.split()]):
                 sort_dict.pop(book_id, None)
 
     return render_template("books.html", query=q, books_list=sort_dict.values(), language_list=language_list)
@@ -1186,7 +1186,7 @@ def filter_language(language):
     inventory_data = dbf.retrieve_inventory()
 
     for book in inventory_data:
-        if inventory_data[book].get_language() == language:
+        if inventory_data[book].language == language:
             books.update({book: inventory_data[book]})
     return books
 
@@ -1197,7 +1197,7 @@ def name_a_to_z(inventory_data):
     unsorted_dict = {}
     if inventory_data != {}:
         for book in inventory_data:
-            unsorted_dict.update({book: inventory_data[book].get_title()})
+            unsorted_dict.update({book: inventory_data[book].title})
         print(unsorted_dict)
         unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
         unsorted_dict = {k: v for k, v in unsorted_dict}
@@ -1215,7 +1215,7 @@ def name_z_to_a(inventory_data):
     unsorted_dict = {}
     if inventory_data != {}:
         for book in inventory_data:
-            unsorted_dict.update({book: inventory_data[book].get_title()})
+            unsorted_dict.update({book: inventory_data[book].title})
         print(unsorted_dict)
         unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
         unsorted_dict = {k: v for k, v in unsorted_dict}
@@ -1233,7 +1233,7 @@ def price_low_to_high(inventory_data):
     unsorted_dict = {}
     if inventory_data != {}:
         for book in inventory_data:
-            unsorted_dict.update({book: float(inventory_data[book].get_price())})
+            unsorted_dict.update({book: float(inventory_data[book].price)})
         print(unsorted_dict)
         unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
         unsorted_dict = {k: v for k, v in unsorted_dict}
@@ -1251,7 +1251,7 @@ def price_high_to_low(inventory_data):
     unsorted_dict = {}
     if inventory_data != {}:
         for book in inventory_data:
-            unsorted_dict.update({book: float(inventory_data[book].get_price())})
+            unsorted_dict.update({book: float(inventory_data[book].price)})
         print(unsorted_dict)
         unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
         unsorted_dict = {k: v for k, v in unsorted_dict}
@@ -1310,7 +1310,7 @@ def add_to_cart():
     cart_item = dbf.get_cart_item(user_id, book_id)
 
     # stock left inside (basically customer can't buy more than this)
-    max_quantity = book.qty
+    max_quantity = book.stock
 
     # If book is not in customer's cart
     if cart_item is None:
@@ -1354,7 +1354,7 @@ def cart():
     # Get total price
     total_price = 0
     for book_id, quantity in cart_items:
-        total_price += dbf.retrieve_book(book_id).get_price() * quantity
+        total_price += dbf.retrieve_book(book_id).price * quantity
 
     return render_template('cart.html', cart_items=cart_items, buy_count=buy_count, total_price=total_price)
     # user_id = get_user().get_user_id()
@@ -1390,7 +1390,7 @@ def cart():
     #         for key in buy_cart:
     #             buy_count += buy_cart[key]
     #             total_price = float(total_price)
-    #             total_price += float(buy_cart[key] * books_dict[key].get_price())
+    #             total_price += float(buy_cart[key] * books_dict[key].price)
     #             total_price = float(("%.2f" % round(total_price, 2)))
     #     if len(user_cart) == 1:
     #         print('This user has nothing in the renting cart')
@@ -1398,7 +1398,7 @@ def cart():
     #         rent_cart = user_cart[1]
     #         rent_count = len(user_cart[1])
     #         for book in rent_cart:
-    #             total_price += float(books_dict[book].get_price()) * 0.1
+    #             total_price += float(books_dict[book].price) * 0.1
     #             total_price = float(("%.2f" % round(total_price, 2)))
 
     # return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
@@ -1415,7 +1415,7 @@ def update_cart(user_id):
         abort(403)
 
     # get book_id
-    book_id = user.get_book_id()
+    book.book_id
 
     # Update quantity
     book_quantity = int(request.form['quantity'])

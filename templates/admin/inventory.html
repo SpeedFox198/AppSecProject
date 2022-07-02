@@ -52,25 +52,25 @@
           <tbody>
           {% for book in books_list %}
             <tr>
-              <td>{{ book.get_book_id() }}</td>
+              <td>{{ book.book_id }}</td>
               <td>
-                <img src="{{ book.get_img() }}" alt="{{ book.get_title() }}" style="width:40px;height:60px;">
+                <img src="{{ book.cover_img }}" alt="{{ book.title }}" style="width:40px;height:60px;">
               </td>
-              <td>{{ book.get_language() }}</td>
-              <td>{{ book.get_title() }}</td>
-              <td>{{ book.get_author() }}</td>
-              <td>{{ book.get_price() }}</td>
-              <td>{{ book.get_qty() }}</td>
-              <td><a href="/book/{{book.get_book_id()}}" data-bs-toggle="tooltip" title="View"><i class="actions-button fa fa-eye"></i></a></td>
+              <td>{{ book.language }}</td>
+              <td>{{ book.title }}</td>
+              <td>{{ book.author }}</td>
+              <td>{{ book.price }}</td>
+              <td>{{ book.stock }}</td>
+              <td><a href="{{ url_for('book_info', book_id=book.book_id) }}" data-bs-toggle="tooltip" title="View"><i class="actions-button fa fa-eye"></i></a></td>
               <td><a href="{{ url_for('update_book', book_id=book.book_id)}}" data-bs-toggle="tooltip" title="Update"><i class="actions-button fa fa-pen"></i></a></td>
               <td>
-                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="document.getElementById('toggleModal_{{book.get_book_id()}}').click()">
+                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="document.getElementById('toggleModal_{{book.book_id}}').click()">
                   <i class="actions-button fa fa-trash"></i>
                 </button>
-                <button type="button" class="d-none" id="toggleModal_{{book.get_book_id()}}" data-bs-toggle="modal" data-bs-target="#myModal_{{book.get_book_id()}}"></button>
+                <button type="button" class="d-none" id="toggleModal_{{book.book_id}}" data-bs-toggle="modal" data-bs-target="#myModal_{{book.book_id}}"></button>
                 <form class="" action="{{url_for('delete_book', book_id=book.book_id)}}" method="POST">
                   <!-- The Modal -->
-                  <div class="modal fade" id="myModal_{{book.get_book_id()}}">
+                  <div class="modal fade" id="myModal_{{book.book_id}}">
                     <div class="modal-dialog">
                       <div class="modal-content">
 
@@ -82,7 +82,7 @@
 
                         <!-- Modal body -->
                         <div class="modal-body">
-                          Are you sure you want to delete {{book.get_title()}} by {{book.get_author()}} priced at ${{book.get_price()}}?
+                          Are you sure you want to delete {{book.title}} by {{book.author}} priced at ${{book.price}}?
                         </div>
 
                         <!-- Modal footer -->

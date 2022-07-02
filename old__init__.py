@@ -1498,7 +1498,7 @@ def add_book():
         except:
             print("First time adding book so last book id not needed")
 
-        book = Book.Book(add_book_form.language.data, add_book_form.category.data, add_book_form.age.data, add_book_form.action.data, add_book_form.title.data, add_book_form.author.data, add_book_form.price.data, add_book_form.qty.data, add_book_form.desc.data, add_book_form.img.data, rented=0)
+        book = Book.Book(add_book_form.language.data, add_book_form.category.data, add_book_form.age.data, add_book_form.action.data, add_book_form.title.data, add_book_form.author.data, add_book_form.price.data, add_book_form.stock.data, add_book_form.desc.data, add_book_form.img.data, rented=0)
 
         if add_book_form.language2.data != "":
             book.set_language(add_book_form.language2.data)
@@ -1601,7 +1601,7 @@ def update_book(id):
         book.set_title(update_book_form.title.data)
         book.set_author(update_book_form.author.data)
         book.set_price(update_book_form.price.data)
-        book.set_qty(update_book_form.qty.data)
+        book.set_qty(update_book_form.stock.data)
         book.set_desc(update_book_form.desc.data)
         book.set_img(book.get_img())
 
@@ -1654,7 +1654,7 @@ def update_book(id):
         update_book_form.title.data = book.get_title()
         update_book_form.author.data = book.get_author()
         update_book_form.price.data = book.get_price()
-        update_book_form.qty.data = book.get_qty()
+        update_book_form.stock.data = book.get_qty()
         update_book_form.desc.data = book.get_desc()
         update_book_form.img.data = book.get_img()
 

@@ -190,10 +190,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -218,9 +218,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -368,10 +368,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -396,9 +396,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -541,10 +541,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -569,9 +569,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -701,10 +701,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -716,9 +716,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -848,10 +848,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -863,9 +863,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -989,10 +989,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -1004,9 +1004,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -1136,10 +1136,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -1164,9 +1164,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -1239,10 +1239,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -1254,9 +1254,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}
@@ -1385,10 +1385,10 @@
                                 </tr>
                                 {% for book in order.get_buy_item() %}
                                 <tr class="products">
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td style="text-align:left;">{{ books_dict[book].get_title() }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td style="text-align:left;">{{ books_dict[book].title }}</td>
                                     <td>X{{ order.get_buy_item()[book] }}</td>
-                                    <td>${{ "%.2f"|format(books_dict[book].get_price()|float) }}</td>
+                                    <td>${{ "%.2f"|format(books_dict[book].price|float) }}</td>
                                 {% endfor %}
                             {% endif %}
                             {% if order.get_rent_item() != '' %}
@@ -1413,9 +1413,9 @@
                                 {% for book in order.get_rent_item() %}
                                 <tr class="products">
                                     {% if book != 'Returned' %}
-                                    <td><img src={{ books_dict[book].get_img() }}></td>
-                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].get_title() }}</td>
-                                    <td>{{ "$%.2f"|format((books_dict[book].get_price()|float)*0.1) }}</td>
+                                    <td><img src="{{ books_dict[book].cover_img }}"></td>
+                                    <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
+                                    <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
                                     {% endif %}
                                 </tr>
                                 {% endfor %}

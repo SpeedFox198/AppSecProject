@@ -73,12 +73,12 @@
           <div class="row row-cols-2 row-cols-md-4 g-4">
             {% for book in books_list %}
             <div class="col">
-              <a href="/book/{{ book.get_book_id() }}">
+              <a href="{{ url_for('book_info', book_id=book.book_id) }}">
                   <div class="card h-100">
-                  <img src="{{ book.get_img() }}" class="card-img-top" alt="{{ book.get_title() }}" width="259" height="371.56">
+                  <img src="{{ book.cover_img }}" class="card-img-top" alt="{{ book.title }}" width="259" height="371.56">
                   <div class="card-body">
-                  <h5 class="card-title">{{ book.get_title() }}</h5>
-                  <p class="card-text">${{ "%.2f"|format(book.get_price()|float) }}</p>
+                  <h5 class="card-title">{{ book.title }}</h5>
+                  <p class="card-text">${{ "%.2f"|format(book.price|float) }}</p>
                   </div>
                   </div>
               </a>
