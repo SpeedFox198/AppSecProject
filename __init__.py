@@ -218,6 +218,7 @@ def sign_up():
     # Render sign up page
     return render_template("user/sign_up.html", form=sign_up_form)
 
+
 @app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():

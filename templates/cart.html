@@ -54,7 +54,7 @@
     <h6 class="d-block d-md-none">For Payment</h6>
   {% if buy_count == 0 %}
   <div class="col-md-9 col-12 empty-cart">
-    <h5>Your cart is empty. <a href="{{url_for('books', sort_this='')}}">Browse more</a>.</h5>
+    <h5>Your cart is empty. <a href="{{url_for("books", sort_this="all")}}">Browse more</a>.</h5>
   </div>
   {% else %}
   <!-- Update Cart -->
