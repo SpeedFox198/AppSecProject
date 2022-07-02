@@ -1275,57 +1275,52 @@ def price_high_to_low(inventory_data):
 
 
 # Add to cart
-@app.route("/add-to-cart", methods=['GET', 'POST']) # should there be a GET here?
+@app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("100/minute", override_defaults=False)
-def add_to_cart(book_id):
+def add_to_cart():
 
     # User is a Class
     user:User = flask_global.user
 
-    if user is None or not user.is_admin:
+    if not isinstance(user, User) or not user.is_admin:
         abort(403)
 
-    # Get book from database
-    book:Book = dbf.retrieve_book(book_id)
-
-    if request.method == 'POST':
-
-        user_id = user.get_user_id()
-        # Getting book_id and quantity to add
-        book_id = request.form['book_id']
-        buying_quantity = request.form['quantity']
+    user_id = user.user_id
+    # Getting book_id and quantity to add
+    book_id = request.form['book_id']
+    buying_quantity = request.form['quantity']
+    
+    # Checking if book_id is in inventory
+    try:
+        buying_quantity = int(buying_quantity)
+    except:
+        abort(400) # Bad Request
         
-        # Checking if book_id is in inventory
-        try:
-            buying_quantity = int(buying_quantity)
-        except:
-            buying_quantity = 1
-        if buying_quantity < 1:
-            buying_quantity = 1
-        
-        
-        if book_id == dbf.retrieve_db("Books", book_id="book_id"):
-            # if book_id is found
-            # Checking if book_id is already in cart
-            cartItems = dbf.get_shopping_cart(user_id)
-            for bookID, quantity in cartItems:
-                if bookID == book_id:
-                    # if book_id is already in cart
-                    # Update quantity
-                    user.add_existing_to_shopping_cart(user_id, book_id, buying_quantity)
-                    flash("Book already exists, adding quantity only.")
+    if buying_quantity < 1:
+        buying_quantity = 1
+    
+    if book_id == dbf.retrieve_db("Books", book_id=book_id):
+        # if book_id is found
+        # Checking if book_id is already in cart
+        cartItems = dbf.get_shopping_cart(user_id)
+        for bookID, quantity in cartItems:
+            if bookID == book_id:
+                # if book_id is already in cart
+                # Update quantity
+                user.add_existing_to_shopping_cart(user_id, book_id, buying_quantity)
+                flash("Book already exists, adding quantity only.")
 
-                    return redirect(url_for('home'))
+                return redirect(request.referrer)
 
-                elif bookID != book_id:
-                    # if book_id is not in cart
-                    # Add to cart
-                    user.add_to_shopping_cart(user_id, book_id, buying_quantity)
-                    flash("Book has been added to your cart.")
+            elif bookID != book_id:
+                # if book_id is not in cart
+                # Add to cart
+                user.add_to_shopping_cart(user_id, book_id, buying_quantity)
+                flash("Book has been added to your cart.")
 
-                    return redirect(url_for('home'))
-        else:
-            return redirect(url_for('home')) # Return to catalogue if book_id is not in inventory
+                return redirect(request.referrer)
+    else:
+        return redirect(request.referrer) # Return to catalogue if book_id is not in inventory
 
 
 """ View Shopping Cart"""
