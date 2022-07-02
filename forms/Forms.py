@@ -150,7 +150,7 @@ class AddBookForm(Form):
                                    validators.NumberRange(min=1, message="Price cannot be less than 1")])
     stock = IntegerField('Stock', [validators.InputRequired("Stock is required"),
                                     validators.NumberRange(min=1, message="Stock cannot be less than 1")])
-    desc = TextAreaField('Description', [validators.Length(min=1), validators.InputRequired("Description is required")])
+    description = TextAreaField('Description', [validators.Length(min=1), validators.InputRequired("Description is required")])
 
     def validate(self, extra_validators=None):
         if not super(AddBookForm, self).validate():

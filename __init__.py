@@ -1084,7 +1084,7 @@ def update_book(book_id):
         update_book_form.author.data = selected_book.author
         update_book_form.price.data = selected_book.price
         update_book_form.stock.data = selected_book.stock
-        update_book_form.description.data = selected_book.descriptionription
+        update_book_form.description.data = selected_book.description
         return render_template('admin/update_book.html', form=update_book_form)
 
 
