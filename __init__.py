@@ -1044,7 +1044,7 @@ def update_book(book_id):
     if not dbf.retrieve_book(book_id):
         abort(404)
 
-    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+    selected_book = Book(*dbf.retrieve_book(book_id))
 
     update_book_form = AddBookForm(request.form)
     update_book_form.language.choices = lang_list
