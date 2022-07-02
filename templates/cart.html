@@ -9,128 +9,126 @@
 {% endblock %}
 
 {% block content %}
-    <div aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
-      </ol>
-    </div>
-    <!-- Page Name -->
-    <h2 class="page-name"><span>Shopping Cart</span></h2>
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+  "Home": url_for("home"),
+  "Shopping Cart": "#"
+}) }}
+<h2 class="page-name"><span>Shopping Cart</span></h2>
 
-    <h6 class="cart-label d-none d-md-block">For Payment</h6>
-    <div class="row">
-        <div class="col-12 order-summary d-block d-lg-none">
-        <div class="card">
-          <div class="card-header">
-            <p>Order Summary
-            <span>{{ buy_count }} item(s)</span></p>
-          </div>
-          <div class="card-body">
-            <p class="card-text">Subtotal<span>${{ total_price }}</span></p>
-            {% if buy_count == 0 %}
-             <p class="card-text">Shipping <span>-</span></p>
-              <p class="card-text bolder">Estimated Total <span>-</span></p>
-            {% else %}
-            <p class="card-text">Shipping <span>$5.00</span></p>
-            <p class="card-text bolder">Estimated Total <span>${{ "%.2f"|format((total_price|float)+5) }}</span></p>
-            {% endif %}
-          </div>
-        </div>
-          <div>
-            <form action="/checkout" method="POST">
-              <button type="submit" class="check-out-button btn" name="button">Check Out</button>
-            </form>
-          </div>
-        {% endif %}
-        <div class="show-payment">
-          <p>Accepted Payment Method</p>
-          <i class="fab fa-cc-visa"></i>
-          <i class="fab fa-cc-mastercard"></i>
-          <i class="fa-brands fa-cc-amex"></i>
-          <i class="fas fa-times"></i>
-        </div>
+<h6 class="cart-label d-none d-md-block">For Payment</h6>
+<div class="row">
+    <div class="col-12 order-summary d-block d-lg-none">
+    <div class="card">
+      <div class="card-header">
+        <p>Order Summary
+        <span>{{ buy_count }} item(s)</span></p>
       </div>
-
-        <h6 class="d-block d-md-none">For Payment</h6>
-      {% if buy_count == 0 %}
-      <div class="col-md-9 col-12 empty-cart">
-        <h5>Your cart is empty. <a href="/all_books/all">Browse more</a>.</h5>
-      </div>
-      {% else %}
-      <!-- Update Cart -->
-      <div class="col-lg-9 col-12 buying-cart">
-          <table class="table table-striped">
-            <tbody>
-            {% for key in buy_cart %}
-                <tr class="d-none d-md-block">
-                    <form method="POST" action="/update-cart/{{ key }}">
-                      <!-- Book Image, Title, Price, No. of books-->
-                        <td class="col-2"><a href="/book/{{ key }}"><img src="{{ books_dict[key].cover_img }}" alt="book cover"></a></td>
-                        <td class="col-5"><a href="/book/{{ key }}"><h4>{{ books_dict[key].title }}</h4></a>#{{ key }}</td>
-                        <td class="col-2"><h5>${{ "%.2f"|format(books_dict[key].price|float) }}</h5></td>
-                        <td class="col-2"><input type="number" class="quantity-selector" name="quantity" min="0" value={{ buy_cart[key] }}>
-                        <button type="submit" class="btn update-btn" onclick="update_cart()">Update</button></td>
-                    </form>
-                    <form method="POST" action="/delete-buying-cart/{{ key }}">
-                        <input type="number" name="book_id" class="book_id" style="display:none;" value={{ books_dict[key] }} readonly></td>
-                        <td class="col-1"><button type="submit" onclick="delete_buying_cart()" name="button" style="float:right;" class="btn"><i class="fas fa-times"></i></button></td>
-                    </form>
-                </tr>
-                <tr class="d-block d-md-none">
-                    <form method="POST" action="/update-cart/{{ key }}">
-                        <td rowspan="col-2"><a href="/book/{{ book }}"><img src="{{ books_dict[key].cover_img }}" alt="book cover"></a></td>
-                        <td class="col-5"><a href="/book/{{ book }}"><p>{{ books_dict[key].title }}</p></a>#{{ key }}</td>
-                        <td class="col-1"><p>${{ "%.2f"|format(books_dict[key].price|float) }}</p></td>
-                        <td class="col-2"><input type="number" class="quantity-selector" name="quantity" min="0" value={{ buy_cart[key] }}>
-                        <button style="font-size:0.8em; padding:0px;" type="submit" class="btn update-btn" onclick="update_cart()">Update</button></td>
-                    </form>
-                    <form method="POST" action="/delete-buying-cart/{{ key }}">
-                        <input type="number" name="book_id" class="book_id" style="display:none;" value={{ books_dict[key] }} readonly></td>
-                        <td class="col-1"><button type="submit" onclick="delete_buying_cart()" name="button" style="float:right;" class="btn"><i class="fas fa-times"></i></button></td>
-                    </form>
-                </tr>
-            {% endfor %}
-              </tbody>
-          </table>
-      </div>
-      {% endif %}
-      <div class="col-md-3 col-12 order-summary d-none d-lg-block">
-        <div class="card">
-          <div class="card-header">
-            <p>Order Summary
-            <span>{{ buy_count }} item(s)</span></p>
-          </div>
-          <div class="card-body">
-            <p class="card-text">Subtotal<span>${{ total_price }}</span></p>
-            {% if buy_count == 0 %}
-             <p class="card-text">Shipping <span>-</span></p>
-              <p class="card-text bolder">Estimated Total <span>-</span></p>
-            {% else %}
-            <p class="card-text">Shipping <span>$5.00</span></p>
-            <p class="card-text bolder">Estimated Total <span>${{ "%.2f"|format((total_price|float)+5) }}</span></p>
-            {% endif %}
-          </div>
-        </div>
+      <div class="card-body">
+        <p class="card-text">Subtotal<span>${{ total_price }}</span></p>
         {% if buy_count == 0 %}
-                <button type="submit" disabled class="check-out-button btn" name="button">Check Out</button>
+          <p class="card-text">Shipping <span>-</span></p>
+          <p class="card-text bolder">Estimated Total <span>-</span></p>
         {% else %}
-          <div>
-            <form action="/checkout" method="POST">
-              <button type="submit" class="check-out-button btn" name="button">Check Out</button>
-            </form>
-          </div>
+        <p class="card-text">Shipping <span>$5.00</span></p>
+        <p class="card-text bolder">Estimated Total <span>${{ "%.2f"|format((total_price|float)+5) }}</span></p>
         {% endif %}
-        <div class="show-payment">
-          <p>Accepted Payment Method</p>
-          <i class="fab fa-cc-visa"></i>
-          <i class="fab fa-cc-mastercard"></i>
-          <i class="fab fa-cc-amex"></i>
-          <i class="fab fa-google-pay"></i>
-        </div>
       </div>
-
     </div>
+      <div>
+        <form action="/checkout" method="POST">
+          <button type="submit" class="check-out-button btn" name="button">Check Out</button>
+        </form>
+      </div>
+    {% endif %}
+    <div class="show-payment">
+      <p>Accepted Payment Method</p>
+      <i class="fab fa-cc-visa"></i>
+      <i class="fab fa-cc-mastercard"></i>
+      <i class="fa-brands fa-cc-amex"></i>
+      <i class="fas fa-times"></i>
+    </div>
+  </div>
+
+    <h6 class="d-block d-md-none">For Payment</h6>
+  {% if buy_count == 0 %}
+  <div class="col-md-9 col-12 empty-cart">
+    <h5>Your cart is empty. <a href="{{url_for('books', sort_this='')}}">Browse more</a>.</h5>
+  </div>
+  {% else %}
+  <!-- Update Cart -->
+  <div class="col-lg-9 col-12 buying-cart">
+      <table class="table table-striped">
+        <tbody>
+        {% for key in buy_cart %}
+            <tr class="d-none d-md-block">
+                <form method="POST" action="/update-cart/{{ key }}">
+                  <!-- Book Image, Title, Price, No. of books-->
+                    <td class="col-2"><a href="{{ url_for('book_info', book_id=key) }}"><img src="{{ books_dict[key].cover_img }}" alt="book cover"></a></td>
+                    <td class="col-5"><a href="{{ url_for('book_info', book_id=key) }}"><h4>{{ books_dict[key].title }}</h4></a>#{{ key }}</td>
+                    <td class="col-2"><h5>${{ "%.2f"|format(books_dict[key].price|float) }}</h5></td>
+                    <td class="col-2"><input type="number" class="quantity-selector" name="quantity" min="0" value={{ buy_cart[key] }}>
+                    <button type="submit" class="btn update-btn" onclick="update_cart()">Update</button></td>
+                </form>
+                <form method="POST" action="/delete-buying-cart/{{ key }}">
+                    <input type="number" name="book_id" class="book_id" style="display:none;" value={{ books_dict[key] }} readonly></td>
+                    <td class="col-1"><button type="submit" onclick="delete_buying_cart()" name="button" style="float:right;" class="btn"><i class="fas fa-times"></i></button></td>
+                </form>
+            </tr>
+            <tr class="d-block d-md-none">
+                <form method="POST" action="/update-cart/{{ key }}">
+                    <td rowspan="col-2"><a href="{{ url_for('book_info', book_id=book) }}"><img src="{{ books_dict[key].cover_img }}" alt="book cover"></a></td>
+                    <td class="col-5"><a href="{{ url_for('book_info', book_id=book) }}"><p>{{ books_dict[key].title }}</p></a>#{{ key }}</td>
+                    <td class="col-1"><p>${{ "%.2f"|format(books_dict[key].price|float) }}</p></td>
+                    <td class="col-2"><input type="number" class="quantity-selector" name="quantity" min="0" value={{ buy_cart[key] }}>
+                    <button style="font-size:0.8em; padding:0px;" type="submit" class="btn update-btn" onclick="update_cart()">Update</button></td>
+                </form>
+                <form method="POST" action="/delete-buying-cart/{{ key }}">
+                    <input type="number" name="book_id" class="book_id" style="display:none;" value={{ books_dict[key] }} readonly></td>
+                    <td class="col-1"><button type="submit" onclick="delete_buying_cart()" name="button" style="float:right;" class="btn"><i class="fas fa-times"></i></button></td>
+                </form>
+            </tr>
+        {% endfor %}
+          </tbody>
+      </table>
+  </div>
+  {% endif %}
+  <div class="col-md-3 col-12 order-summary d-none d-lg-block">
+    <div class="card">
+      <div class="card-header">
+        <p>Order Summary
+        <span>{{ buy_count }} item(s)</span></p>
+      </div>
+      <div class="card-body">
+        <p class="card-text">Subtotal<span>${{ total_price }}</span></p>
+        {% if buy_count == 0 %}
+          <p class="card-text">Shipping <span>-</span></p>
+          <p class="card-text bolder">Estimated Total <span>-</span></p>
+        {% else %}
+        <p class="card-text">Shipping <span>$5.00</span></p>
+        <p class="card-text bolder">Estimated Total <span>${{ "%.2f"|format((total_price|float)+5) }}</span></p>
+        {% endif %}
+      </div>
+    </div>
+    {% if buy_count == 0 %}
+            <button type="submit" disabled class="check-out-button btn" name="button">Check Out</button>
+    {% else %}
+      <div>
+        <form action="/checkout" method="POST">
+          <button type="submit" class="check-out-button btn" name="button">Check Out</button>
+        </form>
+      </div>
+    {% endif %}
+    <div class="show-payment">
+      <p>Accepted Payment Method</p>
+      <i class="fab fa-cc-visa"></i>
+      <i class="fab fa-cc-mastercard"></i>
+      <i class="fab fa-cc-amex"></i>
+      <i class="fab fa-google-pay"></i>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

@@ -10,39 +10,36 @@
 {% endblock %}
 
 {% block content %}
-<!-- put contents here-->
-<!-- breadcrumb -->
-    <div aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/ ">Home</a></li>
-        <li class="breadcrumb-item"><a href="#">All Books</a></li>
-        <li class="breadcrumb-item"><a href="#">English Books</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Book Title</li>
-      </ol>
-    </div>
-    <!-- ----------------------------- Filter ----------------------------- -->
-    <div class="container">
-      <div class="box">
-        <div>
-          <form action="" method="POST">
-            <div class="row">
-              <div class="col-sm-6">
-                <h2>Create a review (Less than 200 words):</h2>
-              </div>
-            </div>
-            <div>
-              {{ render_field(form.title, class="form-control") }}
-              <br>
-              {{ render_field(form.review, class="form-control", rows="10") }}
-              <br>
-            </div>
-            <div>
-              <button type="submit" class="btn btn-primary mb-2" style="float:right;">Submit</button>
-            </div>
-          </form>
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+  "Home": url_for("home"),
+  "All Books": url_for("books", sort_this=""),
+  book.title: "#"
+}) }}
+<!-- ----------------------------- Filter ----------------------------- -->
+<div class="container">
+  <div class="box">
+    <div>
+      <form action="" method="POST">
+        <div class="row">
+          <div class="col-sm-6">
+            <h2>Create a review (Less than 200 words):</h2>
+          </div>
         </div>
-      </div>
+        <div>
+          {{ render_field(form.title, class="form-control") }}
+          <br>
+          {{ render_field(form.review, class="form-control", rows="10") }}
+          <br>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary mb-2" style="float:right;">Submit</button>
+        </div>
+      </form>
     </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

@@ -1508,7 +1508,7 @@ def my_orders():
 """ About Page """
 
 
-@app.route("/home2")
+@app.route("/about")
 def about():
     return render_template("about.html")
 

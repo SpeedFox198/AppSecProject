@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 BOOK_IMG_UPLOAD_FOLDER = r"/static/img/books/"
 
-## TODO: refactor `hrefs`, `src`
+## TODO: refactor `href`, `src`
 
 @dataclass
 class Book:
