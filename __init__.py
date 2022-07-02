@@ -1117,16 +1117,16 @@ def manage_orders():
 """    Books Pages    """
 
 
-@app.route('/book/<int:id>', methods=['GET', 'POST'])
+@app.route('/book/<id>', methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-def book_info2(id):
+def book_info2(book_id):
 
     # Get book details
-    book:Book = dbf.retrieve_book(id)[0]
+    book:Book = dbf.retrieve_book(book_id)[0]
     print(book)
 
     # Get specified book
-    if not dbf.retrieve_book(id)[0]:
+    if not dbf.retrieve_book(book_id)[0]:
         print(book)
         abort(404)
 

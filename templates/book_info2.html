@@ -36,9 +36,10 @@
 
           <h4>$<span>{{ book.get_price() }}</span></h4>
 
-          <form method="POST" action="/addtocart/{{ book.get_book_id() }}">
+          <form method="POST" action="{{ url_for('add_to_cart') }}">
+              <input type="text" class="d-none" name="book_id" value="{{ book.get_book_id() }}">
               <input type="number" class="quantity-selector" name="quantity" min="1" value="1">
-              <input type="submit" onclick="add_to__shopping_cart()" class="btn add-cart-button" value="ADD TO CART">
+              <input type="submit" class="btn add-cart-button" value="ADD TO CART">
           </form>
 
           <h5>Description</h5>
@@ -92,8 +93,4 @@
       </div>
     </div>
 
-{% endblock %}
-
-{% block scripts %}
-<!-- put js here -->
 {% endblock %}
