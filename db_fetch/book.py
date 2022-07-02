@@ -2,12 +2,11 @@
 Book Functions
 --------------
 
-Contains functions that interacts with book information
+Contains functions that interact with book information
 """
 from .general import *
 
-
-""" User-triggered Fuctions """
+""" User-triggered Functions """
 
 
 def retrieve_books_by_language(book_language):
@@ -21,8 +20,6 @@ def retrieve_inventory():
 def retrieve_book(id_of_book: str) -> Union[tuple, None]:
     """ Retrieves details of the book """
     return retrieve_db("Books", book_id=id_of_book, fetchone=True)
-
-
 
 
 """ Admin-triggered Fuctions """

@@ -8,7 +8,7 @@ from .general import *
 from .user import retrieve_user
 
 
-""" Customer-triggered Fuctions """
+""" Customer-triggered Functions """
 
 
 def create_customer(user_id, username, email, password) -> None:
@@ -47,14 +47,16 @@ def change_password(user_id: str, password: str) -> None:
     update_rows("Users", ("password",), (password,), user_id=user_id)
 
 
-
-
-""" Admin-triggered Fuctions """
+""" Admin-triggered Functions """
 
 
 def retrieve_these_customers(limit:int, offset: int) -> list[tuple]:
     """ Retrieves and returns a list of max 10 customers starting from offset """
     return retrieve_db("Users NATURAL JOIN Customers", limit=limit, offset=offset, is_admin=0)
+
+
+def retrieve_customer_detail(user_id: str):
+    return retrieve_db("Users NATURAL JOIN Customers", fetchone=True, is_admin=0, or_and=1, user_id=user_id)
 
 
 def number_of_customers() -> int:
