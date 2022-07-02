@@ -145,7 +145,7 @@ def after_request(response):
 
 
 @app.route("/")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def home():
     english_books_data = dbf.retrieve_books_by_language("English")
     chinese_books_data = dbf.retrieve_books_by_language("Chinese")
@@ -160,7 +160,7 @@ def home():
 
 
 @app.route("/user/sign-up", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def sign_up():
     # If user is already logged in
     if flask_global.user is not None:
@@ -220,7 +220,7 @@ def sign_up():
     return render_template("user/sign_up.html", form=sign_up_form)
 
 @app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def OTPverification():
     email = session.get("Email")
     username = session.get("Username")
@@ -253,7 +253,7 @@ def OTPverification():
 
 
 @app.route("/user/login", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def login():
     # If user is already logged in
     if flask_global.user is not None:
@@ -298,7 +298,7 @@ def login():
 
 
 @app.route("/user/logout")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def logout():
     flask_global.user = None
     response = make_response()
@@ -309,7 +309,7 @@ def logout():
 
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def password_forget():
     # Get user
     user:User = flask_global.user
@@ -360,6 +360,7 @@ def password_forget():
 
 
 @app.route("/user/password/reset/<token>", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
 def password_reset(token):
 
     # Get user
@@ -428,6 +429,7 @@ def password_reset(token):
 
 
 @app.route("/user/password/change", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
 def password_change():
 
     # Get current user
@@ -482,7 +484,9 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
-@app.route("user/account/2FA")
+
+@app.route("/user/account/2FA")
+@limiter.limit("10/second", override_defaults=False)
 def account_2FA():
     user: User = flask_global.user
 
@@ -768,7 +772,7 @@ def verify_send():
 
 
 @app.route("/user/account", methods=["GET", "POST"])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def account():
     # Get current user
     user: User = flask_global.user
@@ -833,12 +837,17 @@ def account():
 """    Admin Pages    """
 
 
-def admin_check():
+def admin_check(mode="regular"):
     user: User = flask_global.user
-
-    # If user is not admin
-    if user is None or not user.is_admin:
-        abort(403)  # Forbidden, go away D:
+    """ 2 modes for admin check
+        regular (Regular) - normal routes with the HTML, default option
+        api (API) - API routes
+    """
+    if not isinstance(user, User) or not user.is_admin: # Check if no cookie and if user is not admin
+        if mode == "regular":
+            abort(403)
+        elif mode == "api":
+            return jsonify(message="The resource you requested does not exist."), 404
 
 
 # Manage accounts page
@@ -1109,6 +1118,7 @@ def manage_orders():
 
 
 @app.route('/book/<int:id>', methods=['GET', 'POST'])
+@limiter.limit("10/second", override_defaults=False)
 def book_info2(id):
 
     # Get book details
@@ -1147,7 +1157,7 @@ def book_reviews(id, reviewPageNumber):
 
 
 @app.route("/books/<sort_this>")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def books(sort_this):
     sort_dict = {}
     books_dict = {}
@@ -1276,8 +1286,8 @@ def price_high_to_low(inventory_data):
 
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
-@limiter.limit("100/minute", override_defaults=False)
-def add_to_cart():
+@limiter.limit("10/second", override_defaults=False)
+def add_to_cart(book_id):
 
     # User is a Class
     user:User = flask_global.user
@@ -1327,7 +1337,7 @@ def add_to_cart():
 
 
 @app.route('/cart')
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def cart():
 
     # User is a Class
@@ -1398,7 +1408,7 @@ def cart():
 
 """ Update Shopping Cart """
 @app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def update_cart(user_id):
     # User is a Class
     user: User = flask_global.user
@@ -1448,7 +1458,7 @@ def delete_buying_cart(user_id):
 
 
 @app.route("/my-orders")
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def my_orders():
     db_order = []
     new_order = []
@@ -1515,13 +1525,18 @@ def api_home():
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    username = request.json.get("username")
-    password = request.json.get("password")
+    try:  # Error handle if user never put username and password key in json body
+        username = request.json.get("username")
+        password = request.json.get("password")
+    except AttributeError:
+        return jsonify(message="Please enter username or email, and password"), 400
 
     if username is None:
         return jsonify(message="Please enter a username or email"), 400
-    if password is None:
+    elif password is None:
         return jsonify(message="Please enter a password"), 400
+    elif username is None and password is None:
+        return jsonify(message="Please enter username or email, and password"), 400
 
     user_data = dbf.user_auth(username, password)
     if user_data is None:
@@ -1555,6 +1570,7 @@ def api_all_books():
 
 @app.route("/api/books/<book_id>", methods=["GET"])
 def api_single_book(book_id):
+    # WIP add more methods e.g. POST, PUT, DELETE
     if request.method == "GET":
         book_data = dbf.retrieve_book(book_id)
         if not book_data:
@@ -1571,6 +1587,30 @@ def api_single_book(book_id):
                       image=book_data[8]
                       )
         return jsonify(output)
+
+
+@app.route('/api/admin/users/all', methods=["GET"])
+def api_all_users():
+    users_data = dbf.retrieve_these_customers(limit=0, offset=0)
+
+    if not users_data:
+        return jsonify(message="There are currently no users.")
+
+    # Comment out personal info in case of excessive data exposure
+    output = [dict(user_id=row[0],
+                   username=row[1],
+                   email=row[2],
+                   # password=row[3],
+                   profile_pic=row[4],
+                   is_admin=row[5],
+                   name=row[6],
+                   # credit_card_no=row[7],
+                   # address=row[8],
+                   # phone_no=row[9],
+                   )
+              for row in users_data]
+
+    return admin_check("api") or jsonify(output)
 
 
 """    Error Handlers    """
@@ -1590,12 +1630,6 @@ def page_not_found(e):
 @app.errorhandler(429)
 def too_many_request(e):
     return render_template("error/429.html")
-
-
-@app.route("/medium")
-@limiter.limit("100/minute", override_defaults=False)
-def medium():
-    return ":|"
 
 
 """    Main    """
