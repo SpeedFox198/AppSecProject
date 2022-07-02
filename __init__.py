@@ -1044,7 +1044,7 @@ def update_book(book_id):
     if not dbf.retrieve_book(book_id):
         abort(404)
 
-    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+    selected_book = Book(*dbf.retrieve_book(book_id))
 
     update_book_form = AddBookForm(request.form)
     update_book_form.language.choices = lang_list
@@ -1609,6 +1609,29 @@ def api_all_users():
               for row in users_data]
 
     return admin_check("api") or jsonify(output)
+
+
+@app.route('/api/admin/users/<user_id>', methods=["GET"])
+def api_single_user(user_id):
+    if request.method == "GET":
+        user_data = dbf.retrieve_customer_detail(user_id)
+
+        if user_data is None:
+            return jsonify(message=f"There are no such user with id of {user_id}"), 404
+
+        output = dict(user_id=user_data[0],
+                      username=user_data[1],
+                      email=user_data[2],
+                      # password=user_data[3],
+                      profile_pic=user_data[4],
+                      is_admin=user_data[5],
+                      name=user_data[6],
+                      # credit_card_no=user_data[7],
+                      # address=user_data[8],
+                      # phone_no=user_data[9],
+                      )
+
+        return admin_check("api") or jsonify(output)
 
 
 """    Error Handlers    """
