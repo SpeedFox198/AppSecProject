@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 # Profile pic path
-_UPLOAD_FOLDER = r"/static/img/profile-pic/"
+UPLOAD_FOLDER = r"/static/img/profile-pic/"
 _DEFAULT_PIC_NAME = r"default.png"
 
 @dataclass
@@ -23,7 +23,7 @@ class User:
     @property
     def profile_pic(self):
         """ Path to profile picture of user """
-        return _UPLOAD_FOLDER + self._profile_pic
+        return UPLOAD_FOLDER + self._profile_pic
 
     @property
     def display_name(self):

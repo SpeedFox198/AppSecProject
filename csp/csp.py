@@ -24,7 +24,7 @@ csp = {
     ],
     "img-src": [
         "\'self\'",
-        "data:"
+        "data:"                         # For loading images from data scheme
     ],
     "font-src": [
         "\'self\'",

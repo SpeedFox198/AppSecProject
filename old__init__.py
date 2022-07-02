@@ -13,7 +13,7 @@ import datetime
 import db_fetch as dbf
 from SecurityFunctions import encrypt_info, decrypt_info, generate_id
 from session_handler import create_user_session, retrieve_session
-from users import Admin
+from user import Admin
 
 # Import classes
 import Book, Cart as c

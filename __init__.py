@@ -7,11 +7,11 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME
-from users import User
+from user import User, UPLOAD_FOLDER as _PROFILE_PIC_UPLOAD_FOLDER
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
-from Book import Book
+from Book import Book, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_UPLOAD_FOLDER
 from math import ceil
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
@@ -34,10 +34,8 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
-BOOK_IMG_UPLOAD_FOLDER = "static/img/books"
-PROFILE_PIC_UPLOAD_FOLDER = "static/img/profile-pic"
-app.config["BOOK_UPLOAD_FOLDER"] = BOOK_IMG_UPLOAD_FOLDER  # Set upload folder
-app.config["PROFILE_PIC_UPLOAD_FOLDER"] = PROFILE_PIC_UPLOAD_FOLDER
+BOOK_UPLOAD_FOLDER = _BOOK_IMG_UPLOAD_FOLDER[1:]
+PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_UPLOAD_FOLDER[1:]
 
 limiter = Limiter(
     app,
@@ -809,7 +807,7 @@ def account():
                 profile_pic = request.files["picture"]
                 if profile_pic and allowed_file(profile_pic.filename):
                     profile_pic_filename = f"{user.user_id}_{profile_pic.filename}"
-                    profile_pic.save(os.path.join(app.config['PROFILE_PIC_UPLOAD_FOLDER'], profile_pic_filename))
+                    profile_pic.save(os.path.join(PROFILE_PIC_UPLOAD_FOLDER, profile_pic_filename))
 
             # Apparently account details were needed to be split because profile picture is in user table
             account_details = (name, phone_number, user.user_id)
@@ -1013,7 +1011,7 @@ def add_book():
         if book_img and allowed_file(book_img.filename):
             book_id = generate_uuid4()
             book_img_filename = f"{book_id}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
-            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
+            path = os.path.join(BOOK_UPLOAD_FOLDER, book_img_filename)
             book_img.save(path)
             image = Image.open(path)
             resized_image = image.resize((259, 371))
@@ -1055,11 +1053,11 @@ def update_book(book_id):
         book_img = request.files['bookimg']
 
         # If no selected book cover
-        book_img_filename = selected_book.cover_img
+        book_img_filename = selected_book._cover_img
 
         if book_img and allowed_file(book_img.filename):
             book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
-            path = os.path.join(app.config['BOOK_UPLOAD_FOLDER'], book_img_filename)
+            path = os.path.join(BOOK_UPLOAD_FOLDER, book_img_filename)
             book_img.save(path)
             image = Image.open(path)
             resized_image = image.resize((259, 371))
