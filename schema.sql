@@ -66,6 +66,7 @@ CREATE TABLE CartItems (
 CREATE TABLE Reviews (
     book_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
+    stars INTEGER NOT NULL,
     time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     content TEXT NOT NULL,
     FOREIGN KEY (book_id) REFERENCES Books(book_id),
