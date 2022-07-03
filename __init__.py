@@ -1512,6 +1512,7 @@ def my_orders():
 
 
 @app.route("/about")
+@limiter.limit("10/second", override_defaults=False)
 def about():
     return render_template("about.html")
 
@@ -1520,11 +1521,13 @@ def about():
 
 
 @app.route("/api", methods=["GET"])
+@limiter.limit("10/second", override_defaults=False)
 def api_home():
     return jsonify(message="BrasBasahBooks API")
 
 
 @app.route("/api/login", methods=["POST"])
+@limiter.limit("10/second", override_defaults=False)
 def api_login():
     try:  # Error handle if user never put username and password key in json body
         username = request.json.get("username")
@@ -1550,6 +1553,7 @@ def api_login():
 
 
 @app.route("/api/books/all", methods=["GET"])
+@limiter.limit("10/second", override_defaults=False)
 def api_all_books():
     books_data = dbf.retrieve_inventory()
     if not books_data:
@@ -1570,6 +1574,7 @@ def api_all_books():
 
 
 @app.route("/api/books/<book_id>", methods=["GET"])
+@limiter.limit("10/second", override_defaults=False)
 def api_single_book(book_id):
     # WIP add more methods e.g. POST, PUT, DELETE
     if request.method == "GET":
@@ -1591,6 +1596,7 @@ def api_single_book(book_id):
 
 
 @app.route('/api/admin/users/all', methods=["GET"])
+@limiter.limit("10/second", override_defaults=False)
 def api_all_users():
     users_data = dbf.retrieve_these_customers(limit=0, offset=0)
 
@@ -1615,6 +1621,7 @@ def api_all_users():
 
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
+@limiter.limit("10/second", override_defaults=False)
 def api_single_user(user_id):
     if request.method == "GET":
         user_data = dbf.retrieve_customer_detail(user_id)
@@ -1635,6 +1642,16 @@ def api_single_user(user_id):
                       )
 
         return admin_check("api") or jsonify(output)
+
+
+# TODO: @SpeedFox198 add limit
+@app.route("/api/reviews/<book_id>")
+@limiter.limit("10/second", override_defaults=False)
+def api_reviews(book_id):
+    """ Returns a list of customer reviews in json format """
+    # Retrieve customer reviews
+    reviews = [Review(*review).jsonify() for review in dbf.retrieve_reviews(book_id)]
+    return jsonify(reviews)
 
 
 """    Error Handlers    """
