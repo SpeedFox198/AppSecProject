@@ -1592,7 +1592,7 @@ def api_single_book(book_id):
         return jsonify(output)
 
 
-@app.route('/api/admin/users/', methods=["GET", "POST"])
+@app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def api_users():
     if request.method == "GET":
@@ -1618,6 +1618,9 @@ def api_users():
         return admin_check("api") or jsonify(output)
 
     elif request.method == "POST":
+        if admin_check("api"):
+            return admin_check("api")
+
         try:
             username = request.json.get("username")
             email = request.json.get("email")
