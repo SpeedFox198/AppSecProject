@@ -17,11 +17,11 @@
   book.title: "#"
 }) }}
 
-<div class="row justify-content-center book-info">
+<div class="row book-info mb-5">
   <div class="col-4">
     <img src="{{ book.cover_img }}">
   </div>
-  <div class="col-6">
+  <div class="col-8">
     <h2>{{ book.title }}</h2>
     <p>By: {{ book.author }}</p>
     <p>Language: <span>{{ book.language }}</span></p>
@@ -38,5 +38,17 @@
     <h5>Description</h5>
     <p>{{ book.description }}</p>
   </div>
+</div>
+
+{# Customer Reviews Section #}
+<h2 class="review-header">Customer Reviews</h2>
+<div>
+{% if reviews %}
+  {% for review in reviews %}
+    ...
+  {% endfor %}
+{% else %}
+  No reviews have been written for this book.
+{% endif %}
 </div>
 {% endblock %}

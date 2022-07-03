@@ -10,5 +10,6 @@ from .customer import *
 from .admin import *
 from .exists import *
 from .book import *
+from .review import *
 from .order import *
 from .cart import *

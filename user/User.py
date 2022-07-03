@@ -24,8 +24,3 @@ class User:
     def profile_pic(self):
         """ Path to profile picture of user """
         return UPLOAD_FOLDER + self._profile_pic
-
-    @property
-    def display_name(self):
-        """ Name to display for user (default username if no name is set)"""
-        return self.name or self.username

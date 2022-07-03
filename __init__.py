@@ -824,7 +824,6 @@ def account():
     account_page_form.phone_number.data = user.phone_no
     return render_template("user/account.html",
                            form=account_page_form,
-                           display_name=user.display_name,
                            picture_path=user.profile_pic,
                            username=user.username,
                            email=user.email,
@@ -1127,13 +1126,15 @@ def book_info(book_id):
 
     book = Book(*book_data)
 
-    return render_template("book_info.html", book=book)
+    reviews = []  # Empty list for now
+
+    return render_template("book_info.html", book=book, reviews=reviews)
 
 
-# TODO: @Miku @SpeedFox198 work on this
+# TODO: @Miku @SpeedFox198 work on this (perhaps we not using this?)
 @app.route("/book/<int:id>/reviews/page_<int:reviewPageNumber>")
 def book_reviews(id, reviewPageNumber):
-    pass
+    ...
 
 
 """ Search Results Page """
