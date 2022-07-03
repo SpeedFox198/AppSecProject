@@ -72,13 +72,28 @@ function noReviews(customerReviews) {
     customerReviews.textContent = "No reviews have been written for this book.";
 }
 
+async function retrieveReviews() {
+    const url = "/api/reviews/" + window.location.pathname.split("/")[2]
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            const reviews = await response.json();
+            return reviews;
+        }
+        else {
+            throw new Error("API response not ok.");
+        }
+    }
+    catch (err) {
+        console.error(err);
+    }
+}
+
 (async () => {
     const customerReviews = document.getElementById("customerReviews");
-    const url = "/api/reviews/" + window.location.pathname.split("/")[2]
-    const response = await fetch(url);
-    const reviews = await response.json();
+    const reviews = await retrieveReviews();
 
-    if (reviews) {
+    if (reviews && reviews.length) {
         displayReviews(customerReviews, reviews);
     }
     else {
