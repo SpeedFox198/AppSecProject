@@ -16,39 +16,66 @@
   "All Books": url_for("books", sort_this="all"),
   book.title: "#"
 }) }}
+<div class="container display-section p-3 mb-4">
+  <div class="row book-info">
+    <div class="col-4">
+      <img src="{{ book.cover_img }}">
+    </div>
+    <div class="col-8">
+      <h2>{{ book.title }}</h2>
+      <p>By: {{ book.author }}</p>
+      <p>Language: <span>{{ book.language }}</span></p>
+      <p>Genre: <span>{{ book.genre }}</span></p>
 
-<div class="row book-info mb-5">
-  <div class="col-4">
-    <img src="{{ book.cover_img }}">
-  </div>
-  <div class="col-8">
-    <h2>{{ book.title }}</h2>
-    <p>By: {{ book.author }}</p>
-    <p>Language: <span>{{ book.language }}</span></p>
-    <p>Genre: <span>{{ book.genre }}</span></p>
+      <h4>$<span>{{ book.price }}</span></h4>
 
-    <h4>$<span>{{ book.price }}</span></h4>
+      <form method="POST" action="{{ url_for('add_to_cart') }}">
+        <input type="text" class="d-none" name="book_id" value="{{ book.book_id }}">
+        <input type="number" class="quantity-selector" name="quantity" min="1" value="1">
+        <input type="submit" class="btn add-cart-button" value="ADD TO CART">
+      </form>
 
-    <form method="POST" action="{{ url_for('add_to_cart') }}">
-      <input type="text" class="d-none" name="book_id" value="{{ book.book_id }}">
-      <input type="number" class="quantity-selector" name="quantity" min="1" value="1">
-      <input type="submit" class="btn add-cart-button" value="ADD TO CART">
-    </form>
-
-    <h5>Description</h5>
-    <p>{{ book.description }}</p>
+      <h5>Description</h5>
+      <p>{{ book.description }}</p>
+    </div>
   </div>
 </div>
 
 {# Customer Reviews Section #}
-<h2 class="review-header">Customer Reviews</h2>
-<div>
-{% if reviews %}
-  {% for review in reviews %}
-    ...
-  {% endfor %}
-{% else %}
-  No reviews have been written for this book.
-{% endif %}
+<div class="container display-section reviews-section p-4 mb-4">
+  <h2 class="review-header mb-3">Customer Reviews</h2>
+  {% if reviews %}
+    {% for review in reviews %}
+      <div class="reviews row p-3">
+        {# Customer Profile Pic #}
+        <div class="col-1 profile-pic-col">
+          <div class="img-wrapper img-1-1">
+            <img class="profile-pic" src="{{ review.profile_pic }}" alt="{{ review.username }}">
+          </div>
+        </div>
+
+        {# Review details #}
+        <div class="col-11">
+          <div>{{ review.username }}</div>
+          <div class="review-stars">
+            {% for _ in range(review.stars) %}
+              <i class="fas fa-star" aria-hidden="true"></i>
+            {% endfor %}
+            {% for _ in range(review.stars, 5) %}
+              <i class="far fa-star" aria-hidden="true"></i>
+            {% endfor %}
+          </div>
+          <div class="mb-2">{{ review.time }}</div>
+          <div>{{ review.content }}</div>
+        </div>
+      </div>
+      <hr class="mx-3">
+    {% endfor %}
+  {% else %}
+    No reviews have been written for this book.
+  {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
 {% endblock %}

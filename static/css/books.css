@@ -1,10 +1,11 @@
-/* Book Info Page */
-.book-info img{
-  width: 90%;
+/* Body Styling */
+.display-section {
+  background-color: #fff;
 }
 
-.book-info {
-  margin-bottom: 25px;
+/* Book Info Page */
+.book-info img{
+  width: 100%;
 }
 
 .book-info h2, .book-info h4, .review-header {
@@ -40,4 +41,15 @@
 a .card .card-body{
     color: #4b8282;
     text-decoration: none;
+}
+
+
+/* Reviews Section */
+
+.profile-pic {
+  border-radius: 50%;
+}
+
+.review-stars .fas.fa-star, .review-stars .far.fa-star {
+  color: #4b8282;
 }
