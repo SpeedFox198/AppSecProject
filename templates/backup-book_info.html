@@ -44,7 +44,38 @@
 {# Customer Reviews Section #}
 <div class="container display-section reviews-section p-4 mb-4">
   <h2 class="review-header mb-3">Customer Reviews</h2>
-  <div class="container" id="customerReviews">{# Javascript will fetch API for this #}</div>
+  <div class="container" id="customerReviews">
+  {% if reviews %}
+    {% for review in reviews %}
+      <div class="reviews row p-3">
+        {# Customer Profile Pic #}
+        <div class="col-1 profile-pic-col">
+          <div class="img-wrapper img-1-1">
+            <img class="profile-pic" src="{{ review.profile_pic }}" alt="{{ review.username }}">
+          </div>
+        </div>
+
+        {# Review details #}
+        <div class="col-11">
+          <div>{{ review.username }}</div>
+          <div class="review-stars">
+            {% for _ in range(review.stars) %}
+              <i class="fas fa-star" aria-hidden="true"></i>
+            {% endfor %}
+            {% for _ in range(review.stars, 5) %}
+              <i class="far fa-star" aria-hidden="true"></i>
+            {% endfor %}
+          </div>
+          <div class="mb-2">{{ review.time }}</div>
+          <div>{{ review.content }}</div>
+        </div>
+      </div>
+      <hr class="mx-3">
+    {% endfor %}
+  {% else %}
+    No reviews have been written for this book.
+  {% endif %}
+  </div>
 </div>
 {% endblock %}
 
