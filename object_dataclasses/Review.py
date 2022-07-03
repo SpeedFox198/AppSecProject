@@ -2,7 +2,8 @@
 Review
 ------
 
-Represents a customer review
+Customer review class representing
+a review in the review section
 """
 from dataclasses import dataclass
 from .User import UPLOAD_FOLDER

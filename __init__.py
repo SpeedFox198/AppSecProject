@@ -7,7 +7,7 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME
-from object_dataclasses import User, UPLOAD_FOLDER as _PROFILE_PIC_UPLOAD_FOLDER
+from object_dataclasses import User, UPLOAD_FOLDER as _PROFILE_PIC_UPLOAD_FOLDER, Review
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -1127,7 +1127,7 @@ def book_info(book_id):
     book = Book(*book_data)
 
     # Retrieve customer reviews
-    reviews = dbf.retrieve_reviews(book_id)
+    reviews = [Review(*review) for review in dbf.retrieve_reviews(book_id)]
 
     return render_template("book_info.html", book=book, reviews=reviews)
 

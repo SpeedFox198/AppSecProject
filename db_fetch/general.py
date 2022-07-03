@@ -95,7 +95,7 @@ def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, off
     return execute_db(query, tuple(attributes.values()), fetchone)
 
 
-def insert_row(table: str, values: list, columns: list=None) -> None:
+def insert_row(table: str, values: list, columns: list[str]=None) -> None:
     """ Inserts new row with values into, columns of table """
 
     # Values shouldn't be empty
