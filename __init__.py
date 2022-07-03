@@ -1595,29 +1595,54 @@ def api_single_book(book_id):
         return jsonify(output)
 
 
-@app.route('/api/admin/users/all', methods=["GET"])
+@app.route('/api/admin/users/', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-def api_all_users():
-    users_data = dbf.retrieve_these_customers(limit=0, offset=0)
+def api_users():
+    if request.method == "GET":
+        users_data = dbf.retrieve_these_customers(limit=0, offset=0)
 
-    if not users_data:
-        return jsonify(message="There are currently no users.")
+        if not users_data:
+            return jsonify(message="There are currently no users.")
 
-    # Comment out personal info in case of excessive data exposure
-    output = [dict(user_id=row[0],
-                   username=row[1],
-                   email=row[2],
-                   # password=row[3],
-                   profile_pic=row[4],
-                   is_admin=row[5],
-                   name=row[6],
-                   # credit_card_no=row[7],
-                   # address=row[8],
-                   # phone_no=row[9],
-                   )
-              for row in users_data]
+        # Comment out personal info in case of excessive data exposure
+        output = [dict(user_id=row[0],
+                       username=row[1],
+                       email=row[2],
+                       # password=row[3],
+                       profile_pic=row[4],
+                       is_admin=row[5],
+                       name=row[6],
+                       # credit_card_no=row[7],
+                       # address=row[8],
+                       # phone_no=row[9],
+                       )
+                  for row in users_data]
 
-    return admin_check("api") or jsonify(output)
+        return admin_check("api") or jsonify(output)
+
+    elif request.method == "POST":
+        try:
+            username = request.json.get("username")
+            email = request.json.get("email")
+            password = request.json.get("password")
+        except AttributeError:
+            return jsonify(message="Please enter username, email and password."), 400
+
+        if username is None:
+            return jsonify(message="Please enter a username."), 400
+        elif email is None:
+            return jsonify(message="Please enter an email."), 400
+        elif password is None:
+            return jsonify(message="Please enter a password."), 400
+
+        if dbf.username_exists(username):
+            return jsonify(message="The username you entered already exists. Please enter another username."), 400
+
+        if dbf.email_exists(email):
+            return jsonify(message="The email already been registered. Please enter another email."), 400
+
+        dbf.create_customer(generate_uuid5(username), username, email, password)
+        return jsonify("User created!"), 200
 
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
