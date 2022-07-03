@@ -1126,10 +1126,7 @@ def book_info(book_id):
 
     book = Book(*book_data)
 
-    # Retrieve customer reviews
-    reviews = [Review(*review) for review in dbf.retrieve_reviews(book_id)]
-
-    return render_template("book_info.html", book=book, reviews=reviews)
+    return render_template("book_info.html", book=book)
 
 
 # TODO: @Miku @SpeedFox198 work on this (perhaps we not using this?)
