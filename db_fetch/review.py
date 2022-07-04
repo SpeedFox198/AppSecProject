@@ -9,10 +9,8 @@ from .general import *
 
 # TODO: not done yet @SpeedFox198
 # TODO: @Royston - add limiting for ur API rate limiting
-def retrieve_reviews(book_id: str, page: int) -> list[tuple]:
+def retrieve_reviews(book_id: str) -> list[tuple]:
     """ Retrieve all customer reviews for book """
-    limit = 10
-    offset = page
     return retrieve_db(
         "Reviews NATURAL JOIN Users",
         ["username", "profile_pic", "stars", r"STRFTIME('%d/%m/%Y %H:%M', DATETIME(time, 'localtime'))", "content"],
