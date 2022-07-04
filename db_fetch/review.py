@@ -8,6 +8,7 @@ from .general import *
 
 
 # TODO: not done yet @SpeedFox198
+# TODO: @Royston - add limiting for ur API rate limiting
 def retrieve_reviews(book_id: str, page: int) -> list[tuple]:
     """ Retrieve all customer reviews for book """
     limit = 10

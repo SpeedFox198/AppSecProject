@@ -7,11 +7,10 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME
-from object_dataclasses import User, UPLOAD_FOLDER as _PROFILE_PIC_UPLOAD_FOLDER, Review
+from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
-from Book import Book, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_UPLOAD_FOLDER
 from math import ceil
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
@@ -36,8 +35,8 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
-BOOK_UPLOAD_FOLDER = _BOOK_IMG_UPLOAD_FOLDER[1:]            # Book image upload folder
-PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_UPLOAD_FOLDER[1:]  # Profile pic upload folder
+BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]             # Book image upload folder
+PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]   # Profile pic upload folder
 
 limiter = Limiter(
     app,
@@ -1676,7 +1675,7 @@ def api_single_user(user_id):
 def api_reviews(book_id):
     """ Returns a list of customer reviews in json format """
     # Retrieve customer reviews
-    reviews = [Review(*review).jsonify() for review in dbf.retrieve_reviews(book_id)]
+    reviews = [Review(*review).to_dict() for review in dbf.retrieve_reviews(book_id)]
     return jsonify(reviews)
 
 
