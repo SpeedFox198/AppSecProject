@@ -1445,7 +1445,7 @@ def update_cart(user_id):
 
 """ Delete Cart """
 @app.route("/delete-buying-cart/<user_id>", methods=['GET', 'POST'])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def delete_buying_cart(user_id):
     dbf.delete_shopping_cart(user_id)
     return redirect(request.referrer)
