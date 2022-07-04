@@ -5,7 +5,7 @@ General Operations Functions
 Contains general functions (including CRUD functions)
 """
 from contextlib import closing
-from typing import Union
+from typing import Union, Iterable
 import sqlite3
 
 # Database filename
@@ -41,13 +41,13 @@ def execute_db(query: str, parameters, fetchone=False) -> Union[list[tuple], tup
     raise RuntimeError("Unknown critical error!")
 
 
-def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, offset: int=0, fetchone=False, **attributes) -> Union[list[tuple], tuple, None]:
+def retrieve_db(table: str, columns: Iterable=None, or_and: int=0, limit: int=0, offset: int=0, fetchone=False, **attributes) -> Union[list[tuple], tuple, None]:
     """
     Retrieve rows from table
 
     Args:
         table (str): Table to be retrieved.
-        columns (:obj:`list`, optional): Columns to be projected.
+        columns (:obj:`Iterable`, optional): Columns to be projected.
         or_and (:obj:`int`, optional): 0 for OR, 1 for AND.
         limit (:obj:`int`, optional): Limits the number of rows retrieved
         offset (:obj:`int`, optional): Offset of index to start retrieving from
@@ -95,7 +95,7 @@ def retrieve_db(table: str, columns: list=None, or_and: int=0, limit: int=0, off
     return execute_db(query, tuple(attributes.values()), fetchone)
 
 
-def insert_row(table: str, values: list, columns: list[str]=None) -> None:
+def insert_row(table: str, values: Iterable, columns: Iterable[str]=None) -> None:
     """ Inserts new row with values into, columns of table """
 
     # Values shouldn't be empty
@@ -138,7 +138,7 @@ def delete_rows(table: str, or_and: int=0, **attributes) -> None:
     execute_db(query, tuple(attributes.values()))
 
 
-def update_rows(table: str, columns: list[str], values: list, or_and: int=0, **attributes) -> None:
+def update_rows(table: str, columns: Iterable[str], values: Iterable, or_and: int=0, **attributes) -> None:
     """ Updates rows of table """
 
     # At least one column should be updated

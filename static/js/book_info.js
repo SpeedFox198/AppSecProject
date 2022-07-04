@@ -1,3 +1,4 @@
+/* Create elements general functions */
 function createElementClass(elementName, className) {
     const e = document.createElement(elementName);
     if (className) e.className = className;
@@ -8,6 +9,8 @@ function createDiv(className) {
     return createElementClass("div", className);
 }
 
+
+/* Create review section components functions */
 function createPfp(profilePic, username) {
     const colDiv = createDiv("col-1 profile-pic-col");
     const imgWrapper = createDiv("img-wrapper img-1-1");
@@ -53,12 +56,13 @@ function createReview(review) {
     const reviewDiv = createDiv("reviews row p-3");
     const pfpDiv = createPfp(profile_pic, username);
     const detailsDiv = createDetails(username, stars, time, content);
-    const hrLine = createElementClass("hr", "mx-3");
     reviewDiv.appendChild(pfpDiv);
     reviewDiv.appendChild(detailsDiv);
     return reviewDiv;
 }
 
+
+/* Display retrieved reviews functions */
 function displayReviews(customerReviews, reviews) {
     for(let i=0; i < reviews.length; i++) {
         let reviewElement = createReview(reviews[i])
@@ -72,6 +76,8 @@ function noReviews(customerReviews) {
     customerReviews.textContent = "No reviews have been written for this book.";
 }
 
+
+/* Retrieve reviews from API function */
 async function retrieveReviews() {
     const url = "/api/reviews/" + window.location.pathname.split("/")[2]
     try {
@@ -89,6 +95,8 @@ async function retrieveReviews() {
     }
 }
 
+
+/* Main function */
 (async () => {
     const customerReviews = document.getElementById("customerReviews");
     const reviews = await retrieveReviews();
