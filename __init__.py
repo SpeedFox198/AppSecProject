@@ -1517,12 +1517,6 @@ def about():
 """ API Routes"""
 
 
-@app.route("/api", methods=["GET"])
-@limiter.limit("10/second", override_defaults=False)
-def api_home():
-    return jsonify(message="BrasBasahBooks API")
-
-
 @app.route("/api/login", methods=["POST"])
 @limiter.limit("10/second", override_defaults=False)
 def api_login():
@@ -1669,7 +1663,7 @@ def api_single_user(user_id):
         return admin_check("api") or jsonify(output)
 
 
-# TODO: @SpeedFox198 add limit
+# TODO: @SpeedFox198 @Miku add limit
 @app.route("/api/reviews/<book_id>")
 @limiter.limit("10/second", override_defaults=False)
 def api_reviews(book_id):

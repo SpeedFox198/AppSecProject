@@ -64,10 +64,10 @@
               <td><a href="{{ url_for('book_info', book_id=book.book_id) }}" data-bs-toggle="tooltip" title="View"><i class="actions-button fa fa-eye"></i></a></td>
               <td><a href="{{ url_for('update_book', book_id=book.book_id)}}" data-bs-toggle="tooltip" title="Update"><i class="actions-button fa fa-pen"></i></a></td>
               <td>
-                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="document.getElementById('toggleModal_{{book.book_id}}').click()">
+                <button id="deleteButton_{{book.book_id}}" class="btn me-auto p-0 delete-book-button" data-bs-toggle="tooltip" title="Delete">
                   <i class="actions-button fa fa-trash"></i>
                 </button>
-                <button type="button" class="d-none" id="toggleModal_{{book.book_id}}" data-bs-toggle="modal" data-bs-target="#myModal_{{book.book_id}}"></button>
+                <button type="button" id="toggleModal_{{book.book_id}}" class="d-none" data-bs-toggle="modal" data-bs-target="#myModal_{{book.book_id}}"></button>
                 <form class="" action="{{url_for('delete_book', book_id=book.book_id)}}" method="POST">
                   <!-- The Modal -->
                   <div class="modal fade" id="myModal_{{book.book_id}}">
@@ -109,4 +109,8 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin/inventory.js"></script>
 {% endblock %}
