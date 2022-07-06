@@ -40,7 +40,9 @@ Our web application is an online bookstore. It provides the service of purchasin
 **11. google-auth-httplib2** | `pip install google-auth-httplib2`  
 **12. google-auth-oauthlib** | `pip install google-auth-oauthlib`  
 **13. google-auth** | `pip install google-auth`  
-**13. pyotp** | `pip install pyotp`
+**14. pyotp** | `pip install pyotp`
+**15. flask-expects-json** | `pip install flask-expects-json`
+**16. jsonschema** | `pip install jsonschema`
 
 You may install all using: `pip3 install -r requirements.txt`
 
