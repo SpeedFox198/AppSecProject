@@ -63,7 +63,8 @@ function createReview(review) {
 
 
 /* Display retrieved reviews functions */
-function displayReviews(customerReviews, reviews) {
+function displayReviews(reviews) {
+    const customerReviews = document.getElementById("customerReviews");
     for(let i=0; i < reviews.length; i++) {
         let reviewElement = createReview(reviews[i])
         let line = createElementClass("hr", "mx-3");
@@ -72,8 +73,11 @@ function displayReviews(customerReviews, reviews) {
     }
 }
 
-function noReviews(customerReviews) {
-    customerReviews.textContent = "No reviews have been written for this book.";
+function noReviews() {
+    const reviewHeader = document.getElementById("reviewHeader");
+    const message = createElementClass("span", "row px-3 pb-2");
+    message.textContent = "No reviews have been written for this book."
+    reviewHeader.insertAdjacentElement("afterend", message);
 }
 
 
@@ -98,13 +102,12 @@ async function retrieveReviews() {
 
 /* Main function */
 (async () => {
-    const customerReviews = document.getElementById("customerReviews");
     const reviews = await retrieveReviews();
 
     if (reviews && reviews.length) {
-        displayReviews(customerReviews, reviews);
+        displayReviews(reviews);
     }
     else {
-        noReviews(customerReviews);
+        noReviews();
     }
 })();
