@@ -36,13 +36,12 @@ Our web application is an online bookstore. It provides the service of purchasin
 **7. argon2-cffi** | `pip install argon2-cffi`  
 **8. stripe** | `pip install stripe`  
 **9. Pillow** | `pip install pillow`  
-**10. google-api-python-client** | `pip install google-api-python-client`  
-**11. google-auth-httplib2** | `pip install google-auth-httplib2`  
-**12. google-auth-oauthlib** | `pip install google-auth-oauthlib`  
-**13. google-auth** | `pip install google-auth`  
-**14. pyotp** | `pip install pyotp`
-**15. flask-expects-json** | `pip install flask-expects-json`
-**16. jsonschema** | `pip install jsonschema`
+**10. flask-expects-json** | `pip install flask-expects-json`
+**11. google-api-python-client** | `pip install google-api-python-client`  
+**12. google-auth-httplib2** | `pip install google-auth-httplib2`  
+**13. google-auth-oauthlib** | `pip install google-auth-oauthlib`  
+**14. google-auth** | `pip install google-auth`  
+**15. pyotp** | `pip install pyotp`
 
 You may install all using: `pip3 install -r requirements.txt`
 
