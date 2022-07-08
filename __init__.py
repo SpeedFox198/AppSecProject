@@ -300,21 +300,21 @@ def login():
 
             # If login credentials are correct
             else:
+                user = User(*user_data)
+                # Get user object
+                
                 #Check if user enabled 2FA
                 if enable_2FA:
-                    session["user_data"] = user_data
 
                     twoFA_code = generateOTP()
                     # Send email with OTP
                     subject = "2FA code"
                     message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
-                    gmail_send(email, subject, message)
+                    gmail_send(user.email , subject, message)
                     session["2FA"] = twoFA_code
                     return redirect(url_for("twoFA"))
                 else:
-                    # Get user object
-                    user = User(*user_data)
 
                     # Create session to login
                     flask_global.user = user
