@@ -50,6 +50,10 @@ a .card .card-body{
   border-radius: 50%;
 }
 
-.review-stars .fas.fa-star, .review-stars .far.fa-star {
+.review-stars .fas.fa-star, .review-stars .far.fa-star, .review-stars .fas .fa-star-half-alt {
   color: #4b8282;
+}
+
+.review-ratings {
+  font-size: 2rem;
 }

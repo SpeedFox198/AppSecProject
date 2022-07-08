@@ -22,7 +22,7 @@ function createPfp(profilePic, username) {
     return colDiv;
 }
 
-function createRatings(stars) {
+function createStars(stars) {
     const theDiv = createDiv("review-stars");
     for (let i=0; i < stars; i++) {
         let theStar = createElementClass("i", "fas fa-star");
@@ -38,7 +38,7 @@ function createRatings(stars) {
 function createDetails(username, stars, time, content) {
     const colDiv = createDiv("col-11");
     const usernameDiv = createDiv("");
-    const starsDiv = createRatings(stars);
+    const starsDiv = createStars(stars);
     const timeDiv = createDiv("mb-2");
     const contentDiv = createDiv("");
     usernameDiv.textContent = username;
@@ -52,7 +52,7 @@ function createDetails(username, stars, time, content) {
 }
 
 function createReview(review) {
-    let {content, profile_pic, stars, time, username} = review;
+    const {content, profile_pic, stars, time, username} = review;
     const reviewDiv = createDiv("reviews row p-3");
     const pfpDiv = createPfp(profile_pic, username);
     const detailsDiv = createDetails(username, stars, time, content);
@@ -61,10 +61,47 @@ function createReview(review) {
     return reviewDiv;
 }
 
+function createRatings(ratings) {
+    const container = createDiv("container");
+    const theNumSpan = createElementClass("span", "review-ratings");
+    const theTextRow = createDiv("row px-3");
+    const theTextDiv = createDiv("");
+    const theTextSpan = createElementClass("span", "");
+    const theStarRow = createDiv("row px-3");
+    const theStarsDiv = createDiv("review-stars");
+    container.appendChild(theTextRow);
+    container.appendChild(theStarRow);
+    theTextRow.appendChild(theTextDiv);
+    theTextDiv.appendChild(theNumSpan);
+    theTextDiv.appendChild(theTextSpan);
+    theStarRow.appendChild(theStarsDiv);
+    value = Math.round(ratings * 2);
+    theNumSpan.textContent = (+ratings).toFixed(1);
+    theTextSpan.textContent = " out of 5 stars";
+    let x = 2;
+    while (x <= value) {
+        let theStar = createElementClass("i", "fas fa-star");
+        theStarsDiv.appendChild(theStar);
+        x += 2;
+    }
+    if (value < x) {
+        let theStar = createElementClass("i", "fas fa-star-half-alt");
+        theStarsDiv.appendChild(theStar);
+    }
+    for (let i=x; i < 10; i+=2) {
+        let theStar = createElementClass("i", "far fa-star");
+        theStarsDiv.appendChild(theStar);
+    }
+    return container
+}
+
 
 /* Display retrieved reviews functions */
-function displayReviews(reviews) {
+function displayReviews(reviews, ratings) {
+    const reviewHeader = document.getElementById("reviewHeader");
     const customerReviews = document.getElementById("customerReviews");
+    const avgRatings = createRatings(ratings);
+    reviewHeader.insertAdjacentElement("afterend", avgRatings);
     for(let i=0; i < reviews.length; i++) {
         let reviewElement = createReview(reviews[i])
         let line = createElementClass("hr", "mx-3");
@@ -75,9 +112,13 @@ function displayReviews(reviews) {
 
 function noReviews() {
     const reviewHeader = document.getElementById("reviewHeader");
-    const message = createElementClass("span", "row px-3 pb-2");
+    const container = createDiv("container mb-2");
+    const row = createDiv("row px-3");
+    const message = createDiv("");
+    container.appendChild(row);
+    row.appendChild(message);
     message.textContent = "No reviews have been written for this book."
-    reviewHeader.insertAdjacentElement("afterend", message);
+    reviewHeader.insertAdjacentElement("afterend", container);
 }
 
 
@@ -87,8 +128,7 @@ async function retrieveReviews() {
     try {
         const response = await fetch(url);
         if (response.ok) {
-            const reviews = await response.json();
-            return reviews;
+            return await response.json();
         }
         else {
             throw new Error("API response not ok.");
@@ -102,10 +142,16 @@ async function retrieveReviews() {
 
 /* Main function */
 (async () => {
-    const reviews = await retrieveReviews();
+    const data = await retrieveReviews();
 
-    if (reviews && reviews.length) {
-        displayReviews(reviews);
+    if (data) {
+        const {reviews, ratings} = data;
+        if (reviews && reviews.length && ratings) {
+            displayReviews(reviews, ratings);
+        }
+        else {
+            noReviews();
+        }
     }
     else {
         noReviews();
