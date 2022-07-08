@@ -99,7 +99,6 @@ def before_request():
 
 """ After request """
 
-
 @app.after_request
 def after_request(response):
     user: User = flask_global.user
@@ -214,13 +213,13 @@ def sign_up():
 
         gmail_send(email, subject, message)
         session["OTP"] = oneTimePass
-        return redirect(url_for("OTPverification"))
+        return redirect(url_for("OTP"))
 
     # Render sign up page
     return render_template("user/sign_up.html", form=sign_up_form)
 
 
-@app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
+@app.route("/user/sign-up/OTP", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():
     email = session.get("Email")
@@ -246,7 +245,7 @@ def OTPverification():
 
         else:
             flash("Invalid OTP Entered! Please try again!")
-            return redirect(url_for("OTPverification"))
+            return redirect(url_for("OTP"))
     else:
         return render_template("user/OTP.html", form=OTPformat)
 
@@ -283,17 +282,49 @@ def login():
 
             # If login credentials are correct
             else:
-                # Google Authentication insert here -Royston
+                #Check if user enabled 2FA
+                if enable_2FA:
+                    session["user_data"] = user_data
 
-                # Get user object
-                user = User(*user_data)
+                    twoFA_code = generateOTP()
+                    # Send email with OTP
+                    subject = "2FA code"
+                    message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
-                # Create session to login
-                flask_global.user = user
-                return redirect(url_for("home"))
+                    gmail_send(email, subject, message)
+                    session["2FA"] = twoFA_code
+                    return redirect(url_for("twoFA"))
+                else:
+                    # Get user object
+                    user = User(*user_data)
 
-    # Render page
-    return render_template("user/login.html", form=login_form)
+                    # Create session to login
+                    flask_global.user = user
+                    return redirect(url_for("home"))
+
+@app.route("/user/login/2FA", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+def twoFA():
+    user_data = session.get("user_data")
+    twoFA_code = session.get("2FA")
+
+    OTPformat = OTPForm(request.form)
+    print(request.method)
+    if request.method == "POST":
+        twoFAinput = OTPformat.otp.data
+        if twoFA_code == twoFAinput:
+            # Get user object
+            user = User(*user_data)
+
+            # Create session to login
+            flask_global.user = user
+            return redirect(url_for("home"))
+
+        else:
+            flash("Invalid OTP Entered! Please try again!")
+            return redirect(url_for("2FA"))
+    else:
+        return render_template("user/2FA.html", form=OTPformat)
 
 
 """ Logout """

@@ -1,53 +1,28 @@
-<div class="container">
-    <div class="row">
-        <div class="LSUForm col">
-            <div class="bg-dark p-4 rounded updateForm" id="userForm">
-                {% with messages = get_flashed_messages() %}
-                    {% if messages %}
-                        {% for message in messages %}
-                        <div class="alert alert-danger d-flex align-items-center" role="alert">
-                            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill"/></svg>
-                            <div>
-                                <h6 class="warning_text">{{ message }}</h6>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                <form action="" method="POST" class="row g-3 ">
-                    <h4 class="text-white">Setup 2FA</h4>
-                    <div class="col-12 text-white">
-                        <h6>Instructions:</h6>
-                        <ol>
-                            <li>Download Google Authenticator on <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en&gl=US" target="_blank">Android</a> or <a href="https://apps.apple.com/us/app/google-authenticator/id388497605" target="_blank">iOS</a>.</li>
-                            <li>Create a new account with setup key method or scan the QR code</li>
-                            <li>If you chose setup key method, enter your username and secret key below</li>
-                            <li>Select time-based authentication</li>
-                            <li>Submit the time-based one time password (OTP) in the form.</li>
-                            <li class="text-warning">Do note that this setup key will change upon refreshing the page.</li>
-                        </ol>
-                        <h6 class="text-break">Setup Key: <a href="javascript:copyToClipBoard('OTP')" onmouseout="tooltipMouseOut('OTP')" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard" id="tooltipElementOTP">{{ secret }}</a></h6>
-                        <span id="tooltipValueOTP" hidden>{{ secret }}</span>
-                        <div class="QRCode_wrapper">
-                            <img src="{{ qrCodePath }}" alt="Google Authenticator OTP QR Code" class="QRCode">
-                        </div>
-                    </div>
-                    <div class="col-12 text-white">
-                        <input type="hidden" name="secret" value="{{ secret }}">
-                        {{ render_field(form.twoFAOTP, class="form-control") }}
-                    </div>
-                    <div class="col-12">
-                        <a href="/user_profile" class="float-start form-buttons margin-top margin-top2 text-white"><i class="fas fa-arrow-left"></i> Back</a>
-                        <button type="submit" class="btn btn-colour text-white float-end">Submit</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/css/login.css">
+<link rel="stylesheet" href="/static/css/OTP.css">
 {% endblock %}
 
-{% block extra_js %}
-<script src="{{ url_for('static', filename='scripts/bootstrap_util.js') }}"></script>
-<script src="{{ url_for('static', filename='scripts/copy_to_clipboard.js') }}"></script>
+{% block navbar %}
+  {% include 'includes/_login_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+{% from "includes/_login_render_field.html" import render_field %}
+{# Displays flash sign up error #}
+
+<div class="box">
+    <h2>2FA</h2>
+    <div>
+        <form method="POST">
+            {{ render_field(form.otp, class="form-control") }}
+            <button type="submit" class="btn btn-primary mb-2" style="margin-top:20px;">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://apis.google.com/js/platform.js" async defer></script>
 {% endblock %}
