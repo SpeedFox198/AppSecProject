@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME
+from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
@@ -72,6 +72,24 @@ def get_user():
             return User(*user_data)
 
 
+def add_cookie(cookies:dict):
+    """ Adds cookies """
+    if not isinstance(cookies, dict):
+        raise TypeError("Expected dictionary")
+    new_cookies:dict = flask_global.get(NEW_COOKIES, default={})
+    new_cookies.update(cookies)
+    flask_global[NEW_COOKIES] = new_cookies
+
+
+def remove_cookies(cookies:list):
+    """ Remove cookies """
+    if not isinstance(cookies, list):
+        raise TypeError("Expected list")
+    expired_cookies:list = flask_global.get(EXPIRED_COOKIES, default=[])
+    expired_cookies.extend(cookies)
+    flask_global[EXPIRED_COOKIES] = expired_cookies
+
+
 """ Before first request """
 
 
@@ -105,8 +123,8 @@ def after_request(response):
     user: User = flask_global.user
 
     # Get expired cookies to be deleted and new cookies to be set
-    expired_cookies = flask_global.get("expired_cookies", default=[])
-    new_cookies = flask_global.get("new_cookies", default={})
+    expired_cookies = flask_global.get(EXPIRED_COOKIES, default=[])
+    new_cookies = flask_global.get(NEW_COOKIES, default={})
 
     # It needs to be a list for me to iterate through
     if not isinstance(expired_cookies, list):
@@ -1658,7 +1676,8 @@ def api_reviews(book_id):
     """ Returns a list of customer reviews in json format """
     # Retrieve customer reviews
     reviews = [Review(*review).to_dict() for review in dbf.retrieve_reviews(book_id)]
-    return jsonify(reviews)
+    ratings = dbf.retrieve_reviews_ratings(book_id)
+    return jsonify(reviews=reviews, ratings=ratings)
 
 
 """    Error Handlers    """
