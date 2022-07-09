@@ -6,24 +6,26 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME
-from object_dataclasses import User, UPLOAD_FOLDER as _PROFILE_PIC_UPLOAD_FOLDER, Review
+from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
+from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
-from Book import Book, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_UPLOAD_FOLDER
 from math import ceil
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
 from csp import CSP
+from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
+from sanitize import sanitize
 import pyotp
 import time
+from flask_expects_json import expects_json
+from jsonschema import ValidationError
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm
 )
-
 
 # CONSTANTS
 # TODO @everyone: set to False when deploying
@@ -31,18 +33,18 @@ DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 
-
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
-BOOK_UPLOAD_FOLDER = _BOOK_IMG_UPLOAD_FOLDER[1:]            # Book image upload folder
-PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_UPLOAD_FOLDER[1:]  # Profile pic upload folder
+BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
+PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
 
 limiter = Limiter(
     app,
     key_func=get_remote_address,
     default_limits=["30 per second"]
 )
+
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -68,6 +70,24 @@ def get_user():
 
             # Return user object
             return User(*user_data)
+
+
+def add_cookie(cookies:dict):
+    """ Adds cookies """
+    if not isinstance(cookies, dict):
+        raise TypeError("Expected dictionary")
+    new_cookies:dict = flask_global.get(NEW_COOKIES, default={})
+    new_cookies.update(cookies)
+    flask_global[NEW_COOKIES] = new_cookies
+
+
+def remove_cookies(cookies:list):
+    """ Remove cookies """
+    if not isinstance(cookies, list):
+        raise TypeError("Expected list")
+    expired_cookies:list = flask_global.get(EXPIRED_COOKIES, default=[])
+    expired_cookies.extend(cookies)
+    flask_global[EXPIRED_COOKIES] = expired_cookies
 
 
 """ Before first request """
@@ -97,14 +117,13 @@ def before_request():
 
 """ After request """
 
-
 @app.after_request
 def after_request(response):
-    user:User = flask_global.user
+    user: User = flask_global.user
 
     # Get expired cookies to be deleted and new cookies to be set
-    expired_cookies = flask_global.get("expired_cookies", default=[])
-    new_cookies = flask_global.get("new_cookies", default={})
+    expired_cookies = flask_global.get(EXPIRED_COOKIES, default=[])
+    new_cookies = flask_global.get(NEW_COOKIES, default={})
 
     # It needs to be a list for me to iterate through
     if not isinstance(expired_cookies, list):
@@ -199,7 +218,7 @@ def sign_up():
             errors["DisplayFieldError"] = errors["SignUpPasswordError"] = True
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
-        
+
         session["Username"] = username
         session["Email"] = email
         session["Password"] = password
@@ -212,14 +231,13 @@ def sign_up():
 
         gmail_send(email, subject, message)
         session["OTP"] = oneTimePass
-        return redirect(url_for("OTPverification"))
-
+        return redirect(url_for("OTP"))
 
     # Render sign up page
     return render_template("user/sign_up.html", form=sign_up_form)
 
 
-@app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
+@app.route("/user/sign-up/OTP", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():
     email = session.get("Email")
@@ -240,14 +258,15 @@ def OTPverification():
             # Create new user session to login (placeholder values were used to create user object)
             flask_global.user = User(user_id, "", "", "", "", 0)
 
-            #Return redirect with session cookie
+            # Return redirect with session cookie
             return redirect(url_for("home"))
 
         else:
             flash("Invalid OTP Entered! Please try again!")
-            return redirect(url_for("OTPverification"))
+            return redirect(url_for("OTP"))
     else:
         return render_template("user/OTP.html", form=OTPformat)
+
 
 """ Login page """
 
@@ -281,17 +300,49 @@ def login():
 
             # If login credentials are correct
             else:
-                #Google Authentication insert here -Royston
-
-                # Get user object
                 user = User(*user_data)
+                # Get user object
+                
+                #Check if user enabled 2FA
+                if enable_2FA:
 
-                # Create session to login
-                flask_global.user = user
-                return redirect(url_for("home"))
+                    twoFA_code = generateOTP()
+                    # Send email with OTP
+                    subject = "2FA code"
+                    message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
-    # Render page
-    return render_template("user/login.html", form=login_form)
+                    gmail_send(user.email , subject, message)
+                    session["2FA"] = twoFA_code
+                    return redirect(url_for("twoFA"))
+                else:
+
+                    # Create session to login
+                    flask_global.user = user
+                    return redirect(url_for("home"))
+
+@app.route("/user/login/2FA", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+def twoFA():
+    user_data = session.get("user_data")
+    twoFA_code = session.get("2FA")
+
+    OTPformat = OTPForm(request.form)
+    print(request.method)
+    if request.method == "POST":
+        twoFAinput = OTPformat.otp.data
+        if twoFA_code == twoFAinput:
+            # Get user object
+            user = User(*user_data)
+
+            # Create session to login
+            flask_global.user = user
+            return redirect(url_for("home"))
+
+        else:
+            flash("Invalid OTP Entered! Please try again!")
+            return redirect(url_for("2FA"))
+    else:
+        return render_template("user/2FA.html", form=OTPformat)
 
 
 """ Logout """
@@ -312,7 +363,7 @@ def logout():
 @limiter.limit("10/second", override_defaults=False)
 def password_forget():
     # Get user
-    user:User = flask_global.user
+    user: User = flask_global.user
 
     if user is not None:
         return redirect(url_for("home"))
@@ -362,7 +413,6 @@ def password_forget():
 @app.route("/user/password/reset/<token>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def password_reset(token):
-
     # Get user
     guest = get_user()
 
@@ -428,9 +478,8 @@ def password_reset(token):
 @app.route("/user/password/change", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def password_change():
-
     # Get current user
-    user:User = flask_global.user
+    user: User = flask_global.user
 
     # If user is not logged in
     if user is None:
@@ -489,25 +538,27 @@ def account_2FA():
 
     if user is None or not user.is_admin:
         abort(403)
-    
+
     totp = pyotp.TOTP('base32secret3232')
-    totp.now() # => '492039'
+    totp.now()  # => '492039'
 
     # OTP verified for current time
-    totp.verify('492039') # => True
+    totp.verify('492039')  # => True
     time.sleep(30)
-    totp.verify('492039') # => False
-    pyotp.random_hex() 
+    totp.verify('492039')  # => False
+    pyotp.random_hex()
     return render_template("user/account/2FA.html")
+
 
 # Needs to be changed
 # TODO: needs to change
 # NOTE: sending email is done by Royston
 """Verification page in case"""
+
+
 # Send verification link page
 @app.route("/user/verify")
 def verify_send():
-
     # Get user
     user = get_user()
 
@@ -536,11 +587,12 @@ def verify_send():
     flash(f"Verification email sent to {email}")
     return redirect(url_for("account"))
 
-#"""2FA by Jason"""
+
+# """2FA by Jason"""
 #
-#@app.route('/2FA', methods=['GET', 'POST'])
-#@limiter.limit("10/second") # to prevent attackers from trying to crack passwords or doing enumeration attacks by sending too many automated requests from their ip address
-#def twoFactorAuthenticationSetup():
+# @app.route('/2FA', methods=['GET', 'POST'])
+# @limiter.limit("10/second") # to prevent attackers from trying to crack passwords or doing enumeration attacks by sending too many automated requests from their ip address
+# def twoFactorAuthenticationSetup():
 #    if "userSession" in session:
 #        userSession = session["userSession"]
 #        userDict = {}
@@ -611,9 +663,9 @@ def verify_send():
 #        else:
 #            return redirect(url_for("userLogin"))
 #
-#@app.route('/2FA_disable')
-#@limiter.limit("10/second") # to prevent attackers from trying to crack passwords or doing enumeration attacks by sending too many automated requests from their ip address
-#def removeTwoFactorAuthentication():
+# @app.route('/2FA_disable')
+# @limiter.limit("10/second") # to prevent attackers from trying to crack passwords or doing enumeration attacks by sending too many automated requests from their ip address
+# def removeTwoFactorAuthentication():
 #    if "userSession" in session:
 #        userSession = session["userSession"]
 #        userDict = {}
@@ -651,9 +703,9 @@ def verify_send():
 #        else:
 #            return redirect(url_for("userLogin"))
 #
-#@app.route('/2FA_required', methods=['GET', 'POST'])
-#@limiter.limit("10/second") # to prevent attackers from trying to bruteforce the 2FA
-#def twoFactorAuthentication():
+# @app.route('/2FA_required', methods=['GET', 'POST'])
+# @limiter.limit("10/second") # to prevent attackers from trying to bruteforce the 2FA
+# def twoFactorAuthentication():
 #    # checks if the user is not logged in
 #    if "userSession" not in session and "adminSession" not in session:
 #        # for admin login
@@ -760,11 +812,13 @@ def verify_send():
 #    else:
 #        return redirect(url_for("home"))
 #
-#"""End of 2FA by Jason"""
+# """End of 2FA by Jason"""
 
 """    User Pages    """
 
 """ View account page """
+
+
 # TODO Chung Wai do hehe
 
 
@@ -839,7 +893,7 @@ def admin_check(mode="regular"):
         regular (Regular) - normal routes with the HTML, default option
         api (API) - API routes
     """
-    if not isinstance(user, User) or not user.is_admin: # Check if no cookie and if user is not admin
+    if not isinstance(user, User) or not user.is_admin:  # Check if no cookie and if user is not admin
         if mode == "regular":
             abort(403)
         elif mode == "api":
@@ -926,33 +980,33 @@ def manage_accounts():
     customer_count = dbf.number_of_customers()
 
     # Set page number
-    last_page = ceil(customer_count/ACCOUNTS_PER_PAGE) or 1
+    last_page = ceil(customer_count / ACCOUNTS_PER_PAGE) or 1
     if active_page < 1:
         active_page = 1
     elif active_page > last_page:
         active_page = last_page
 
     # Get users to be displayed
-    offset = (active_page-1) * ACCOUNTS_PER_PAGE  # Offset for SQL query
+    offset = (active_page - 1) * ACCOUNTS_PER_PAGE  # Offset for SQL query
     display_users = [User(*data) for data in dbf.retrieve_these_customers(ACCOUNTS_PER_PAGE, offset)]
 
-    first_index = (active_page-1)*ACCOUNTS_PER_PAGE
+    first_index = (active_page - 1) * ACCOUNTS_PER_PAGE
 
     # Get page list
     if last_page <= 5:
-        page_list = [i for i in range(1, last_page+1)]
+        page_list = [i for i in range(1, last_page + 1)]
     else:
         center_item = active_page
         if center_item < 3:
             center_item = 3
         elif center_item > last_page - 2:
             center_item = last_page - 2
-        page_list = [i for i in range(center_item-2, center_item+2+1)]
-    prev_page = active_page-1 if active_page-1 > 0 else active_page
-    next_page = active_page+1 if active_page+1 <= last_page else last_page
+        page_list = [i for i in range(center_item - 2, center_item + 2 + 1)]
+    prev_page = active_page - 1 if active_page - 1 > 0 else active_page
+    next_page = active_page + 1 if active_page + 1 <= last_page else last_page
 
     # Get entries range
-    entries_range = (first_index+1, first_index+len(display_users))
+    entries_range = (first_index + 1, first_index + len(display_users))
 
     return render_template(
         "admin/manage_accounts.html",
@@ -964,7 +1018,7 @@ def manage_accounts():
         form_trigger=form_trigger,
         create_user_form=create_user_form,
         delete_user_form=delete_user_form
-        )
+    )
 
 
 @app.route('/admin/inventory')
@@ -1036,7 +1090,6 @@ def add_book():
 
 @app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
 def update_book(book_id):
-
     admin_check()
 
     # Get specified book
@@ -1110,13 +1163,13 @@ def manage_orders():
     admin_check()
     return "sorry for removing your code"
 
+
 """    Books Pages    """
 # Wei Ren was here. hello.
 
 @app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def book_info(book_id):
-
     # Get book details
     book_data = dbf.retrieve_book(book_id)
 
@@ -1126,10 +1179,7 @@ def book_info(book_id):
 
     book = Book(*book_data)
 
-    # Retrieve customer reviews
-    reviews = [Review(*review) for review in dbf.retrieve_reviews(book_id)]
-
-    return render_template("book_info.html", book=book, reviews=reviews)
+    return render_template("book_info.html", book=book)
 
 
 # TODO: @Miku @SpeedFox198 work on this (perhaps we not using this?)
@@ -1157,21 +1207,21 @@ def books(sort_this):
         language_list.add(book.language)
 
     if books_dict != {}:
-         if sort_this == 'latest':
-             books_dict = dict(reversed(list(books_dict.items())))
-             sort_dict = books_dict
-         elif sort_this == 'name_a_to_z':
-             sort_dict = name_a_to_z(books_dict)
-         elif sort_this == 'name_z_to_a':
-             sort_dict = name_z_to_a(books_dict)
-         elif sort_this == 'price_low_to_high':
-             sort_dict = price_low_to_high(books_dict)
-         elif sort_this == 'price_high_to_low':
-             sort_dict = price_high_to_low(books_dict)
-         elif sort_this.capitalize() in language_list:
-             sort_dict = filter_language(sort_this)
-         else:
-             sort_dict = books_dict
+        if sort_this == 'latest':
+            books_dict = dict(reversed(list(books_dict.items())))
+            sort_dict = books_dict
+        elif sort_this == 'name_a_to_z':
+            sort_dict = name_a_to_z(books_dict)
+        elif sort_this == 'name_z_to_a':
+            sort_dict = name_z_to_a(books_dict)
+        elif sort_this == 'price_low_to_high':
+            sort_dict = price_low_to_high(books_dict)
+        elif sort_this == 'price_high_to_low':
+            sort_dict = price_high_to_low(books_dict)
+        elif sort_this.capitalize() in language_list:
+            sort_dict = filter_language(sort_this)
+        else:
+            sort_dict = books_dict
 
     q = request.args.get("q", default="", type=str)
 
@@ -1202,7 +1252,7 @@ def name_a_to_z(inventory_data):
         for book in inventory_data:
             unsorted_dict.update({book: inventory_data[book].title})
         print(unsorted_dict)
-        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
+        unsorted_dict = sorted(unsorted_dict.items(), key=lambda kv: (kv[1], kv[0]))
         unsorted_dict = {k: v for k, v in unsorted_dict}
         print(unsorted_dict)
 
@@ -1220,7 +1270,7 @@ def name_z_to_a(inventory_data):
         for book in inventory_data:
             unsorted_dict.update({book: inventory_data[book].title})
         print(unsorted_dict)
-        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
+        unsorted_dict = sorted(unsorted_dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
         unsorted_dict = {k: v for k, v in unsorted_dict}
         print(unsorted_dict)
 
@@ -1238,7 +1288,7 @@ def price_low_to_high(inventory_data):
         for book in inventory_data:
             unsorted_dict.update({book: float(inventory_data[book].price)})
         print(unsorted_dict)
-        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]))
+        unsorted_dict = sorted(unsorted_dict.items(), key=lambda kv: (kv[1], kv[0]))
         unsorted_dict = {k: v for k, v in unsorted_dict}
         print(unsorted_dict)
 
@@ -1256,7 +1306,7 @@ def price_high_to_low(inventory_data):
         for book in inventory_data:
             unsorted_dict.update({book: float(inventory_data[book].price)})
         print(unsorted_dict)
-        unsorted_dict = sorted(unsorted_dict.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
+        unsorted_dict = sorted(unsorted_dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
         unsorted_dict = {k: v for k, v in unsorted_dict}
         print(unsorted_dict)
 
@@ -1274,9 +1324,8 @@ def price_high_to_low(inventory_data):
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
 def add_to_cart():
-
     # User is a Class
-    user:User = flask_global.user
+    user: User = flask_global.user
 
     if not isinstance(user, User):
         return redirect(url_for("login"))
@@ -1298,7 +1347,6 @@ def add_to_cart():
     # Ensure quantity is within correct range
     if buying_quantity < 0 or buying_quantity > 10000:
         abort(400)  # Bad Request
-
 
     book_data = dbf.retrieve_book(book_id)
 
@@ -1331,7 +1379,7 @@ def add_to_cart():
     # Flash success message to user
     flash("Book has been added to your cart")
 
-    return redirect(request.referrer) # Return to catalogue if book_id is not in inventory
+    return redirect(request.referrer)  # Return to catalogue if book_id is not in inventory
 
 
 """ View Shopping Cart"""
@@ -1340,9 +1388,8 @@ def add_to_cart():
 @app.route('/cart')
 @limiter.limit("10/second", override_defaults=False)
 def cart():
-
     # User is a Class
-    user:User = flask_global.user
+    user: User = flask_global.user
 
     if not isinstance(user, User):
         return redirect(url_for("login"))
@@ -1408,7 +1455,10 @@ def cart():
     # return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
     #                        rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
 
+
 """ Update Shopping Cart """
+
+
 @app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
 def update_cart(user_id):
@@ -1448,11 +1498,14 @@ def update_cart(user_id):
 
 
 """ Delete Cart """
+
+
 @app.route("/delete-buying-cart/<user_id>", methods=['GET', 'POST'])
-@limiter.limit("100/minute", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def delete_buying_cart(user_id):
     dbf.delete_shopping_cart(user_id)
     return redirect(request.referrer)
+
 
 """    Order Pages    """
 
@@ -1521,31 +1574,15 @@ def about():
 """ API Routes"""
 
 
-@app.route("/api", methods=["GET"])
-@limiter.limit("10/second", override_defaults=False)
-def api_home():
-    return jsonify(message="BrasBasahBooks API")
-
-
 @app.route("/api/login", methods=["POST"])
 @limiter.limit("10/second", override_defaults=False)
+@expects_json(LOGIN_SCHEMA)
 def api_login():
-    try:  # Error handle if user never put username and password key in json body
-        username = request.json.get("username")
-        password = request.json.get("password")
-    except AttributeError:
-        return jsonify(message="Please enter username or email, and password"), 400
-
-    if username is None:
-        return jsonify(message="Please enter a username or email"), 400
-    elif password is None:
-        return jsonify(message="Please enter a password"), 400
-    elif username is None and password is None:
-        return jsonify(message="Please enter username or email, and password"), 400
-
+    username = flask_global.data['username']
+    password = flask_global.data['password']
     user_data = dbf.user_auth(username, password)
     if user_data is None:
-        return jsonify(message="Your username and/or password is incorrect, please try again"), 400
+        return jsonify(error="Your username and/or password is incorrect, please try again"), 400
 
     user = User(*user_data)
     flask_global.user = user
@@ -1596,29 +1633,48 @@ def api_single_book(book_id):
         return jsonify(output)
 
 
-@app.route('/api/admin/users/all', methods=["GET"])
+@app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-def api_all_users():
-    users_data = dbf.retrieve_these_customers(limit=0, offset=0)
+@expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
+def api_users():
+    if request.method == "GET":
+        users_data = dbf.retrieve_these_customers(limit=0, offset=0)
 
-    if not users_data:
-        return jsonify(message="There are currently no users.")
+        if not users_data:
+            return jsonify(message="There are currently no users.")
 
-    # Comment out personal info in case of excessive data exposure
-    output = [dict(user_id=row[0],
-                   username=row[1],
-                   email=row[2],
-                   # password=row[3],
-                   profile_pic=row[4],
-                   is_admin=row[5],
-                   name=row[6],
-                   # credit_card_no=row[7],
-                   # address=row[8],
-                   # phone_no=row[9],
-                   )
-              for row in users_data]
+        # Comment out personal info in case of excessive data exposure
+        output = [dict(user_id=row[0],
+                       username=row[1],
+                       email=row[2],
+                       # password=row[3],
+                       profile_pic=row[4],
+                       is_admin=row[5],
+                       name=row[6],
+                       # credit_card_no=row[7],
+                       # address=row[8],
+                       # phone_no=row[9],
+                       )
+                  for row in users_data]
 
-    return admin_check("api") or jsonify(output)
+        return admin_check("api") or jsonify(output)
+
+    elif request.method == "POST":
+        if admin_check("api"):
+            return admin_check("api")
+
+        username = flask_global.data['username']
+        email = flask_global.data['email']
+        password = flask_global.data['password']
+
+        if dbf.username_exists(username):
+            return jsonify(message="The username you entered already exists. Please enter another username."), 400
+
+        if dbf.email_exists(email):
+            return jsonify(message="The email already been registered. Please enter another email."), 400
+
+        dbf.create_customer(generate_uuid5(username), username, email, password)
+        return jsonify("User created!"), 200
 
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
@@ -1645,14 +1701,15 @@ def api_single_user(user_id):
         return admin_check("api") or jsonify(output)
 
 
-# TODO: @SpeedFox198 add limit
+# TODO: @SpeedFox198 @Miku add limit
 @app.route("/api/reviews/<book_id>")
 @limiter.limit("10/second", override_defaults=False)
 def api_reviews(book_id):
     """ Returns a list of customer reviews in json format """
     # Retrieve customer reviews
-    reviews = [Review(*review).jsonify() for review in dbf.retrieve_reviews(book_id)]
-    return jsonify(reviews)
+    reviews = [Review(*review).to_dict() for review in dbf.retrieve_reviews(book_id)]
+    ratings = dbf.retrieve_reviews_ratings(book_id)
+    return jsonify(reviews=reviews, ratings=ratings)
 
 
 """    Error Handlers    """
@@ -1661,17 +1718,27 @@ def api_reviews(book_id):
 # Error handling page
 @app.errorhandler(403)
 def forbidden(e):
-    return render_template("error/403.html")
+    return render_template("error/403.html"), 403
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template("error/404.html")
+    return render_template("error/404.html"), 404
 
 
 @app.errorhandler(429)
 def too_many_request(e):
-    return render_template("error/429.html")
+    return render_template("error/429.html"), 429
+
+
+@app.errorhandler(400)
+def bad_request(error):
+    if isinstance(error.description, ValidationError):
+        original_error = error.description
+        if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
+            return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
+        return jsonify(error=original_error.message), 400
+    return error
 
 
 """    Main    """

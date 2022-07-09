@@ -20,7 +20,8 @@ class Review:
     def __post_init__(self):
         self.profile_pic = UPLOAD_FOLDER + (self.profile_pic or _DEFAULT_PIC_NAME)
 
-    def jsonify(self):
+    def to_dict(self):
+        """ Returns dictionary form of class for jsonifying """
         return {
             "username": self.username,
             "profile_pic": self.profile_pic,

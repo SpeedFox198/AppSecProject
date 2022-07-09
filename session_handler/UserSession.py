@@ -3,9 +3,12 @@ from typing import Union
 from .session_handler import create_session as _cs, get_cookie_value as _gcv
 
 USER_SESSION_NAME = "user_session"
+NEW_COOKIES = "new_cookies"
+EXPIRED_COOKIES = "expired_cookies"
 
 # Max duration user can stay logged in for (since last active)
 _MAX_TIME = timedelta(hours=3)
+
 
 class UserSession:
     """ Defines a user session """

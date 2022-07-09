@@ -26,6 +26,9 @@ csp = {
         "\'self\'",
         "data:"                         # For loading images from data scheme
     ],
+    "connect-src": [
+        "\'self\'"
+    ],
     "font-src": [
         "\'self\'",
         "https://use.fontawesome.com"   # For fontawesome
