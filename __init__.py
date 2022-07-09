@@ -1111,7 +1111,7 @@ def manage_orders():
     return "sorry for removing your code"
 
 """    Books Pages    """
-
+# Wei Ren was here. hello.
 
 @app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -1344,11 +1344,12 @@ def cart():
     # User is a Class
     user:User = flask_global.user
 
-    if user is None or not user.is_admin:
+    if not isinstance(user, User):
+        return redirect(url_for("login"))
+    elif user.is_admin:
         abort(403)
 
-    # Get user_id
-    user_id = user.get_user_id()
+    user_id = user.user_id
 
     # Get cart items
     cart_items = dbf.get_shopping_cart(user_id)
