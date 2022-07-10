@@ -1126,9 +1126,8 @@ def update_book(book_id):
             update_book_form.author.data,
             update_book_form.description.data,
             book_img_filename,
-            selected_book.book_id  # book id here for WHERE statement in query
         )
-        dbf.book_update(updated_details)
+        dbf.book_update(updated_details, selected_book.book_id)
         flash("Book successfully updated!")
         return redirect(url_for('inventory'))
     else:

@@ -22,31 +22,34 @@ def retrieve_book(id_of_book: str) -> Union[tuple, None]:
     return retrieve_db("Books", book_id=id_of_book, fetchone=True)
 
 
-""" Admin-triggered Fuctions """
+""" Admin-triggered Functions """
 
 
 def book_add(details: tuple):
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = "INSERT INTO Books VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
-    cur.execute(query, details)
-    con.commit()
-    con.close()
+    # con = sqlite3.connect(DATABASE)
+    # cur = con.cursor()
+    # query = "INSERT INTO Books VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
+    # cur.execute(query, details)
+    # con.commit()
+    # con.close()
+    insert_row("Books", details)
 
 
-def book_update(details: tuple):
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = "UPDATE Books SET language = ?, genre = ?, title = ?, stock = ?, price = ?, author = ?, description = ?, cover_img = ? WHERE book_id = ?;"
-    cur.execute(query, details)
-    con.commit()
-    con.close()
+def book_update(details: tuple, book_id: str):
+    # con = sqlite3.connect(DATABASE)
+    # cur = con.cursor()
+    # query = "UPDATE Books SET language = ?, genre = ?, title = ?, stock = ?, price = ?, author = ?, description = ?, cover_img = ? WHERE book_id = ?;"
+    # cur.execute(query, details)
+    # con.commit()
+    # con.close()
+    update_rows("Books", ["language", "genre", "title", "stock", "price", "author", "description", "cover_img"], values=details, book_id=book_id)
 
 
 def delete_book(id_of_book: str):
-    con = sqlite3.connect(DATABASE)
-    cur = con.cursor()
-    query = "DELETE FROM Books WHERE book_id = ?;"
-    cur.execute(query, (id_of_book,))
-    con.commit()
-    con.close()
+    # con = sqlite3.connect(DATABASE)
+    # cur = con.cursor()
+    # query = "DELETE FROM Books WHERE book_id = ?;"
+    # cur.execute(query, (id_of_book,))
+    # con.commit()
+    # con.close()
+    delete_rows("Books", book_id=id_of_book)
