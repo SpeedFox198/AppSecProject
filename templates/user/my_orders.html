@@ -440,6 +440,7 @@
                             <p>Order #{{ order.get_order_id() }}</p>
                             <div class="row user-info" style="position: absolute; bottom: 0;">
                                 <p>Name: {{ order.get_name() }}</p>
+                                <a href="/review/{{order.get_order_id()}}">Write a review</a>
                                 <div class="col-6">
                                     <h5 style="font-weight: 500;">Contact</h5>
                                     <p>Contact Number: {{ order.get_contact_num() }}</p>
