@@ -296,7 +296,6 @@ def login():
 
                 # Flash login error message
                 flash("Your account and/or password is incorrect, please try again", "form-error")
-                return render_template("user/login.html", form=login_form)
 
             # If login credentials are correct
             else:
@@ -319,6 +318,9 @@ def login():
                     # Create session to login
                     flask_global.user = user
                     return redirect(url_for("home"))
+
+    # Render page's template
+    return render_template("user/login.html", form=login_form)
 
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
