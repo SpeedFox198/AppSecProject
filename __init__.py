@@ -303,6 +303,7 @@ def login():
                 # Get user object
                 
                 #Check if user enabled 2FA
+                enable_2FA = False
                 if enable_2FA:
 
                     twoFA_code = generateOTP()

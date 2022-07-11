@@ -27,10 +27,12 @@ function createStars(stars) {
     for (let i=0; i < stars; i++) {
         let theStar = createElementClass("i", "fas fa-star");
         theDiv.appendChild(theStar);
+        theDiv.appendChild(document.createTextNode(" "));
     }
     for (let i=stars; i < 5; i++) {
         let theStar = createElementClass("i", "far fa-star");
         theDiv.appendChild(theStar);
+        theDiv.appendChild(document.createTextNode(" "));
     }
     return theDiv
 }
@@ -39,7 +41,7 @@ function createDetails(username, stars, time, content) {
     const colDiv = createDiv("col-11");
     const usernameDiv = createDiv("");
     const starsDiv = createStars(stars);
-    const timeDiv = createDiv("mb-2");
+    const timeDiv = createDiv("mb-2 review-time");
     const contentDiv = createDiv("");
     usernameDiv.textContent = username;
     timeDiv.textContent = time;
@@ -62,15 +64,15 @@ function createReview(review) {
 }
 
 function createRatings(ratings) {
-    const container = createDiv("container");
+    const ratingsDetails = document.getElementById("ratingsDetails");
     const theNumSpan = createElementClass("span", "review-ratings");
     const theTextRow = createDiv("row px-3");
     const theTextDiv = createDiv("");
     const theTextSpan = createElementClass("span", "");
     const theStarRow = createDiv("row px-3");
-    const theStarsDiv = createDiv("review-stars");
-    container.appendChild(theTextRow);
-    container.appendChild(theStarRow);
+    const theStarsDiv = createDiv("review-stars avg-ratings");
+    ratingsDetails.insertAdjacentElement("afterbegin", theStarRow);
+    ratingsDetails.insertAdjacentElement("afterbegin", theTextRow);
     theTextRow.appendChild(theTextDiv);
     theTextDiv.appendChild(theNumSpan);
     theTextDiv.appendChild(theTextSpan);
@@ -92,33 +94,28 @@ function createRatings(ratings) {
         let theStar = createElementClass("i", "far fa-star");
         theStarsDiv.appendChild(theStar);
     }
-    return container
 }
 
 
 /* Display retrieved reviews functions */
 function displayReviews(reviews, ratings) {
-    const reviewHeader = document.getElementById("reviewHeader");
     const customerReviews = document.getElementById("customerReviews");
-    const avgRatings = createRatings(ratings);
-    reviewHeader.insertAdjacentElement("afterend", avgRatings);
     for(let i=0; i < reviews.length; i++) {
         let reviewElement = createReview(reviews[i])
         let line = createElementClass("hr", "mx-3");
         customerReviews.appendChild(reviewElement);
         customerReviews.appendChild(line);
     }
+    createRatings(ratings);
 }
 
 function noReviews() {
-    const reviewHeader = document.getElementById("reviewHeader");
-    const container = createDiv("container mb-2");
+    const ratingsDetails = document.getElementById("ratingsDetails");
     const row = createDiv("row px-3");
     const message = createDiv("");
-    container.appendChild(row);
     row.appendChild(message);
     message.textContent = "No reviews have been written for this book."
-    reviewHeader.insertAdjacentElement("afterend", container);
+    ratingsDetails.insertAdjacentElement("afterbegin", row);
 }
 
 
