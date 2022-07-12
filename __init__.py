@@ -222,34 +222,38 @@ def sign_up():
         add_cookie({"email": email})
         add_cookie({"password": password})
 
-        oneTimePass = generateOTP()
-        print(oneTimePass)
+        one_time_pass = generateOTP()
+        print(one_time_pass)
         # Send email with OTP
         subject = "OTP for registration"
-        message = "Do not reply to this email.\nPlease enter " + oneTimePass + " as your OTP to complete your registration."
+        message = "Do not reply to this email.\nPlease enter " + one_time_pass + " as your OTP to complete your registration."
 
         gmail_send(email, subject, message)
-        add_cookie({"OTP": oneTimePass})
-        return redirect(url_for("OTP"))
+        add_cookie({"OTP": one_time_pass})
+        return redirect(url_for("OTPverification"))
 
     # Render sign up page
     return render_template("user/sign_up.html", form=sign_up_form)
 
 
-@app.route("/user/sign-up/OTP", methods=["GET", "POST"])
+@app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():
-    email = get_cookie_value("email")
-    username = get_cookie_value("username")
-    password = get_cookie_value("password")
-    oneTimePass = get_cookie_value("OTP")
+    email = get_cookie_value(request, "email")
+    username = get_cookie_value(request, "username")
+    password = get_cookie_value(request, "password")
+    one_time_pass = get_cookie_value(request, "OTP")
 
     OTPformat = OTPForm(request.form)
     print(request.method)
     if request.method == "POST":
         OTPinput = OTPformat.otp.data
         print(OTPinput)
-        if oneTimePass == OTPinput:
+        print(one_time_pass)
+        print(email)
+        print(username)
+        print(password)
+        if one_time_pass == OTPinput:
             # Create new customer
             user_id = generate_uuid5(username)  # Generate new unique user id for customer
             dbf.create_customer(user_id, username, email, password)
@@ -258,11 +262,15 @@ def OTPverification():
             flask_global.user = User(user_id, "", "", "", "", 0)
 
             # Return redirect with session cookie
+            remove_cookies("username")
+            remove_cookies("email")
+            remove_cookies("password")
+            remove_cookies("OTP")
             return redirect(url_for("home"))
 
         else:
             flash("Invalid OTP Entered! Please try again!")
-            return redirect(url_for("OTP"))
+            return redirect(url_for("OTPverification"))
     else:
         return render_template("user/OTP.html", form=OTPformat)
 
