@@ -1,3 +1,4 @@
+from inspect import CO_ASYNC_GENERATOR
 from flask import (
     Flask, render_template, request, redirect, url_for, flash,
     make_response, g as flask_global, abort, jsonify, session  # TODO: session to be removed
@@ -72,13 +73,13 @@ def get_user():
             return User(*user_data)
 
 
-def add_cookie(cookies:dict, flask_global):
+def add_cookie(cookies:dict, x):
     """ Adds cookies """
     if not isinstance(cookies, dict):
         raise TypeError("Expected dictionary")
-    new_cookies:dict = flask_global.get(NEW_COOKIES, default={})
+    new_cookies:dict = x.get(NEW_COOKIES, default={})
     new_cookies.update(cookies)
-    flask_global[NEW_COOKIES] = new_cookies
+    x[NEW_COOKIES] = new_cookies
 
 def remove_cookies(cookies:list, flask_global):
     """ Remove cookies """
