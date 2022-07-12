@@ -41,7 +41,6 @@
           <button type="submit" class="check-out-button btn" name="button">Check Out</button>
         </form>
       </div>
-    {% endif %}
     <div class="show-payment">
       <p>Accepted Payment Method</p>
       <i class="fab fa-cc-visa"></i>
@@ -54,32 +53,33 @@
     <h6 class="d-block d-md-none">For Payment</h6>
   {% if buy_count == 0 %}
   <div class="col-md-9 col-12 empty-cart">
-    <h5>Your cart is empty. <a href="{{url_for("books", sort_this="all")}}">Browse more</a>.</h5>
+    <h5>Your cart is empty. <a href="{{ url_for(home) }}">Browse more</a>.</h5>
   </div>
   {% else %}
   <!-- Update Cart -->
   <div class="col-lg-9 col-12 buying-cart">
       <table class="table table-striped">
         <tbody>
-        {% for key in buy_cart %}
+        {% for book_id in cart_items %}
             <tr class="d-none d-md-block">
                 <form method="POST" action="/update-cart/{{ key }}">
                   <!-- Book Image, Title, Price, No. of books-->
-                    <td class="col-2"><a href="{{ url_for('book_info', book_id=key) }}"><img src="{{ books_dict[key].cover_img }}" alt="book cover"></a></td>
+                    <td class="col-2"><a href="{{ url_for('book_info', book_id=book_id) }}"><img src="{{  }}" alt="book cover"></a></td>
                     <td class="col-5"><a href="{{ url_for('book_info', book_id=key) }}"><h4>{{ books_dict[key].title }}</h4></a>#{{ key }}</td>
                     <td class="col-2"><h5>${{ "%.2f"|format(books_dict[key].price|float) }}</h5></td>
                     <td class="col-2"><input type="number" class="quantity-selector" name="quantity" min="0" value={{ buy_cart[key] }}>
                     <button type="submit" class="btn update-btn" onclick="update_cart()">Update</button></td>
                 </form>
+
                 <form method="POST" action="/delete-buying-cart/{{ key }}">
                     <input type="number" name="book_id" class="book_id" style="display:none;" value={{ books_dict[key] }} readonly></td>
                     <td class="col-1"><button type="submit" onclick="delete_buying_cart()" name="button" style="float:right;" class="btn"><i class="fas fa-times"></i></button></td>
                 </form>
             </tr>
             <tr class="d-block d-md-none">
-                <form method="POST" action="/update-cart/{{ key }}">
-                    <td rowspan="col-2"><a href="{{ url_for('book_info', book_id=book) }}"><img src="{{ books_dict[key].cover_img }}" alt="book cover"></a></td>
-                    <td class="col-5"><a href="{{ url_for('book_info', book_id=book) }}"><p>{{ books_dict[key].title }}</p></a>#{{ key }}</td>
+                <form method="POST" action="/update-cart/{{ book_id }}">
+                    <td rowspan="col-2"><a href="{{ url_for('book_info', book_id=book_id) }}"><img src="{{  }}" alt="book cover"></a></td>
+                    <td class="col-5"><a href="{{ url_for('book_info', book_id=book_id) }}"><p>{{ books_dict[key].title }}</p></a>#{{ books_dict[key] }}</td>
                     <td class="col-1"><p>${{ "%.2f"|format(books_dict[key].price|float) }}</p></td>
                     <td class="col-2"><input type="number" class="quantity-selector" name="quantity" min="0" value={{ buy_cart[key] }}>
                     <button style="font-size:0.8em; padding:0px;" type="submit" class="btn update-btn" onclick="update_cart()">Update</button></td>
