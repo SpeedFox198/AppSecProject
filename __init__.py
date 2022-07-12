@@ -1178,53 +1178,6 @@ def cart():
         total_price += dbf.retrieve_book(book_id).price * quantity
 
     return render_template('cart.html', cart_items=cart_items, buy_count=buy_count, total_price=total_price)
-    # user_id = get_user().get_user_id()
-    # cart_dict = {}
-    # books_dict = {}
-    # cart_db = None  # shelve.open('database', 'c')
-    # book_db = None  # shelve.open('database')
-    # try:
-    #     books_dict = book_db['Books']
-    #     book_db.close()
-    # except:
-    #     print("There is no books in the database currently.")
-    # buy_count = 0
-    # rent_count = 0
-    # total_price = 0
-    # buy_cart = {}
-    # rent_cart = []
-    # try:
-    #     cart_dict = cart_db['Cart']
-    #     print(cart_dict)
-    #     books_dict = book_db['Books']
-    #     book_db.close()
-    # except:
-    #     print("Error while retrieving data from cart.db")
-
-    # if user_id in cart_dict:
-    #     user_cart = cart_dict[user_id]
-    #     if user_cart[0] == '':
-    #         print('This user has nothing in the buying cart')
-    #     else:
-    #         buy_cart = user_cart[0]
-    #         # buy_count = len(user_cart[0])
-    #         for key in buy_cart:
-    #             buy_count += buy_cart[key]
-    #             total_price = float(total_price)
-    #             total_price += float(buy_cart[key] * books_dict[key].price)
-    #             total_price = float(("%.2f" % round(total_price, 2)))
-    #     if len(user_cart) == 1:
-    #         print('This user has nothing in the renting cart')
-    #     else:
-    #         rent_cart = user_cart[1]
-    #         rent_count = len(user_cart[1])
-    #         for book in rent_cart:
-    #             total_price += float(books_dict[book].price) * 0.1
-    #             total_price = float(("%.2f" % round(total_price, 2)))
-
-    # return render_template('cart.html', buy_count=buy_count, rent_count=rent_count, buy_cart=buy_cart,
-    #                        rent_cart=rent_cart, books_dict=books_dict, total_price=total_price)
-
 
 """ Update Shopping Cart """
 
@@ -1285,49 +1238,63 @@ def delete_buying_cart(user_id):
 @app.route("/my-orders")
 @limiter.limit("10/second", override_defaults=False)
 def my_orders():
-    db_order = []
-    new_order = []
-    confirm_order = []
-    ship_order = []
-    deliver_order = []
-    canceled_order = []
-    books_dict = {}
-    try:
-        db = shelve.open('database')
-        books_dict = db['Books']
-        db_order = db['Order']
-        print(db_order, "orders in database")
-        db.close()
-    except:
-        print("There might not have any orders as of now.")
-    for order in db_order:
-        print(order.get_name(), order.get_rent_item())
-        if order.get_order_status() == 'Ordered':
-            new_order.append(order)
-        elif order.get_order_status() == 'Confirmed':
-            confirm_order.append(order)
-        elif order.get_order_status() == 'Shipped':
-            ship_order.append(order)
-        elif order.get_order_status() == 'Delivered':
-            deliver_order.append(order)
-        elif order.get_order_status() == 'Canceled':
-            canceled_order.append(order)
-        else:
-            print(order, "Wrong order status")
+    # User is a Class
+    user: User = flask_global.user
 
-    # display from most recent to the least
-    db_order = list(reversed(db_order))
-    new_order = list(reversed(new_order))
-    confirm_order = list(reversed(confirm_order))
-    ship_order = list(reversed(ship_order))
-    deliver_order = list(reversed(deliver_order))
-    canceled_order = list(reversed(canceled_order))
+    if not isinstance(user, User):
+        return redirect(url_for("login"))
+    elif user.is_admin:
+        abort(403)
 
-    print("canceled_order: ", canceled_order)
-    return render_template('user/my_orders.html', all_order=db_order, new_order=new_order, \
-                           confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
-                           canceled_order=canceled_order, \
-                           books_dict=books_dict)
+    user_id = user.user_id
+
+    # Get orders
+
+    return render_template('my-orders.html')
+# def my_orders():
+#     db_order = []
+#     new_order = []
+#     confirm_order = []
+#     ship_order = []
+#     deliver_order = []
+#     canceled_order = []
+#     books_dict = {}
+#     try:
+#         db = shelve.open('database')
+#         books_dict = db['Books']
+#         db_order = db['Order']
+#         print(db_order, "orders in database")
+#         db.close()
+#     except:
+#         print("There might not have any orders as of now.")
+#     for order in db_order:
+#         print(order.get_name(), order.get_rent_item())
+#         if order.get_order_status() == 'Ordered':
+#             new_order.append(order)
+#         elif order.get_order_status() == 'Confirmed':
+#             confirm_order.append(order)
+#         elif order.get_order_status() == 'Shipped':
+#             ship_order.append(order)
+#         elif order.get_order_status() == 'Delivered':
+#             deliver_order.append(order)
+#         elif order.get_order_status() == 'Canceled':
+#             canceled_order.append(order)
+#         else:
+#             print(order, "Wrong order status")
+
+#     # display from most recent to the least
+#     db_order = list(reversed(db_order))
+#     new_order = list(reversed(new_order))
+#     confirm_order = list(reversed(confirm_order))
+#     ship_order = list(reversed(ship_order))
+#     deliver_order = list(reversed(deliver_order))
+#     canceled_order = list(reversed(canceled_order))
+
+#     print("canceled_order: ", canceled_order)
+#     return render_template('user/my_orders.html', all_order=db_order, new_order=new_order, \
+#                            confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
+#                            canceled_order=canceled_order, \
+#                            books_dict=books_dict)
 
 
 """    Miscellaneous Pages    """
