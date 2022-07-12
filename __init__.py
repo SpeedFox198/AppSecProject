@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
+from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
@@ -80,6 +80,7 @@ def add_cookie(cookies:dict):
     new_cookies.update(cookies)
     flask_global.new_cookies = new_cookies
 
+
 def remove_cookies(cookies:list):
     """ Remove cookies """
     if not isinstance(cookies, list):
@@ -148,7 +149,7 @@ def after_request(response):
 
     # Set new cookies
     for name, value in new_cookies.items():
-        response.set_cookie(name, value)
+        response.set_cookie(name, create_session(value))
 
     # Set CSP to prevent XSS
     response.headers["Content-Security-Policy"] = CSP
