@@ -136,7 +136,7 @@ def after_request(response):
     # Only renew session if login
     if isinstance(user, User):
         renewed_user_session = create_user_session(user.user_id, user.is_admin)
-        new_cookies[USER_SESSION_NAME] = renewed_user_session
+        response.set_cookie(USER_SESSION_NAME, renewed_user_session)
 
     # Default log user out
     else:
@@ -263,10 +263,7 @@ def OTPverification():
             flask_global.user = User(user_id, "", "", "", "", 0)
 
             # Return redirect with session cookie
-            remove_cookies("username")
-            remove_cookies("email")
-            remove_cookies("password")
-            remove_cookies("OTP")
+            remove_cookies(["username", "email", "password", "OTP"])
             return redirect(url_for("home"))
 
         else:

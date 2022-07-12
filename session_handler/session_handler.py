@@ -44,7 +44,7 @@ def retrieve_session(session:str) -> Union[Any, None]:
 
         # If error occurs when comparing/decoding
         # Bad session was provided, return None
-        except Exception:
+        except Exception as e:
             return None
 
 
