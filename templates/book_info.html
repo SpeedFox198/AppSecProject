@@ -42,17 +42,17 @@
 </div>
 
 {# Customer Reviews Section #}
-<div class="container display-section p-4 mb-4">
-  <h2 id="reviewHeader" class="mb-2">Customer Reviews</h2>
+<div class="container display-section customer-reviews-container p-4 mb-4">
+  <h2 class="review-header mb-2">Customer Reviews</h2>
+  <div id="ratingsDetails" class="container py-3">
   {% if g.user %}
-  <div class="container my-2">
-    <div class="row px-3">
+    <div class="row px-3 my-2">
       <div>
         <a href="{# go to review page #}" class="btn defaultbtn">Write Your Own Review</a>
       </div>
     </div>
-  </div>
   {% endif %}
+  </div>
   <div class="container" id="customerReviews">{# Javascript will fetch API for this #}</div>
 </div>
 {% endblock %}

@@ -8,7 +8,7 @@
   width: 100%;
 }
 
-.book-info h2, .book-info h4, #reviewHeader {
+.book-info h2, .book-info h4, .review-header {
   font-weight: bolder;
 }
 
@@ -46,14 +46,36 @@ a .card .card-body{
 
 /* Reviews Section */
 
+#ratingsDetails {
+  background-color: #ecf4f4;
+  border: 1px solid #d3e5e5;
+  border-radius: 0.15rem;
+}
+
+#customerReviews {
+  color: #212529;
+}
+
 .profile-pic {
   border-radius: 50%;
 }
 
-.review-stars .fas.fa-star, .review-stars .far.fa-star, .review-stars .fas .fa-star-half-alt {
+.review-stars {
+  font-size: 0.8rem;
+}
+
+.review-stars.avg-ratings {
+  font-size: 1.3rem;
+}
+
+.review-stars .fas.fa-star, .review-stars .far.fa-star, .review-stars .fas.fa-star-half-alt {
   color: #4b8282;
 }
 
 .review-ratings {
   font-size: 2rem;
+}
+
+.review-time {
+  color: #999;
 }
