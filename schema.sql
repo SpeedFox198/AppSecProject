@@ -13,7 +13,14 @@ CREATE TABLE Users (
     password TEXT NOT NULL,
     profile_pic TEXT,
     is_admin INTEGER NOT NULL,
+    enabled_2FA INTEGER NOT NULL,
     PRIMARY KEY (user_id)
+);
+
+CREATE TABLE OTP (
+    user_id TEXT NOT NULL,
+    secret TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
 CREATE TABLE Customers (
