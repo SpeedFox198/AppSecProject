@@ -45,14 +45,18 @@
           <tbody>
             {% for user in display_users %}
             <tr class="account-row">
-              <td>{{ user.username }}</td>
-              <td>{{ user.name or "-" }}</td>
-              <td>{{ user.email }}</td>
+              {# user-details-<type> classes are used for passing data to the javascript function #}
+              {# To be removed/change if using API #}
+              <div class="user-details-profile-pic d-none">{{ user.profile_pic }}</div>
+              <div class="user-details-user-id d-none">{{ user.user_id }}</div>
+              <td class="user-details-username">{{ user.username }}</td>
+              <td class="user-details-name">{{ user.name or "-" }}</td>
+              <td class="user-details-email">{{ user.email }}</td>
               <td class="account-actions d-flex">
-                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="View" onclick="viewUser('{{ user.username }}', '{{ user.name or '-' }}', '{{ user.email }}', '{{ user.profile_pic }}');">
+                <button class="view-button btn me-auto p-0" data-bs-toggle="tooltip" title="View">
                   <i class="fa fa-eye"></i>
                 </button>
-                <button class="btn me-auto p-0" data-bs-toggle="tooltip" title="Delete" onclick="selectAccount('{{ user.user_id }}', '{{ user.username }}', 'deleteUserButton');">
+                <button class="delete-button btn me-auto p-0" data-bs-toggle="tooltip" title="Delete">
                   <i class="fa fa-trash"></i>
                 </button>
               </td>
