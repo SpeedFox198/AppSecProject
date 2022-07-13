@@ -115,7 +115,7 @@ def before_request():
     flask_global.user = get_user()  # Get user
 
 
-""" After request """
+""" After request """##TODO: add SECURE in header
 
 @app.after_request
 def after_request(response):
@@ -136,7 +136,7 @@ def after_request(response):
     # Only renew session if login
     if isinstance(user, User):
         renewed_user_session = create_user_session(user.user_id, user.is_admin)
-        response.set_cookie(USER_SESSION_NAME, renewed_user_session)
+        response.set_cookie(USER_SESSION_NAME, renewed_user_session, httponly=True)
 
     # Default log user out
     else:
@@ -145,11 +145,11 @@ def after_request(response):
 
     # Delete expired cookies
     for delete_this in expired_cookies:
-        response.set_cookie(delete_this, "", expires=0)
+        response.set_cookie(delete_this, "", expires=0, httponly=True)
 
     # Set new cookies
     for name, value in new_cookies.items():
-        response.set_cookie(name, create_session(value))
+        response.set_cookie(name, create_session(value), httponly=True)
 
     # Set CSP to prevent XSS
     response.headers["Content-Security-Policy"] = CSP
