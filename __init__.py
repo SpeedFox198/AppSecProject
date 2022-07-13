@@ -249,11 +249,6 @@ def OTPverification():
     print(request.method)
     if request.method == "POST":
         OTPinput = OTPformat.otp.data
-        print(OTPinput)
-        print(one_time_pass)
-        print(email)
-        print(username)
-        print(password)
         if one_time_pass == OTPinput:
             # Create new customer
             user_id = generate_uuid5(username)  # Generate new unique user id for customer
@@ -308,7 +303,7 @@ def login():
                 # Get user object
                 
                 #Check if user enabled 2FA
-                enable_2FA = False
+                enable_2FA = True
                 if enable_2FA:
 
                     twoFA_code = generateOTP()
@@ -317,7 +312,8 @@ def login():
                     message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
                     gmail_send(user.email , subject, message)
-                    session["2FA"] = twoFA_code
+                    add_cookie({"2FA": twoFA_code})
+                    add_cookie({"user_data": user_data})
                     return redirect(url_for("twoFA"))
                 else:
 
@@ -331,8 +327,8 @@ def login():
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def twoFA():
-    user_data = session.get("user_data")
-    twoFA_code = session.get("2FA")
+    user_data = get_cookie_value(request, "user_data")
+    twoFA_code = get_cookie_value(request, "2FA")
 
     OTPformat = OTPForm(request.form)
     print(request.method)
@@ -344,11 +340,12 @@ def twoFA():
 
             # Create session to login
             flask_global.user = user
+            remove_cookies(["user_data", "2FA"])
             return redirect(url_for("home"))
 
         else:
             flash("Invalid OTP Entered! Please try again!")
-            return redirect(url_for("2FA"))
+            return redirect(url_for("twoFA"))
     else:
         return render_template("user/2FA.html", form=OTPformat)
 
