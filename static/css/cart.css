@@ -22,11 +22,16 @@ table td, table i{
     text-decoration: underline;
 }
 
+.item-background {
+    background-color: white;
+    padding: 0.5rem;
+}
+
 .fa-times:hover{
   opacity: 0.8;
 }
 
-td .quantity-selector, .update-btn{
+.quantity-selector, .update-btn{
   width: 60%;
   color: #4b8282;
 }

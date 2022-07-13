@@ -1165,16 +1165,17 @@ def cart():
 
     user_id = user.user_id
 
-    # Get cart items
-    cart_items = dbf.get_shopping_cart(user_id)
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity) for items, quantity in dbf.get_shopping_cart(user_id)]
     buy_count = len(cart_items)
 
     # Get total price
     total_price = 0
-    for book_id, quantity in cart_items:
-        total_price += dbf.retrieve_book(book_id).price * quantity
+    for book, quantity in cart_items:
+        total_price += book.price * quantity
 
-    return render_template('cart.html', cart_items=cart_items, buy_count=buy_count, total_price=total_price)
+    return render_template('cart.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items)
+
 
 """ Update Shopping Cart """
 
