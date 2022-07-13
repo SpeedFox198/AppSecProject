@@ -1221,10 +1221,12 @@ def update_cart(user_id):
 """ Delete Cart """
 
 
-@app.route("/delete-buying-cart/<user_id>", methods=['GET', 'POST'])
+@app.route("/delete-buying-cart/<book_id>", methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-def delete_buying_cart(user_id):
-    dbf.delete_shopping_cart(user_id)
+def delete_buying_cart(book_id):
+    user: User = flask_global.user
+    user_id = user.user_id
+    dbf.delete_shopping_cart(user_id, book_id)
     return redirect(request.referrer)
 
 
