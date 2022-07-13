@@ -5,13 +5,14 @@ from typing import Union, Any
 from os import environ
 
 # Get secret key (you ain't gonna see it in plain text lol)
-_SECRET_KEY = environ.get("VERY_SECRET_KEY").encode()
+_SECRET_KEY = environ.get("VERY_SECRET_KEY")
 assert _SECRET_KEY, "Secret key must be set in OS System environment variable"
+_SECRET_KEY = _SECRET_KEY.encode()
 
 # Character for separating session data and signature
 _SEPARATOR = b"."
 _DIGEST_METHOD = "sha512"
-# TODO: add salt
+# TODO: add salt? (perhaps not? perhaps yes?)
 
 def create_session(data) -> bytes:
     """ Creates and returns a regular session cookie """
