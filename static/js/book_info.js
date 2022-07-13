@@ -39,7 +39,7 @@ function createStars(stars) {
 
 function createDetails(username, stars, time, content) {
     const colDiv = createDiv("col-11");
-    const usernameDiv = createDiv("");
+    const usernameDiv = createDiv("review-username");
     const starsDiv = createStars(stars);
     const timeDiv = createDiv("mb-2 review-time");
     const contentDiv = createDiv("");

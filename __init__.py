@@ -136,7 +136,7 @@ def after_request(response):
     # Only renew session if login
     if isinstance(user, User):
         renewed_user_session = create_user_session(user.user_id, user.is_admin)
-        new_cookies[USER_SESSION_NAME] = renewed_user_session
+        response.set_cookie(USER_SESSION_NAME, renewed_user_session)
 
     # Default log user out
     else:
@@ -263,10 +263,7 @@ def OTPverification():
             flask_global.user = User(user_id, "", "", "", "", 0)
 
             # Return redirect with session cookie
-            remove_cookies("username")
-            remove_cookies("email")
-            remove_cookies("password")
-            remove_cookies("OTP")
+            remove_cookies(["username", "email", "password", "OTP"])
             return redirect(url_for("home"))
 
         else:
@@ -1354,7 +1351,6 @@ def api_all_books():
 @app.route("/api/books/<book_id>", methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
 def api_single_book(book_id):
-    # WIP add more methods e.g. POST, PUT, DELETE
     if request.method == "GET":
         book_data = dbf.retrieve_book(book_id)
         if not book_data:
@@ -1378,6 +1374,9 @@ def api_single_book(book_id):
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
 def api_users():
     if request.method == "GET":
+        if admin_check("api"):
+            return admin_check("api")
+
         users_data = dbf.retrieve_these_customers(limit=0, offset=0)
 
         if not users_data:
@@ -1397,30 +1396,33 @@ def api_users():
                        )
                   for row in users_data]
 
-        return admin_check("api") or jsonify(output)
+        return jsonify(output)
 
-    elif request.method == "POST":
-        if admin_check("api"):
-            return admin_check("api")
+    # elif request.method == "POST":
+    #     if admin_check("api"):
+    #         return admin_check("api")
 
-        username = flask_global.data['username']
-        email = flask_global.data['email']
-        password = flask_global.data['password']
+    #     username = flask_global.data['username']
+    #     email = flask_global.data['email']
+    #     password = flask_global.data['password']
 
-        if dbf.username_exists(username):
-            return jsonify(message="The username you entered already exists. Please enter another username."), 400
+    #     if dbf.username_exists(username):
+    #         return jsonify(message="The username you entered already exists. Please enter another username."), 400
 
-        if dbf.email_exists(email):
-            return jsonify(message="The email already been registered. Please enter another email."), 400
+    #     if dbf.email_exists(email):
+    #         return jsonify(message="The email already been registered. Please enter another email."), 400
 
-        dbf.create_customer(generate_uuid5(username), username, email, password)
-        return jsonify("User created!"), 200
+    #     dbf.create_customer(generate_uuid5(username), username, email, password)
+    #     return jsonify("User created!"), 200
 
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
 def api_single_user(user_id):
     if request.method == "GET":
+        if admin_check("api"):
+            return admin_check("api")
+
         user_data = dbf.retrieve_customer_detail(user_id)
 
         if user_data is None:
@@ -1438,7 +1440,24 @@ def api_single_user(user_id):
                       # phone_no=user_data[9],
                       )
 
-        return admin_check("api") or jsonify(output)
+        return jsonify(output)
+
+    #elif request.method == "DELETE":
+    #    if admin_check("api"):
+    #        return admin_check("api")
+    #
+    #    deleted_customer = dbf.delete_customer(user_id)
+    #    if deleted_customer:
+    #        deleted_customer = User(*deleted_customer)
+    #        customer_profile_pic = deleted_customer.profile_pic[1:]
+    #        print(customer_profile_pic)
+    #        if os.path.isfile(customer_profile_pic):
+    #            os.remove(customer_profile_pic)
+    #        else:
+    #            print("Profile pic does not exist")
+    #        return jsonify(message=f"Deleted customer: {deleted_customer.username}")
+    #    else:
+    #        return jsonify(error="Customer does not exist")
 
 
 # TODO: @SpeedFox198 @Miku add limit
@@ -1475,8 +1494,8 @@ def too_many_request(e):
 def bad_request(error):
     if isinstance(error.description, ValidationError):
         original_error = error.description
-        if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
-            return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
+        # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
+        #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
         return jsonify(error=original_error.message), 400
     return error
 

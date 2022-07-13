@@ -10,7 +10,8 @@ assert _SECRET_KEY, "Secret key must be set in OS System environment variable"
 
 # Character for separating session data and signature
 _SEPARATOR = b"."
-
+_DIGEST_METHOD = "sha512"
+# TODO: add salt
 
 def create_session(data) -> bytes:
     """ Creates and returns a regular session cookie """
@@ -19,7 +20,7 @@ def create_session(data) -> bytes:
     session = b64encode(dumps(data))
 
     # Generate signature
-    signature = b64encode(digest(_SECRET_KEY, session, "sha256"))
+    signature = b64encode(digest(_SECRET_KEY, session, _DIGEST_METHOD))
 
     # Return session cookie
     return session + _SEPARATOR + signature
@@ -33,7 +34,7 @@ def retrieve_session(session:str) -> Union[Any, None]:
         # Get session values (session and signature)
         try:
             values = session.encode().split(_SEPARATOR)
-            a = digest(_SECRET_KEY, values[0], "sha256")
+            a = digest(_SECRET_KEY, values[0], _DIGEST_METHOD)
             b = b64decode(values[-1])
 
             # Check for integrity of session
@@ -44,7 +45,7 @@ def retrieve_session(session:str) -> Union[Any, None]:
 
         # If error occurs when comparing/decoding
         # Bad session was provided, return None
-        except Exception:
+        except Exception as e:
             return None
 
 

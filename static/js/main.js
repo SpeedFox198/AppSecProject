@@ -31,7 +31,8 @@
   Array.prototype.filter.call(inputs, input => {
 
     // Error messages of the input
-    let error_msgs = document.querySelectorAll(".display-feedback")
+    // let error_msgs = document.querySelectorAll(".display-feedback")
+    // ^ unused so commented out
 
     // Validator function
     function validator() {

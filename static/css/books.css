@@ -56,6 +56,11 @@ a .card .card-body{
   color: #212529;
 }
 
+.review-username {
+  color: #4b8282;
+  font-weight: bold;
+}
+
 .profile-pic {
   border-radius: 50%;
 }
