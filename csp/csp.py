@@ -13,13 +13,14 @@ csp = {
     ],
     "script-src": [
         "\'self\'",
-        "https://cdn.jsdelivr.net",     # For bootstrap
-        "https://code.jquery.com"       # For jQuery
+        "https://cdn.jsdelivr.net",     # For Bootstrap
+        "https://code.jquery.com",      # For jQuery
+        "https://apis.google.com"       # For Google API
     ],
     "style-src": [
         "\'self\'",
-        "https://cdn.jsdelivr.net",     # For bootstrap
-        "https://use.fontawesome.com",  # For fontawesome
+        "https://cdn.jsdelivr.net",     # For Bootstrap
+        "https://use.fontawesome.com",  # For Font Awesome
         "https://code.jquery.com"       # For jQuery
     ],
     "img-src": [
@@ -31,7 +32,7 @@ csp = {
     ],
     "font-src": [
         "\'self\'",
-        "https://use.fontawesome.com"   # For fontawesome
+        "https://use.fontawesome.com"   # For Font Awesome
     ],
     "form-action": [
         "\'self\'"

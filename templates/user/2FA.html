@@ -19,10 +19,13 @@
     <div>
         <form method="POST">
             {{ render_field(form.otp, class="form-control") }}
-            <button type="submit" class="btn btn-primary mb-2" style="margin-top:20px;">Submit</button>
+            <button type="submit" class="btn btn-primary mb-2">Submit</button>
         </form>
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
 <script src="https://apis.google.com/js/platform.js" async defer></script>
 {% endblock %}
