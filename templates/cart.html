@@ -34,9 +34,9 @@
                 <div class="col-2"><a href="{{ url_for('book_info', book_id=item.book_id) }}"><img src="{{ item.cover_img }}" alt="book cover" class="img-fluid"></a></div>
                 <div class="col-5"><a href="{{ url_for('book_info', book_id=item.book_id) }}"><h4 class="px-2">{{ item.title }}</h4></a></div>
                 <div class="col-2"><h5>${{ "%.2f"|format(item.price|float) }}</h5></div>
-                <form method="POST" action="/update-cart/{# asdf #}" class="col-2">
+                <form method="POST" action="/update-cart/{{ item.book_id }}" class="col-2">
                     <input type="number" class="quantity-selector input-sm form-control" name="quantity" min="0" value="{{ quantity }}">
-                    <button type="submit" class="btn update-btn" onclick="update_cart()">Update</button>
+                    <button type="submit" class="btn update-btn">Update</button>
                 </form>
                 <form method="POST" action="/delete-buying-cart/{{ item.book_id }}" class="col-1">
                     <button type="submit" name="button" class="btn"><i class="fas fa-times"></i></button>
