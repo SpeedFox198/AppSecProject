@@ -71,7 +71,7 @@
         <div class="mb-3 row">
           <label for="phone-no" class="col-md-2 col-form-label text-md-end">2FA</label>
           <div class="col-md-10">
-            {% if two_factor_enabled == True %}
+            {% if twoFA_enabled %}
               <div class="form-control no-format-form" id="phone-no">Enabled</div><a href="">Disable</a>
             {% else %}
               <div class="form-control no-format-form" id="phone-no">Disabled</div><a href="">Enable</a>

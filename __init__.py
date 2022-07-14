@@ -17,7 +17,6 @@ from GoogleEmailSend import gmail_send
 from csp import CSP
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from sanitize import sanitize
-import pyotp
 import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
@@ -1105,7 +1104,7 @@ def add_to_cart():
     book_id = request.form['book_id']
     buying_quantity = request.form['quantity']
 
-    # Check if quantity enterred is valid
+    # Check if quantity entered is valid
     try:
         buying_quantity = int(buying_quantity)
     except:
@@ -1180,28 +1179,26 @@ def cart():
 """ Update Shopping Cart """
 
 
-@app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
+@app.route('/update-cart/<book_id>', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-def update_cart(user_id):
+def update_cart(book_id):
     # User is a Class
     user: User = flask_global.user
 
-    if user is None or not user.is_admin:
+    if user is None:
         abort(403)
-
-    # get book_id
-    book.book_id
 
     # Update quantity
     book_quantity = int(request.form['quantity'])
     if book_quantity == 0:
         # No books in cart, delete cart
-        delete_buying_cart(user_id)
+        return redirect(url_for("delete_buying_cart", book_id=book_id))
     else:
         # update book quantity
+        dbf.update_shopping_cart(user.user_id, book_id, book_quantity)
         print('Update book quantity: ', str(book_quantity))
 
-    return redirect(request.referrer)
+    return redirect(url_for('cart'))
     # cart_dict = cart_db['Cart']
     # buy_cart = cart_dict[user_id][0]
     # book_quantity = int(request.form['quantity'])
@@ -1221,11 +1218,14 @@ def update_cart(user_id):
 """ Delete Cart """
 
 
-@app.route("/delete-buying-cart/<user_id>", methods=['GET', 'POST'])
+@app.route("/delete-buying-cart/<book_id>", methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-def delete_buying_cart(user_id):
-    dbf.delete_shopping_cart(user_id)
-    return redirect(request.referrer)
+def delete_buying_cart(book_id):
+    user: User = flask_global.user
+    # Get User ID
+    user_id = user.user_id
+    dbf.delete_shopping_cart(user_id, book_id)
+    return redirect(url_for('cart'))
 
 
 """    Order Pages    """
@@ -1496,7 +1496,7 @@ def bad_request(error):
         # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
         #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
         return jsonify(error=original_error.message), 400
-    return error
+    return render_template("error/400.html"), 400
 
 
 """    Main    """

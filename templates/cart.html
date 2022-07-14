@@ -33,13 +33,13 @@
                 <!-- Book Image, Title, Price, No. of books-->
                 <div class="col-2"><a href="{{ url_for('book_info', book_id=item.book_id) }}"><img src="{{ item.cover_img }}" alt="book cover" class="img-fluid"></a></div>
                 <div class="col-5"><a href="{{ url_for('book_info', book_id=item.book_id) }}"><h4 class="px-2">{{ item.title }}</h4></a></div>
-                <div class="col-2"><h5>${{ item.price }}</h5></div>
-                <form method="POST" action="/update-cart/{# asdf #}" class="col-2">
+                <div class="col-2"><h5>${{ "%.2f"|format(item.price|float) }}</h5></div>
+                <form method="POST" action="/update-cart/{{ item.book_id }}" class="col-2">
                     <input type="number" class="quantity-selector input-sm form-control" name="quantity" min="0" value="{{ quantity }}">
-                    <button type="submit" class="btn update-btn" onclick="update_cart()">Update</button>
+                    <button type="submit" class="btn update-btn">Update</button>
                 </form>
-                <form method="POST" action="/delete-buying-cart/{# asdf #}" class="col-1">
-                    <button type="submit" onclick="delete_buying_cart()" name="button" class="btn"><i class="fas fa-times"></i></button>
+                <form method="POST" action="/delete-buying-cart/{{ item.book_id }}" class="col-1">
+                    <button type="submit" name="button" class="btn"><i class="fas fa-times"></i></button>
                 </form>
             </div>
         </div>
@@ -54,7 +54,7 @@
         <span>{{ buy_count }} item(s)</span></p>
       </div>
       <div class="card-body">
-        <p class="card-text">Subtotal<span>${{ total_price }}</span></p>
+        <p class="card-text">Subtotal<span>${{ "%.2f"|format(total_price|float) }}</span></p>
         {% if buy_count == 0 %}
           <p class="card-text">Shipping <span>-</span></p>
           <p class="card-text bolder">Estimated Total <span>-</span></p>
