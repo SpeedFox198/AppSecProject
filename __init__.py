@@ -17,7 +17,6 @@ from GoogleEmailSend import gmail_send
 from csp import CSP
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from sanitize import sanitize
-import pyotp
 import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
