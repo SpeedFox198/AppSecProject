@@ -1463,6 +1463,7 @@ def api_single_user(user_id):
 @limiter.limit("10/second", override_defaults=False)
 def api_reviews(book_id):
     """ Returns a list of customer reviews in json format """
+    # TODO: allow only a max len for book_id (just in case)
     # Retrieve customer reviews
     reviews = [Review(*review).to_dict() for review in dbf.retrieve_reviews(book_id)]
     ratings = dbf.retrieve_reviews_ratings(book_id)
