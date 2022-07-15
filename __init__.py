@@ -6,7 +6,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
+from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
+    USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
@@ -20,6 +21,7 @@ from sanitize import sanitize
 import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
+from functools import wraps
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -71,20 +73,20 @@ def get_user():
             return User(*user_data)
 
 
-def add_cookie(cookies:dict):
+def add_cookie(cookies: dict):
     """ Adds cookies """
     if not isinstance(cookies, dict):
         raise TypeError("Expected dictionary")
-    new_cookies:dict = flask_global.get(NEW_COOKIES, default={})
+    new_cookies: dict = flask_global.get(NEW_COOKIES, default={})
     new_cookies.update(cookies)
     flask_global.new_cookies = new_cookies
 
 
-def remove_cookies(cookies:list):
+def remove_cookies(cookies: list):
     """ Remove cookies """
     if not isinstance(cookies, list):
         raise TypeError("Expected list")
-    expired_cookies:list = flask_global.get(EXPIRED_COOKIES, default=[])
+    expired_cookies: list = flask_global.get(EXPIRED_COOKIES, default=[])
     expired_cookies.extend(cookies)
     flask_global.expired_cookies = expired_cookies
 
@@ -114,7 +116,8 @@ def before_request():
     flask_global.user = get_user()  # Get user
 
 
-""" After request """##TODO: add SECURE in header
+""" After request """  ##TODO: add SECURE in header
+
 
 @app.after_request
 def after_request(response):
@@ -254,7 +257,7 @@ def OTPverification():
             dbf.create_customer(user_id, username, email, password)
 
             # Create new user session to login (placeholder values were used to create user object)
-            flask_global.user = User(user_id, "", "", "", "", 0)
+            flask_global.user = User(user_id, "", "", "", "", 0, 0)
 
             # Return redirect with session cookie
             remove_cookies(["username", "email", "password", "OTP"])
@@ -290,7 +293,7 @@ def login():
             # Check username/email
             user_data = dbf.user_auth(username, password)
 
-            # If user_data is not succesfully retrieved (username/email/password is/are wrong)
+            # If user_data is not successfully retrieved (username/email/password is/are wrong)
             if user_data is None:
 
                 # Flash login error message
@@ -298,11 +301,11 @@ def login():
 
             # If login credentials are correct
             else:
-                user = User(*user_data)
                 # Get user object
-                
-                #Check if user enabled 2FA
-                enable_2FA = True
+                user = User(*user_data)
+
+                # Check if user enabled 2FA
+                enable_2FA = bool(user.enabled_2fa)
                 if enable_2FA:
 
                     twoFA_code = generateOTP()
@@ -315,7 +318,7 @@ def login():
                     subject = "2FA code"
                     message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
-                    gmail_send(user.email , subject, message)
+                    gmail_send(user.email, subject, message)
                     add_cookie({"user_data": user_data, "user_id": user.user_id})
                     return redirect(url_for("twoFA"))
                 else:
@@ -327,13 +330,13 @@ def login():
     # Render page's template
     return render_template("user/login.html", form=login_form)
 
+
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def twoFA():
     user_id = get_cookie_value(request, "user_id")
     user_data = get_cookie_value(request, "user_data")
     twoFA_code = dbf.retrieve_OTP(user_id)
-    
 
     OTPformat = OTPForm(request.form)
     print(request.method)
@@ -545,6 +548,7 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
+
 # Needs to be changed
 # TODO: needs to change
 # NOTE: sending email is done by Royston
@@ -581,6 +585,7 @@ def verify_send():
 
     flash(f"Verification email sent to {email}")
     return redirect(url_for("account"))
+
 
 """    User Pages    """
 
@@ -655,24 +660,41 @@ def account():
 """    Admin Pages    """
 
 
+# def admin_check(func):
+#     @wraps(func)
+#     def decorator(*args, **kwargs):
+#         user: User = flask_global.user
+#         """ 2 modes for admin check
+#             regular (Regular) - normal routes with the HTML, default option
+#             api (API) - API routes
+#         """
+#         if not isinstance(user, User) or not user.is_admin:  # Check if no cookie and if user is not admin
+#             abort(403)
+#         return func(*args, **kwargs)
+#     return decorator
+
+
 def admin_check(mode="regular"):
-    user: User = flask_global.user
-    """ 2 modes for admin check
-        regular (Regular) - normal routes with the HTML, default option
-        api (API) - API routes
-    """
-    if not isinstance(user, User) or not user.is_admin:  # Check if no cookie and if user is not admin
-        if mode == "regular":
-            abort(403)
-        elif mode == "api":
-            return jsonify(message="The resource you requested does not exist."), 404
+    def decorator(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            user: User = flask_global.user
+            if not isinstance(user, User) or not user.is_admin:
+                if mode == "regular":
+                    abort(403)
+                elif mode == "api":
+                    return jsonify(message="The resource you requested does not exist."), 404
+            return func(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
 
 
 # Manage accounts page
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
+@admin_check()
 def manage_accounts():
-    admin_check()
-
     # Flask global error variable for css
     flask_global.errors = {}
     errors = flask_global.errors
@@ -790,9 +812,8 @@ def manage_accounts():
 
 
 @app.route('/admin/inventory')
+@admin_check()
 def inventory():
-    admin_check()
-
     inventory_data = dbf.retrieve_inventory()
 
     # Create book object and store in inventory
@@ -811,9 +832,8 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
+@admin_check()
 def add_book():
-    admin_check()
-
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
@@ -857,9 +877,8 @@ def add_book():
 
 
 @app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
+@admin_check()
 def update_book(book_id):
-    admin_check()
-
     # Get specified book
     if not dbf.retrieve_book(book_id):
         abort(404)
@@ -910,9 +929,8 @@ def update_book(book_id):
 
 
 @app.route('/delete-book/<book_id>/', methods=['POST'])
+@admin_check()
 def delete_book(book_id):
-    admin_check()
-
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
     book_cover_img = selected_book.cover_img[1:]  # Strip the leading slash for relative path
@@ -926,12 +944,14 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
+@admin_check()
 def manage_orders():
-    admin_check()
     return "sorry for removing your code"
 
 
 """    Books Pages    """
+
+
 # Wei Ren was here. hello.
 # ?? wtf
 
@@ -1261,6 +1281,8 @@ def my_orders():
     # Get orders
 
     return render_template('my-orders.html')
+
+
 # def my_orders():
 #     db_order = []
 #     new_order = []
@@ -1382,10 +1404,9 @@ def api_single_book(book_id):
 @app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
+@admin_check("api")
 def api_users():
     if request.method == "GET":
-        if admin_check("api"):
-            return admin_check("api")
 
         users_data = dbf.retrieve_these_customers(limit=0, offset=0)
 
@@ -1428,11 +1449,9 @@ def api_users():
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
+@admin_check("api")
 def api_single_user(user_id):
     if request.method == "GET":
-        if admin_check("api"):
-            return admin_check("api")
-
         user_data = dbf.retrieve_customer_detail(user_id)
 
         if user_data is None:
@@ -1452,7 +1471,7 @@ def api_single_user(user_id):
 
         return jsonify(output)
 
-    #elif request.method == "DELETE":
+    # elif request.method == "DELETE":
     #    if admin_check("api"):
     #        return admin_check("api")
     #

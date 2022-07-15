@@ -21,6 +21,7 @@ class User:
     password: str
     _profile_pic: str
     is_admin: int
+    enabled_2fa: int
     name: str = None
     credit_card_no: str = None
     address: str = None
