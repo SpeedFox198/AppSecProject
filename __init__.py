@@ -298,10 +298,9 @@ def login():
 
             # If login credentials are correct
             else:
-                user = User(*user_data)
-                # Get user object
+                user = User(*user_data)  # Get user object
                 
-                #Check if user enabled 2FA
+                # Check if user enabled 2FA
                 enable_2FA = True
                 if enable_2FA:
 
@@ -322,6 +321,7 @@ def login():
 
     # Render page's template
     return render_template("user/login.html", form=login_form)
+
 
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -1313,16 +1313,15 @@ def about():
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(LOGIN_SCHEMA)
 def api_login():
-    username = flask_global.data['username']
-    password = flask_global.data['password']
+    username = flask_global.data["username"]
+    password = flask_global.data["password"]
     user_data = dbf.user_auth(username, password)
     if user_data is None:
-        return jsonify(error="Your username and/or password is incorrect, please try again"), 400
+        return jsonify(status=1)    # Status 1 for not success
 
-    user = User(*user_data)
-    flask_global.user = user
+    flask_global.user = User(*user_data)
 
-    return jsonify(message="Login success!")
+    return jsonify(status=0)        # Status 0 is success
 
 
 @app.route("/api/books/all", methods=["GET"])
@@ -1495,7 +1494,7 @@ def bad_request(error):
         original_error = error.description
         # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
         #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
-        return jsonify(error=original_error.message), 400
+        return jsonify(status=1, error=original_error.message), 400
     return render_template("error/400.html"), 400
 
 
