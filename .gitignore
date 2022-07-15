@@ -8,3 +8,7 @@ __pycache__/
 # LOL
 lol.exe
 database.db
+
+# HTTPS
+cert.pem
+key.pem

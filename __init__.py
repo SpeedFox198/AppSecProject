@@ -654,15 +654,28 @@ def account():
 
 
 def admin_check(mode="regular"):
+    """
+    Put this in routes that need admin check with the @ sign
+    For example:
+    @app.route('/admin/lol")
+    @admin_check()
+    """
     def decorator(func):
         @wraps(func)
         def decorated_function(*args, **kwargs):
+            """Admin Check Here
+            2 Modes:
+            regular - for regular routes
+            api - for api routes
+            Checks if there is a logged-in session and if the user is an admin
+            """
             user: User = flask_global.user
             if not isinstance(user, User) or not user.is_admin:
                 if mode == "regular":
                     abort(403)
                 elif mode == "api":
                     return jsonify(message="The resource you requested does not exist."), 404
+            # Execute routes after
             return func(*args, **kwargs)
 
         return decorated_function
