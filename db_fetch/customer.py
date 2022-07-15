@@ -5,7 +5,7 @@ Customer Functions
 Contains functions that interacts with customer accounts
 """
 from .general import *
-from .user import retrieve_user
+from .user import retrieve_user 
 
 
 """ Customer-triggered Functions """
@@ -20,6 +20,21 @@ def create_customer(user_id, username, email, password) -> None:
     # Insert customer details into Customers table
     insert_row("Customers", (user_id,), ("user_id",))
 
+def create_OTP(user_id, OTP) -> None:
+    """ Creates a new OTP for user_id """
+    insert_row("OTP", (user_id, OTP))
+
+def retrieve_OTP(user_id: str) -> Union[tuple, None]:
+    """ Retrieves OTP for user_id """
+    return retrieve_db("OTP", user_id=user_id, fetchone=True)
+
+def update_OTP(user_id: str, OTP: str) -> None:
+    """ Updates OTP for user_id """
+    update_rows("OTP", ("OTP",), (OTP,), user_id=user_id)
+
+def delete_OTP(user_id: str) -> None:
+    """ Deletes and returns OTP from database """
+    delete_rows("OTP", user_id=user_id)
 
 def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
     """ Returns details of customer """

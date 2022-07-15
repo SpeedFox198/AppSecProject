@@ -8,7 +8,11 @@ con = sqlite3.connect("database.db")
 
 # cur = con.cursor()
 
-# cur.execute("DELETE FROM Users WHERE 1=1")
+# cur.execute("""CREATE TABLE OTP (
+#     user_id TEXT NOT NULL,
+#     otp TEXT NOT NULL,
+#     FOREIGN KEY (user_id) REFERENCES Users(user_id)
+# );""")
 # con.commit()
 
 # x = cur.execute("SELECT * FROM Customers;").fetchall()

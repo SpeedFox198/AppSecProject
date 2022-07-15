@@ -306,13 +306,17 @@ def login():
                 if enable_2FA:
 
                     twoFA_code = generateOTP()
+                    otp_checker = dbf.retrieve_OTP(user.user_id)
+                    if otp_checker is None:
+                        dbf.create_OTP(user.user_id, twoFA_code)
+                    else:
+                        dbf.update_OTP(user.user_id, twoFA_code)
                     # Send email with OTP
                     subject = "2FA code"
                     message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
                     gmail_send(user.email , subject, message)
-                    add_cookie({"2FA": twoFA_code})
-                    add_cookie({"user_data": user_data})
+                    add_cookie({"user_data": user_data, "user_id": user.user_id})
                     return redirect(url_for("twoFA"))
                 else:
 
@@ -326,25 +330,32 @@ def login():
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def twoFA():
+    user_id = get_cookie_value(request, "user_id")
     user_data = get_cookie_value(request, "user_data")
-    twoFA_code = get_cookie_value(request, "2FA")
+    twoFA_code = dbf.retrieve_OTP(user_id)
+    
 
     OTPformat = OTPForm(request.form)
     print(request.method)
     if request.method == "POST":
         twoFAinput = OTPformat.otp.data
-        if twoFA_code == twoFAinput:
-            # Get user object
-            user = User(*user_data)
+        try:
+            if twoFA_code[1] == twoFAinput:
+                # Get user object
+                user = User(*user_data)
 
-            # Create session to login
-            flask_global.user = user
-            remove_cookies(["user_data", "2FA"])
-            return redirect(url_for("home"))
-
-        else:
-            flash("Invalid OTP Entered! Please try again!")
-            return redirect(url_for("twoFA"))
+                # Create session to login
+                flask_global.user = user
+                dbf.delete_OTP(user_id)
+                remove_cookies(["user_id", "user_data"])
+                return redirect(url_for("home"))
+            else:
+                flash("Invalid OTP Entered! Please try again!")
+                print(twoFA_code)
+                print(twoFAinput)
+                return redirect(url_for("twoFA"))
+        except:
+            return redirect(url_for("login"))
     else:
         return render_template("user/2FA.html", form=OTPformat)
 
