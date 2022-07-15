@@ -71,10 +71,10 @@
         <div class="mb-3 row">
           <label for="phone-no" class="col-md-2 col-form-label text-md-end">2FA</label>
           <div class="col-md-10">
-            {% if two_factor_enabled == True %}
-              <div class="form-control no-format-form" id="phone-no">Enabled</div><a href="">Disable</a>
+            {% if twoFA_enabled %}
+              <button type="submit"><div class="form-control no-format-form" id="phone-no">Enabled</div>Disable</button>
             {% else %}
-              <div class="form-control no-format-form" id="phone-no">Disabled</div><a href="">Enable</a>
+            <button type="submit"><div class="form-control no-format-form" id="phone-no">Disabled</div>Enable</button>
             {% endif %}
           </div>
         </div>
@@ -88,4 +88,8 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/account.js"></script>
 {% endblock %}

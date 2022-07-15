@@ -1,4 +1,5 @@
 -- DROP TABLE IF EXISTS Users;
+-- DROP TABLE IF EXISTS OTP;
 -- DROP TABLE IF EXISTS Customers;
 -- DROP TABLE IF EXISTS Books;
 -- DROP TABLE IF EXISTS OrderDetails;
@@ -19,7 +20,7 @@ CREATE TABLE Users (
 
 CREATE TABLE OTP (
     user_id TEXT NOT NULL,
-    secret TEXT NOT NULL,
+    otp TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 

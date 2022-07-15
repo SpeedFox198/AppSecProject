@@ -1,9 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Sign Up{% endblock %}
+{% block title %}Account Verification{% endblock %}
 
 {% block stylesheets %}
 <link rel="stylesheet" href="/static/css/login.css">
-<link rel="stylesheet" href="/static/css/OTP.css">
 {% endblock %}
 
 {% block navbar %}
@@ -12,18 +11,31 @@
 
 {% block content %}
 {% from "includes/_login_render_field.html" import render_field %}
-{# Displays flash sign up error #}
-
-<div class="box">
-    <h2>2FA</h2>
-    <div>
-        <form method="POST">
-            {{ render_field(form.otp, class="form-control") }}
-            <button type="submit" class="btn btn-primary mb-2">Submit</button>
-        </form>
+<div class="d-flex justify-content-center align-items-center h-100">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="m-0">One-Time Password</h2>
     </div>
+    <div class="card-body">
+      <form class="needs-validation" method="POST" action="" novalidate>
+        {# Flash login error message #}
+        {% with messages = get_flashed_messages(category_filter=("form-error")) %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash-error alert p-2 mb-4" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <div class="mb-4">
+          {{ render_field(form.otp, "Please enter your one-time password", class="form-control", placeholder="OTP") }}
+        </div>
+        <input type="submit" value="SUBMIT" class="input-group btn"/>
+      </form>
+    </div>
+  </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}

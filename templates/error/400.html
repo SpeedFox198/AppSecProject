@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}
+400 Bad Requesrt
+{% endblock %}
+
+{% block content %}
+<h1>400 Error </h1>
+<h2>Bad Request</h2>
+<p>The data you entered is invalid, go back <a href="{{ url_for('home') }}">home</a></p>
+<p><a href="{{ url_for('home') }}">Click me to return home</a></p>
+
+{% endblock %}

@@ -17,10 +17,10 @@ from GoogleEmailSend import gmail_send
 from csp import CSP
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from sanitize import sanitize
-import pyotp
 import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
+from functools import wraps
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -255,7 +255,7 @@ def OTPverification():
             dbf.create_customer(user_id, username, email, password)
 
             # Create new user session to login (placeholder values were used to create user object)
-            flask_global.user = User(user_id, "", "", "", "", 0)
+            flask_global.user = User(user_id, "", "", "", "", 0, 0)
 
             # Return redirect with session cookie
             remove_cookies(["username", "email", "password", "OTP"])
@@ -291,7 +291,7 @@ def login():
             # Check username/email
             user_data = dbf.user_auth(username, password)
 
-            # If user_data is not succesfully retrieved (username/email/password is/are wrong)
+            # If user_data is not successfully retrieved (username/email/password is/are wrong)
             if user_data is None:
 
                 # Flash login error message
@@ -299,21 +299,25 @@ def login():
 
             # If login credentials are correct
             else:
-                user = User(*user_data)
                 # Get user object
-                
-                #Check if user enabled 2FA
-                enable_2FA = True
+                user = User(*user_data)
+
+                # Check if user enabled 2FA
+                enable_2FA = bool(user.enabled_2fa)
                 if enable_2FA:
 
                     twoFA_code = generateOTP()
+                    otp_checker = dbf.retrieve_OTP(user.user_id)
+                    if otp_checker is None:
+                        dbf.create_OTP(user.user_id, twoFA_code)
+                    else:
+                        dbf.update_OTP(user.user_id, twoFA_code)
                     # Send email with OTP
                     subject = "2FA code"
                     message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
-                    gmail_send(user.email , subject, message)
-                    add_cookie({"2FA": twoFA_code})
-                    add_cookie({"user_data": user_data})
+                    gmail_send(user.email, subject, message)
+                    add_cookie({"user_data": user_data, "user_id": user.user_id})
                     return redirect(url_for("twoFA"))
                 else:
 
@@ -327,25 +331,32 @@ def login():
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def twoFA():
+    user_id = get_cookie_value(request, "user_id")
     user_data = get_cookie_value(request, "user_data")
-    twoFA_code = get_cookie_value(request, "2FA")
+    twoFA_code = dbf.retrieve_OTP(user_id)
+    
 
     OTPformat = OTPForm(request.form)
     print(request.method)
     if request.method == "POST":
         twoFAinput = OTPformat.otp.data
-        if twoFA_code == twoFAinput:
-            # Get user object
-            user = User(*user_data)
+        try:
+            if twoFA_code[1] == twoFAinput:
+                # Get user object
+                user = User(*user_data)
 
-            # Create session to login
-            flask_global.user = user
-            remove_cookies(["user_data", "2FA"])
-            return redirect(url_for("home"))
-
-        else:
-            flash("Invalid OTP Entered! Please try again!")
-            return redirect(url_for("twoFA"))
+                # Create session to login
+                flask_global.user = user
+                dbf.delete_OTP(user_id)
+                remove_cookies(["user_id", "user_data"])
+                return redirect(url_for("home"))
+            else:
+                flash("Invalid OTP Entered! Please try again!")
+                print(twoFA_code)
+                print(twoFAinput)
+                return redirect(url_for("twoFA"))
+        except:
+            return redirect(url_for("login"))
     else:
         return render_template("user/2FA.html", form=OTPformat)
 
@@ -646,23 +657,26 @@ def account():
 
 
 def admin_check(mode="regular"):
-    user: User = flask_global.user
-    """ 2 modes for admin check
-        regular (Regular) - normal routes with the HTML, default option
-        api (API) - API routes
-    """
-    if not isinstance(user, User) or not user.is_admin:  # Check if no cookie and if user is not admin
-        if mode == "regular":
-            abort(403)
-        elif mode == "api":
-            return jsonify(message="The resource you requested does not exist."), 404
+    def decorator(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            user: User = flask_global.user
+            if not isinstance(user, User) or not user.is_admin:
+                if mode == "regular":
+                    abort(403)
+                elif mode == "api":
+                    return jsonify(message="The resource you requested does not exist."), 404
+            return func(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
 
 
 # Manage accounts page
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
+@admin_check()
 def manage_accounts():
-    admin_check()
-
     # Flask global error variable for css
     flask_global.errors = {}
     errors = flask_global.errors
@@ -780,9 +794,8 @@ def manage_accounts():
 
 
 @app.route('/admin/inventory')
+@admin_check()
 def inventory():
-    admin_check()
-
     inventory_data = dbf.retrieve_inventory()
 
     # Create book object and store in inventory
@@ -801,9 +814,8 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
+@admin_check()
 def add_book():
-    admin_check()
-
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
@@ -847,9 +859,8 @@ def add_book():
 
 
 @app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
+@admin_check()
 def update_book(book_id):
-    admin_check()
-
     # Get specified book
     if not dbf.retrieve_book(book_id):
         abort(404)
@@ -900,9 +911,8 @@ def update_book(book_id):
 
 
 @app.route('/delete-book/<book_id>/', methods=['POST'])
+@admin_check()
 def delete_book(book_id):
-    admin_check()
-
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
     book_cover_img = selected_book.cover_img[1:]  # Strip the leading slash for relative path
@@ -916,13 +926,16 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
+@admin_check()
 def manage_orders():
-    admin_check()
     return "sorry for removing your code"
 
 
 """    Books Pages    """
+
+
 # Wei Ren was here. hello.
+# ?? wtf
 
 @app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -1105,7 +1118,7 @@ def add_to_cart():
     book_id = request.form['book_id']
     buying_quantity = request.form['quantity']
 
-    # Check if quantity enterred is valid
+    # Check if quantity entered is valid
     try:
         buying_quantity = int(buying_quantity)
     except:
@@ -1180,28 +1193,26 @@ def cart():
 """ Update Shopping Cart """
 
 
-@app.route('/update-cart/<user_id>', methods=['GET', 'POST'])
+@app.route('/update-cart/<book_id>', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-def update_cart(user_id):
+def update_cart(book_id):
     # User is a Class
     user: User = flask_global.user
 
-    if user is None or not user.is_admin:
+    if user is None:
         abort(403)
-
-    # get book_id
-    book.book_id
 
     # Update quantity
     book_quantity = int(request.form['quantity'])
     if book_quantity == 0:
         # No books in cart, delete cart
-        delete_buying_cart(user_id)
+        return redirect(url_for("delete_buying_cart", book_id=book_id))
     else:
         # update book quantity
+        dbf.update_shopping_cart(user.user_id, book_id, book_quantity)
         print('Update book quantity: ', str(book_quantity))
 
-    return redirect(request.referrer)
+    return redirect(url_for('cart'))
     # cart_dict = cart_db['Cart']
     # buy_cart = cart_dict[user_id][0]
     # book_quantity = int(request.form['quantity'])
@@ -1221,11 +1232,14 @@ def update_cart(user_id):
 """ Delete Cart """
 
 
-@app.route("/delete-buying-cart/<user_id>", methods=['GET', 'POST'])
+@app.route("/delete-buying-cart/<book_id>", methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-def delete_buying_cart(user_id):
-    dbf.delete_shopping_cart(user_id)
-    return redirect(request.referrer)
+def delete_buying_cart(book_id):
+    user: User = flask_global.user
+    # Get User ID
+    user_id = user.user_id
+    dbf.delete_shopping_cart(user_id, book_id)
+    return redirect(url_for('cart'))
 
 
 """    Order Pages    """
@@ -1313,16 +1327,15 @@ def about():
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(LOGIN_SCHEMA)
 def api_login():
-    username = flask_global.data['username']
-    password = flask_global.data['password']
+    username = flask_global.data["username"]
+    password = flask_global.data["password"]
     user_data = dbf.user_auth(username, password)
     if user_data is None:
-        return jsonify(error="Your username and/or password is incorrect, please try again"), 400
+        return jsonify(status=1)    # Status 1 for not success
 
-    user = User(*user_data)
-    flask_global.user = user
+    flask_global.user = User(*user_data)
 
-    return jsonify(message="Login success!")
+    return jsonify(status=0)        # Status 0 is success
 
 
 @app.route("/api/books/all", methods=["GET"])
@@ -1370,10 +1383,9 @@ def api_single_book(book_id):
 @app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
+@admin_check("api")
 def api_users():
     if request.method == "GET":
-        if admin_check("api"):
-            return admin_check("api")
 
         users_data = dbf.retrieve_these_customers(limit=0, offset=0)
 
@@ -1416,11 +1428,9 @@ def api_users():
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
+@admin_check("api")
 def api_single_user(user_id):
     if request.method == "GET":
-        if admin_check("api"):
-            return admin_check("api")
-
         user_data = dbf.retrieve_customer_detail(user_id)
 
         if user_data is None:
@@ -1463,6 +1473,7 @@ def api_single_user(user_id):
 @limiter.limit("10/second", override_defaults=False)
 def api_reviews(book_id):
     """ Returns a list of customer reviews in json format """
+    # TODO: allow only a max len for book_id (just in case)
     # Retrieve customer reviews
     reviews = [Review(*review).to_dict() for review in dbf.retrieve_reviews(book_id)]
     ratings = dbf.retrieve_reviews_ratings(book_id)
@@ -1494,8 +1505,8 @@ def bad_request(error):
         original_error = error.description
         # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
         #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
-        return jsonify(error=original_error.message), 400
-    return error
+        return jsonify(status=1, error=original_error.message), 400
+    return render_template("error/400.html"), 400
 
 
 """    Main    """
