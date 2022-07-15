@@ -1501,4 +1501,4 @@ def bad_request(error):
 """    Main    """
 
 if __name__ == "__main__":
-    app.run(debug=DEBUG)  # Run app
+    app.run(debug=DEBUG, ssl_context=('cert.pem', 'key.pem'))  # Run app)
