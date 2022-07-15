@@ -219,10 +219,7 @@ def sign_up():
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
-        add_cookie({"username": username})
-        add_cookie({"email": email})
-        add_cookie({"password": password})
-
+        add_cookie({"username": username, "email": email, "password": password})
         one_time_pass = generateOTP()
         print(one_time_pass)
         # Send email with OTP
