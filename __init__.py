@@ -6,8 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
-    USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
+from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
@@ -73,20 +72,20 @@ def get_user():
             return User(*user_data)
 
 
-def add_cookie(cookies: dict):
+def add_cookie(cookies:dict):
     """ Adds cookies """
     if not isinstance(cookies, dict):
         raise TypeError("Expected dictionary")
-    new_cookies: dict = flask_global.get(NEW_COOKIES, default={})
+    new_cookies:dict = flask_global.get(NEW_COOKIES, default={})
     new_cookies.update(cookies)
     flask_global.new_cookies = new_cookies
 
 
-def remove_cookies(cookies: list):
+def remove_cookies(cookies:list):
     """ Remove cookies """
     if not isinstance(cookies, list):
         raise TypeError("Expected list")
-    expired_cookies: list = flask_global.get(EXPIRED_COOKIES, default=[])
+    expired_cookies:list = flask_global.get(EXPIRED_COOKIES, default=[])
     expired_cookies.extend(cookies)
     flask_global.expired_cookies = expired_cookies
 
@@ -116,8 +115,7 @@ def before_request():
     flask_global.user = get_user()  # Get user
 
 
-""" After request """  ##TODO: add SECURE in header
-
+""" After request """##TODO: add SECURE in header
 
 @app.after_request
 def after_request(response):
@@ -330,13 +328,13 @@ def login():
     # Render page's template
     return render_template("user/login.html", form=login_form)
 
-
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def twoFA():
     user_id = get_cookie_value(request, "user_id")
     user_data = get_cookie_value(request, "user_data")
     twoFA_code = dbf.retrieve_OTP(user_id)
+    
 
     OTPformat = OTPForm(request.form)
     print(request.method)
@@ -548,7 +546,6 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
-
 # Needs to be changed
 # TODO: needs to change
 # NOTE: sending email is done by Royston
@@ -585,7 +582,6 @@ def verify_send():
 
     flash(f"Verification email sent to {email}")
     return redirect(url_for("account"))
-
 
 """    User Pages    """
 
@@ -658,20 +654,6 @@ def account():
 
 
 """    Admin Pages    """
-
-
-# def admin_check(func):
-#     @wraps(func)
-#     def decorator(*args, **kwargs):
-#         user: User = flask_global.user
-#         """ 2 modes for admin check
-#             regular (Regular) - normal routes with the HTML, default option
-#             api (API) - API routes
-#         """
-#         if not isinstance(user, User) or not user.is_admin:  # Check if no cookie and if user is not admin
-#             abort(403)
-#         return func(*args, **kwargs)
-#     return decorator
 
 
 def admin_check(mode="regular"):
@@ -1281,8 +1263,6 @@ def my_orders():
     # Get orders
 
     return render_template('my-orders.html')
-
-
 # def my_orders():
 #     db_order = []
 #     new_order = []
@@ -1347,16 +1327,15 @@ def about():
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(LOGIN_SCHEMA)
 def api_login():
-    username = flask_global.data['username']
-    password = flask_global.data['password']
+    username = flask_global.data["username"]
+    password = flask_global.data["password"]
     user_data = dbf.user_auth(username, password)
     if user_data is None:
-        return jsonify(error="Your username and/or password is incorrect, please try again"), 400
+        return jsonify(status=1)    # Status 1 for not success
 
-    user = User(*user_data)
-    flask_global.user = user
+    flask_global.user = User(*user_data)
 
-    return jsonify(message="Login success!")
+    return jsonify(status=0)        # Status 0 is success
 
 
 @app.route("/api/books/all", methods=["GET"])
@@ -1471,7 +1450,7 @@ def api_single_user(user_id):
 
         return jsonify(output)
 
-    # elif request.method == "DELETE":
+    #elif request.method == "DELETE":
     #    if admin_check("api"):
     #        return admin_check("api")
     #
@@ -1526,7 +1505,7 @@ def bad_request(error):
         original_error = error.description
         # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
         #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
-        return jsonify(error=original_error.message), 400
+        return jsonify(status=1, error=original_error.message), 400
     return render_template("error/400.html"), 400
 
 
