@@ -404,12 +404,11 @@ def password_forget():
                 token = url_serialiser.dumps(email, salt=app.config["PASSWORD_FORGET_SALT"])
 
                 # Send message to email entered
-                msg = Message(subject="Reset Your Password",
-                              sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
-                              recipients=[email])
-                link = url_for("password_reset", token=token, _external=True)
-                msg.html = render_template("emails/_password_reset.html", link=link)
-                mail.send(msg)
+                subject = "Reset Your Passworrd"
+                message = "Do not reply to this email.\nPlease click on ths link to reset your password." + url_for("password_reset", token=token, _external=True)
+
+                gmail_send(email, subject, message)
+
                 if DEBUG: print(f"Sent email to {email}")
             else:
                 if DEBUG: print(f"No user with email: {email}")
