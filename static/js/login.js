@@ -1,3 +1,19 @@
+// Our Domain Name ٩(๑`^´๑)۶
+const domainName = "https://localhost:5000/"
+
+/* retrieve get parameter value */
+function retrieveGetValue(paramName) {
+    let result = null;
+    let name = null;
+    let value = null;
+    const items = location.search.substring(1).split("&");
+    for (let i = 0; i < items.length; i++) {
+        [name, value] = items[i].split("=");
+        if (name === paramName) result = decodeURIComponent(value);
+    }
+    return result;
+}
+
 /* Post credentials to API */
 async function post_login(username, password) {
     const url = "/api/login";
@@ -32,8 +48,15 @@ async function login(username, password) {
             failMessage.classList.remove("d-none");
         }
         else {
-            // Login success, redirect to prev page (prevent DOM XSS)
-            location.replace("/");
+            // Login success, redirect to prev page
+            let nextPage = retrieveGetValue("from");
+            if (nextPage.substring(0, domainName.length) === domainName) {
+                location.replace(nextPage);
+            }
+            else {  // next page link has been modified, redirect to home
+                console.error("⁽⁽(੭ꐦ •̀Д•́ )੭*⁾⁾ ᑦᵒᔿᵉ ᵒᐢᵎᵎ");
+                location.replace("/");
+            }
         }
     }
     catch (err) {
