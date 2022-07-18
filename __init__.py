@@ -95,11 +95,10 @@ def remove_cookies(cookies:list):
 def login_required(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        user: User = flask_global.user
-        if not isinstance(user, User):
-            flash("You must log in to access this page")
-            return redirect(url_for('login'))
-        return func(*args, **kwargs)
+        if isinstance(flask_global.user, User):
+            return func(*args, **kwargs)
+        flash("You must log in to access this page")
+        return redirect(url_for('login'))
     return decorated_function
 
 

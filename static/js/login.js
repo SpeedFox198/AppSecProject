@@ -50,7 +50,7 @@ async function login(username, password) {
         else {
             // Login success, redirect to prev page
             let nextPage = retrieveGetValue("from");
-            if (nextPage.substring(0, domainName.length) === domainName) {
+            if (nextPage && nextPage.substring(0, domainName.length) === domainName) {
                 location.replace(nextPage);
             }
             else {  // next page link has been modified, redirect to home
