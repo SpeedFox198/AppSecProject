@@ -92,7 +92,7 @@ def remove_cookies(cookies:list):
     flask_global.expired_cookies = expired_cookies
 
 
-def login_required(message=""):
+def login_required(message=None):
     """
     Put this in routes that user must be logged in to access with the @ sign
     For example:
@@ -108,7 +108,9 @@ def login_required(message=""):
             """
             if isinstance(flask_global.user, User):
                 return func(*args, **kwargs)
-            if message:
+            if message is None:
+                flash("You must log in to access this page")
+            elif message:
                 flash(message)
             return redirect(url_for('login'))
         return decorated_function
