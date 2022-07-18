@@ -6,13 +6,18 @@ con = sqlite3.connect("database.db")
 # with open("schema.sql") as f:
 #     con.executescript(f.read())
 
-# cur = con.cursor()
+#cur = con.cursor()
 
-# cur.execute("""CREATE TABLE OTP (
-#     user_id TEXT NOT NULL,
-#     otp TEXT NOT NULL,
-#     FOREIGN KEY (user_id) REFERENCES Users(user_id)
-# );""")
+#cur.execute("""CREATE TABLE Users (
+#    user_id TEXT NOT NULL,
+#    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+#    email TEXT NOT NULL UNIQUE,
+#    password TEXT NOT NULL,
+#    profile_pic TEXT,
+#    is_admin INTEGER NOT NULL,
+#    twoFA_secret_token TEXT,
+#    PRIMARY KEY (user_id)
+#);""")
 # con.commit()
 
 # x = cur.execute("SELECT * FROM Customers;").fetchall()

@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from db_fetch.customer import update_2FA
+from db_fetch.customer import create_OTP
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
@@ -355,25 +355,11 @@ def login():
                 user = User(*user_data)
 
                 # Check if user enabled 2FA
-                enable_2FA = bool(user.enabled_2fa)
+                enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
                 if enable_2FA:
-
-                    twoFA_code = generateOTP()
-                    otp_checker = dbf.retrieve_OTP(user.user_id)
-                    if otp_checker is None:
-                        dbf.create_OTP(user.user_id, twoFA_code)
-                    else:
-                        dbf.update_OTP(user.user_id, twoFA_code)
-                    # Send email with OTP
-
-                    subject = "2FA code"
-                    message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
-
-                    gmail_send(user.email, subject, message)
                     add_cookie({"user_data": user_data, "user_id": user.user_id})
                     return redirect(url_for("twoFA"))
                 else:
-
                     # Create session to login
                     flask_global.user = user
                     return redirect(url_for("home"))
@@ -386,27 +372,24 @@ def login():
 def twoFA():
     user_id = get_cookie_value(request, "user_id")
     user_data = get_cookie_value(request, "user_data")
-    twoFA_code = dbf.retrieve_OTP(user_id)
-    
+    twoFA_code = dbf.retrieve_2FA_token(user_id)
 
     OTPformat = OTPForm(request.form)
     print(request.method)
     if request.method == "POST":
         twoFAinput = OTPformat.otp.data
+        twoFAchecker = pyotp.TOTP(twoFA_code).verify(twoFAinput)
         try:
-            if twoFA_code[1] == twoFAinput:
+            if twoFAchecker:
                 # Get user object
                 user = User(*user_data)
 
                 # Create session to login
                 flask_global.user = user
-                dbf.delete_OTP(user_id)
                 remove_cookies(["user_id", "user_data"])
                 return redirect(url_for("home"))
             else:
                 flash("Invalid OTP Entered! Please try again!")
-                print(twoFA_code)
-                print(twoFAinput)
                 return redirect(url_for("twoFA"))
         except:
             return redirect(url_for("login"))
@@ -471,7 +454,7 @@ def password_forget():
 
 #In case maybe google authenticator
 
-@app.route("/user/account/google-authenticator-enable", methods=["GET", "POST"])
+@app.route("/user/account/google_authenticator_enable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def google_authenticator():
     # User is a Class
@@ -499,9 +482,9 @@ def google_authenticator():
             flash("Invalid OTP Entered! Please try again!")
             return redirect(url_for("google_authenticator"))
     else:
-        return render_template("user/account/google-authenticator.html", form=OTP_Test, secret_token = secret_token)
+        return render_template("user/account/twoFA_setup.html", form=OTP_Test, secret_token = secret_token)
 
-@app.route("/user/account/google-authenticator-disable", methods=["GET", "POST"])
+@app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def google_authenticator_disable():
     # User is a Class
@@ -515,26 +498,6 @@ def google_authenticator_disable():
     dbf.delete_2FA_token(user.user_id)
     flash("2FA has been disabled")
     return redirect(url_for("account"))
-
-@app.route("/user/account/twoFAChecker", methods=["GET", "POST"])
-@login_required()
-@limiter.limit("10/second", override_defaults=False)    
-def twoFAChecker():
-    # User is a Class
-    user: User = flask_global.user
-
-    if user.is_admin:
-        abort(404)
-    
-    twoFA_checker = bool(user.enabled_2fa)
-    print(twoFA_checker)
-    if twoFA_checker == 0:
-        update_2FA(user.user_id, 1)
-        return redirect(url_for("account"))
-    else:
-        update_2FA(user.user_id, 0)
-        return redirect(url_for("account"))
-
 
 """ Reset password page """  ### TODO: work on this SpeedFox198
 
@@ -750,7 +713,8 @@ def account():
     # Set username and gender to display
     account_page_form.name.data = user.name
     account_page_form.phone_number.data = user.phone_no
-    twoFA_enabled = bool(user.enabled_2fa)
+    twoFA_enabled = bool(dbf.retrieve_2FA_token(user.user_id))
+    print(twoFA_enabled)
     return render_template("user/account.html",
                            form=account_page_form,
                            picture_path=user.profile_pic,
