@@ -10,5 +10,3 @@ async function twoFA (enable) {
         confirm("Failed to " + (enable ? "enable" : "disable") + " two factor authentication.");
     }
 }
-
-document.getElementById("enable_button").addEventListener("click", () => twoFA(1));
