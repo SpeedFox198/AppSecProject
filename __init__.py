@@ -6,6 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
+from db_fetch.customer import update_2FA
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
@@ -20,6 +21,8 @@ from sanitize import sanitize
 import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
+from functools import wraps
+import pyotp
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -218,10 +221,7 @@ def sign_up():
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
-        add_cookie({"username": username})
-        add_cookie({"email": email})
-        add_cookie({"password": password})
-
+        add_cookie({"username": username, "email": email, "password": password})
         one_time_pass = generateOTP()
         print(one_time_pass)
         # Send email with OTP
@@ -254,7 +254,7 @@ def OTPverification():
             dbf.create_customer(user_id, username, email, password)
 
             # Create new user session to login (placeholder values were used to create user object)
-            flask_global.user = User(user_id, "", "", "", "", 0)
+            flask_global.user = User(user_id, "", "", "", "", 0, 0)
 
             # Return redirect with session cookie
             remove_cookies(["username", "email", "password", "OTP"])
@@ -290,7 +290,7 @@ def login():
             # Check username/email
             user_data = dbf.user_auth(username, password)
 
-            # If user_data is not succesfully retrieved (username/email/password is/are wrong)
+            # If user_data is not successfully retrieved (username/email/password is/are wrong)
             if user_data is None:
 
                 # Flash login error message
@@ -298,10 +298,11 @@ def login():
 
             # If login credentials are correct
             else:
-                user = User(*user_data)  # Get user object
-                
+                # Get user object
+                user = User(*user_data)
+
                 # Check if user enabled 2FA
-                enable_2FA = True
+                enable_2FA = bool(user.enabled_2fa)
                 if enable_2FA:
 
                     twoFA_code = generateOTP()
@@ -311,10 +312,11 @@ def login():
                     else:
                         dbf.update_OTP(user.user_id, twoFA_code)
                     # Send email with OTP
+
                     subject = "2FA code"
                     message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
-                    gmail_send(user.email , subject, message)
+                    gmail_send(user.email, subject, message)
                     add_cookie({"user_data": user_data, "user_id": user.user_id})
                     return redirect(url_for("twoFA"))
                 else:
@@ -325,7 +327,6 @@ def login():
 
     # Render page's template
     return render_template("user/login.html", form=login_form)
-
 
 @app.route("/user/login/2FA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -358,6 +359,9 @@ def twoFA():
             return redirect(url_for("login"))
     else:
         return render_template("user/2FA.html", form=OTPformat)
+
+
+
 
 
 """ Logout """
@@ -406,12 +410,11 @@ def password_forget():
                 token = url_serialiser.dumps(email, salt=app.config["PASSWORD_FORGET_SALT"])
 
                 # Send message to email entered
-                msg = Message(subject="Reset Your Password",
-                              sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
-                              recipients=[email])
-                link = url_for("password_reset", token=token, _external=True)
-                msg.html = render_template("emails/_password_reset.html", link=link)
-                mail.send(msg)
+                subject = "Reset Your Passworrd"
+                message = "Do not reply to this email.\nPlease click on ths link to reset your password." + url_for("password_reset", token=token, _external=True)
+
+                gmail_send(email, subject, message)
+
                 if DEBUG: print(f"Sent email to {email}")
             else:
                 if DEBUG: print(f"No user with email: {email}")
@@ -420,6 +423,26 @@ def password_forget():
             return redirect(url_for("login"))
 
     return render_template("user/password/password_forget.html", form=forget_password_form)
+
+@app.route("/user/account/twoFAChecker", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)    
+def twoFAChecker():
+    # User is a Class
+    user: User = flask_global.user
+
+    if not isinstance(user, User):
+        return redirect(url_for("login"))
+    elif user.is_admin:
+        abort(403)
+    
+    twoFA_checker = bool(user.enabled_2fa)
+    print(twoFA_checker)
+    if twoFA_checker == 0:
+        update_2FA(user.user_id, 1)
+        return redirect(url_for("account"))
+    else:
+        update_2FA(user.user_id, 0)
+        return redirect(url_for("account"))
 
 
 """ Reset password page """  ### TODO: work on this SpeedFox198
@@ -644,35 +667,53 @@ def account():
     # Set username and gender to display
     account_page_form.name.data = user.name
     account_page_form.phone_number.data = user.phone_no
+    twoFA_enabled = bool(user.enabled_2fa)
     return render_template("user/account.html",
                            form=account_page_form,
                            picture_path=user.profile_pic,
                            username=user.username,
                            email=user.email,
-                           phone_no=user.phone_no)
+                           phone_no=user.phone_no,
+                           twoFA_enabled=twoFA_enabled)
 
 
 """    Admin Pages    """
 
 
 def admin_check(mode="regular"):
-    user: User = flask_global.user
-    """ 2 modes for admin check
-        regular (Regular) - normal routes with the HTML, default option
-        api (API) - API routes
     """
-    if not isinstance(user, User) or not user.is_admin:  # Check if no cookie and if user is not admin
-        if mode == "regular":
-            abort(403)
-        elif mode == "api":
-            return jsonify(message="The resource you requested does not exist."), 404
+    Put this in routes that need admin check with the @ sign
+    For example:
+    @app.route('/admin/lol")
+    @admin_check()
+    """
+    def decorator(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            """Admin Check Here
+            2 Modes:
+            regular - for regular routes
+            api - for api routes
+            Checks if there is a logged-in session and if the user is an admin
+            """
+            user: User = flask_global.user
+            if not isinstance(user, User) or not user.is_admin:
+                if mode == "regular":
+                    abort(403)
+                elif mode == "api":
+                    return jsonify(message="The resource you requested does not exist."), 404
+            # Execute routes after
+            return func(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
 
 
 # Manage accounts page
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
+@admin_check()
 def manage_accounts():
-    admin_check()
-
     # Flask global error variable for css
     flask_global.errors = {}
     errors = flask_global.errors
@@ -790,9 +831,8 @@ def manage_accounts():
 
 
 @app.route('/admin/inventory')
+@admin_check()
 def inventory():
-    admin_check()
-
     inventory_data = dbf.retrieve_inventory()
 
     # Create book object and store in inventory
@@ -811,9 +851,8 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
+@admin_check()
 def add_book():
-    admin_check()
-
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
     add_book_form.category.choices = category_list
@@ -857,9 +896,8 @@ def add_book():
 
 
 @app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
+@admin_check()
 def update_book(book_id):
-    admin_check()
-
     # Get specified book
     if not dbf.retrieve_book(book_id):
         abort(404)
@@ -910,9 +948,8 @@ def update_book(book_id):
 
 
 @app.route('/delete-book/<book_id>/', methods=['POST'])
+@admin_check()
 def delete_book(book_id):
-    admin_check()
-
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
     book_cover_img = selected_book.cover_img[1:]  # Strip the leading slash for relative path
@@ -926,12 +963,14 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
+@admin_check()
 def manage_orders():
-    admin_check()
     return "sorry for removing your code"
 
 
 """    Books Pages    """
+
+
 # Wei Ren was here. hello.
 # ?? wtf
 
@@ -1381,10 +1420,9 @@ def api_single_book(book_id):
 @app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
+@admin_check("api")
 def api_users():
     if request.method == "GET":
-        if admin_check("api"):
-            return admin_check("api")
 
         users_data = dbf.retrieve_these_customers(limit=0, offset=0)
 
@@ -1427,11 +1465,9 @@ def api_users():
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
+@admin_check("api")
 def api_single_user(user_id):
     if request.method == "GET":
-        if admin_check("api"):
-            return admin_check("api")
-
         user_data = dbf.retrieve_customer_detail(user_id)
 
         if user_data is None:
@@ -1513,4 +1549,4 @@ def bad_request(error):
 """    Main    """
 
 if __name__ == "__main__":
-    app.run(debug=DEBUG)  # Run app
+    app.run(debug=DEBUG, ssl_context=('cert.pem', 'key.pem'))  # Run app)
