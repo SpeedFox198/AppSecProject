@@ -467,6 +467,52 @@ def password_forget():
 
     return render_template("user/password/password_forget.html", form=forget_password_form)
 
+#In case maybe google authenticator
+
+@app.route("user/account/google-authenticator-enable", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+def google_authenticator():
+    # User is a Class
+    user: User = flask_global.user
+
+    if not isinstance(user, User):
+        return redirect(url_for("login"))
+    elif user.is_admin:
+        abort(403)
+
+    secret_token = get_cookie_value(request, "token")
+    if secret_token is None:
+        secret_token = pyotp.random_base32()
+        add_cookie({"token": secret_token})
+    OTP_Test = OTPForm(request.form)
+    OTP_check = OTP_Test.otp.data
+    if request.method == "POST":
+        verified = pyotp.TOTP(secret_token).verify(OTP_check)
+        if verified:
+            flash("2FA setup Complete")
+            dbf.create_2FA(user.user_id, secret_token)
+            remove_cookies(["token"])
+            return redirect(url_for("account"))
+        else:
+            flash("Invalid OTP Entered! Please try again!")
+            return redirect(url_for("google_authenticator"))
+    else:
+        return render_template("user/account/google-authenticator.html", form=OTP_Test, secret_token = secret_token)
+
+@app.route("/user/account/google-authenticator-disable", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+def google_authenticator_disable():
+    # User is a Class
+    user: User = flask_global.user
+
+    if not isinstance(user, User):
+        return redirect(url_for("login"))
+    elif user.is_admin:
+        abort(403)
+
+    dbf.delete_2FA_token(user.user_id)
+    flash("2FA has been disabled")
+    return redirect(url_for("account"))
 
 @app.route("/user/account/twoFAChecker", methods=["GET", "POST"])
 @login_required()

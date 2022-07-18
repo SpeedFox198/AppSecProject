@@ -14,7 +14,7 @@ CREATE TABLE Users (
     password TEXT NOT NULL,
     profile_pic TEXT,
     is_admin INTEGER NOT NULL,
-    enabled_2FA INTEGER NOT NULL,
+    twoFA_secret_token TEXT,
     PRIMARY KEY (user_id)
 );
 
