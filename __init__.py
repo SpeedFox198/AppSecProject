@@ -469,7 +469,7 @@ def password_forget():
 
 #In case maybe google authenticator
 
-@app.route("user/account/google-authenticator-enable", methods=["GET", "POST"])
+@app.route("/user/account/google-authenticator-enable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def google_authenticator():
     # User is a Class
