@@ -74,7 +74,7 @@
               {% if not is_admin %}
               <a href="{{ url_for('my_orders') }}">Orders</a>
               {% endif %}
-              <a href="{{ url_for('logout') }}">Logout</a>
+              <a class="login-link" href="{{ url_for('logout') }}">Logout</a>
             {% else %}
               <a class="login-link" href="{{ url_for('login') }}">Login</a>
               <a href="{{ url_for('sign_up') }}">Sign Up</a>
@@ -118,7 +118,7 @@
             </td>
           </tr>
         </table>
-        {# Display a different nav bar for different admins #}
+        {# Display a different nav bar for admins #}
         {% if is_admin %}
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('add_book') }}">Add Book</a>
@@ -152,7 +152,6 @@
       </ul>
     </div>
   </div>
-
 </nav>
 
 {# Loads login link #}

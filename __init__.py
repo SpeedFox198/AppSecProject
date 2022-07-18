@@ -92,14 +92,27 @@ def remove_cookies(cookies:list):
     flask_global.expired_cookies = expired_cookies
 
 
-def login_required(func):
-    @wraps(func)
-    def decorated_function(*args, **kwargs):
-        if isinstance(flask_global.user, User):
-            return func(*args, **kwargs)
-        flash("You must log in to access this page")
-        return redirect(url_for('login'))
-    return decorated_function
+def login_required(message=""):
+    """
+    Put this in routes that user must be logged in to access with the @ sign
+    For example:
+    @app.route('/user/account/")
+    @login_required()
+    """
+    def decorator(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            """
+            Logged in check here
+            flash_message (str): Message to be flashed if user is not logged in 
+            """
+            if isinstance(flask_global.user, User):
+                return func(*args, **kwargs)
+            if message:
+                flash(message)
+            return redirect(url_for('login'))
+        return decorated_function
+    return decorator
 
 
 def admin_check(mode="regular"):
@@ -121,7 +134,7 @@ def admin_check(mode="regular"):
             user: User = flask_global.user
             if not isinstance(user, User) or not user.is_admin:
                 if mode == "regular":
-                    abort(403)
+                    abort(404)
                 elif mode == "api":
                     return jsonify(message="The resource you requested does not exist."), 404
             # Execute routes after
@@ -415,7 +428,7 @@ def logout():
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required()
 def password_forget():
     # Create form
     forget_password_form = ForgetPasswordForm(request.form)
@@ -456,7 +469,7 @@ def password_forget():
 
 
 @app.route("/user/account/twoFAChecker", methods=["GET", "POST"])
-@login_required
+@login_required()
 @limiter.limit("10/second", override_defaults=False)    
 def twoFAChecker():
     # User is a Class
@@ -545,7 +558,7 @@ def password_reset(token):
 
 @app.route("/user/password/change", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required()
 def password_change():
     # Flask global error variable for css
     errors = flask_global.errors = {}
@@ -636,7 +649,7 @@ def verify_send():
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required()
 def account():
     # Get current user
     user: User = flask_global.user
@@ -1132,7 +1145,7 @@ def price_high_to_low(inventory_data):
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required("You need to be logged in to purchase items")
 def add_to_cart():
     # User is a Class
     user: User = flask_global.user
@@ -1195,7 +1208,7 @@ def add_to_cart():
 
 @app.route('/cart')
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required()
 def cart():
     # User is a Class
     user: User = flask_global.user
@@ -1222,7 +1235,7 @@ def cart():
 
 @app.route('/update-cart/<book_id>', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required()
 def update_cart(book_id):
     # User is a Class
     user: User = flask_global.user
@@ -1259,7 +1272,7 @@ def update_cart(book_id):
 
 @app.route("/delete-buying-cart/<book_id>", methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required()
 def delete_buying_cart(book_id):
     user: User = flask_global.user
     # Get User ID
@@ -1275,7 +1288,7 @@ def delete_buying_cart(book_id):
 
 @app.route("/my-orders")
 @limiter.limit("10/second", override_defaults=False)
-@login_required
+@login_required()
 def my_orders():
     # User is a Class
     user: User = flask_global.user
@@ -1537,4 +1550,4 @@ def bad_request(error):
 """    Main    """
 
 if __name__ == "__main__":
-    app.run(debug=DEBUG, ssl_context=('cert.pem', 'key.pem'))  # Run app)
+    app.run(debug=DEBUG, ssl_context=('cert.pem', 'key.pem'))  # Run app

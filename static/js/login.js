@@ -1,5 +1,5 @@
-// Our Domain Name ٩(๑`^´๑)۶
-const domainName = "https://localhost:5000/"
+// Get domain name
+import {DOMAIN_NAME} from "./domain_name.js"
 
 /* retrieve get parameter value */
 function retrieveGetValue(paramName) {
@@ -50,7 +50,7 @@ async function login(username, password) {
         else {
             // Login success, redirect to prev page
             let nextPage = retrieveGetValue("from");
-            if (nextPage && nextPage.substring(0, domainName.length) === domainName) {
+            if (nextPage && nextPage.substring(0, DOMAIN_NAME.length) === DOMAIN_NAME) {
                 location.replace(nextPage);
             }
             else {  // next page link has been modified, redirect to home
