@@ -34,6 +34,7 @@ from forms import (
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+BANNED_CHARACTERS = ('{', '}', '<', '>', '(', ')', '&', '|', '$', '`', '!')  # For input whitelist
 
 app = Flask(__name__)
 app.config.from_pyfile("config/app.cfg")  # Load config file
@@ -121,7 +122,7 @@ def admin_check(mode="regular"):
     """
     Put this in routes that need admin check with the @ sign
     For example:
-    @app.route('/admin/lol")
+    @app.route('/admin/manage-account")
     @admin_check()
     """
     def decorator(func):
