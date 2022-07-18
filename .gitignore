@@ -10,5 +10,6 @@ lol.exe
 database.db
 
 # HTTPS
+mkcert.exe
 cert.pem
 key.pem

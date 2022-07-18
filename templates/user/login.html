@@ -18,17 +18,11 @@
       <h2 class="m-0">Log In</h2>
     </div>
     <div class="card-body">
-      <form class="needs-validation" method="POST" action="" novalidate>
-        {# Flash login error message #}
-        {% with messages = get_flashed_messages(category_filter=("form-error")) %}
-          {% if messages %}
-            {% for message in messages %}
-              <div class="flash-error alert p-2 mb-4" role="alert">
-                {{ message }}
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+      <form id="loginForm" class="needs-validation" method="POST" action="" novalidate>
+        {# Login error message #}
+        <div id="loginFailed" class="d-none flash-error alert p-2 mb-4" role="alert">
+          Your account and/or password is incorrect, please try again
+        </div>
         <div class="mb-4">
           {{ render_field(form.username, "Please enter your username/email", class="form-control", placeholder="Username / Email") }}
         </div>
@@ -48,4 +42,8 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/login.js"></script>
 {% endblock %}

@@ -49,17 +49,25 @@
       <ul class="nav justify-content-end">
         {% if not is_admin %}
         <form class="d-flex" method="GET" action="{{ url_for('books', sort_this='all') }}">
-          <li class="">
+          <li>
             <input name="q" class="form-control" type="search" placeholder="Search..." aria-label="Search" id="search-field" required>
           </li>
-          <li class="">
+          <li>
             <button class="btn nav-link" type="submit"><i class="fa fa-search"></i></button>
           </li>
         </form>
         {% endif %}
         <li class="nav-item {{ 'me-2' if is_admin }}">
           <div class="dropdown">
-            <a class="nav-link" href="{{ url_for('account' if is_logged_in else 'login') }}"><i class="fa fa-user nav-icon"></i></a>
+            {% if is_logged_in %}
+            <a class="nav-link" href="{{ url_for('account') }}">
+              <i class="fa fa-user nav-icon"></i>
+            </a>
+            {% else %}
+            <a class="nav-link login-link" href="{{ url_for('login') }}">
+              <i class="fa fa-user nav-icon"></i>
+            </a>
+            {% endif %}
             <div class="dropdown-content account-link-display">
             {% if is_logged_in %}
               <a href="{{ url_for('account') }}">Account</a>
@@ -68,7 +76,7 @@
               {% endif %}
               <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}
-              <a href="{{ url_for('login') }}">Login</a>
+              <a class="login-link" href="{{ url_for('login') }}">Login</a>
               <a href="{{ url_for('sign_up') }}">Sign Up</a>
             {% endif %}
             </div>
@@ -146,3 +154,6 @@
   </div>
 
 </nav>
+
+{# Loads login link #}
+<script src="/static/js/navbar_login.js"></script>

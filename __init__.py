@@ -92,6 +92,44 @@ def remove_cookies(cookies:list):
     flask_global.expired_cookies = expired_cookies
 
 
+def login_required(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if isinstance(flask_global.user, User):
+            return func(*args, **kwargs)
+        flash("You must log in to access this page")
+        return redirect(url_for('login'))
+    return decorated_function
+
+
+def admin_check(mode="regular"):
+    """
+    Put this in routes that need admin check with the @ sign
+    For example:
+    @app.route('/admin/lol")
+    @admin_check()
+    """
+    def decorator(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            """Admin Check Here
+            2 Modes:
+            regular - for regular routes
+            api - for api routes
+            Checks if there is a logged-in session and if the user is an admin
+            """
+            user: User = flask_global.user
+            if not isinstance(user, User) or not user.is_admin:
+                if mode == "regular":
+                    abort(403)
+                elif mode == "api":
+                    return jsonify(message="The resource you requested does not exist."), 404
+            # Execute routes after
+            return func(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 """ Before first request """
 
 
@@ -361,9 +399,6 @@ def twoFA():
         return render_template("user/2FA.html", form=OTPformat)
 
 
-
-
-
 """ Logout """
 
 
@@ -380,13 +415,8 @@ def logout():
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def password_forget():
-    # Get user
-    user: User = flask_global.user
-
-    if user is not None:
-        return redirect(url_for("home"))
-
     # Create form
     forget_password_form = ForgetPasswordForm(request.form)
 
@@ -410,7 +440,7 @@ def password_forget():
                 token = url_serialiser.dumps(email, salt=app.config["PASSWORD_FORGET_SALT"])
 
                 # Send message to email entered
-                subject = "Reset Your Passworrd"
+                subject = "Reset Your Password"
                 message = "Do not reply to this email.\nPlease click on ths link to reset your password." + url_for("password_reset", token=token, _external=True)
 
                 gmail_send(email, subject, message)
@@ -472,15 +502,14 @@ def google_authenticator_disable():
     return redirect(url_for("account"))
 
 @app.route("/user/account/twoFAChecker", methods=["GET", "POST"])
+@login_required
 @limiter.limit("10/second", override_defaults=False)    
 def twoFAChecker():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
-        abort(403)
+    if user.is_admin:
+        abort(404)
     
     twoFA_checker = bool(user.enabled_2fa)
     print(twoFA_checker)
@@ -562,14 +591,8 @@ def password_reset(token):
 
 @app.route("/user/password/change", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def password_change():
-    # Get current user
-    user: User = flask_global.user
-
-    # If user is not logged in
-    if user is None:
-        return redirect(url_for("login"))
-
     # Flask global error variable for css
     errors = flask_global.errors = {}
 
@@ -657,11 +680,9 @@ def verify_send():
 """ View account page """
 
 
-# TODO Chung Wai do hehe
-
-
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def account():
     # Get current user
     user: User = flask_global.user
@@ -725,36 +746,6 @@ def account():
 
 
 """    Admin Pages    """
-
-
-def admin_check(mode="regular"):
-    """
-    Put this in routes that need admin check with the @ sign
-    For example:
-    @app.route('/admin/lol")
-    @admin_check()
-    """
-    def decorator(func):
-        @wraps(func)
-        def decorated_function(*args, **kwargs):
-            """Admin Check Here
-            2 Modes:
-            regular - for regular routes
-            api - for api routes
-            Checks if there is a logged-in session and if the user is an admin
-            """
-            user: User = flask_global.user
-            if not isinstance(user, User) or not user.is_admin:
-                if mode == "regular":
-                    abort(403)
-                elif mode == "api":
-                    return jsonify(message="The resource you requested does not exist."), 404
-            # Execute routes after
-            return func(*args, **kwargs)
-
-        return decorated_function
-
-    return decorator
 
 
 # Manage accounts page
@@ -1187,14 +1178,13 @@ def price_high_to_low(inventory_data):
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def add_to_cart():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
-        abort(403)
+    if user.is_admin:
+        abort(404)
 
     user_id = user.user_id
 
@@ -1251,14 +1241,13 @@ def add_to_cart():
 
 @app.route('/cart')
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def cart():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
-        abort(403)
+    if user.is_admin:
+        abort(404)
 
     user_id = user.user_id
 
@@ -1279,12 +1268,10 @@ def cart():
 
 @app.route('/update-cart/<book_id>', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def update_cart(book_id):
     # User is a Class
     user: User = flask_global.user
-
-    if user is None:
-        abort(403)
 
     # Update quantity
     book_quantity = int(request.form['quantity'])
@@ -1318,6 +1305,7 @@ def update_cart(book_id):
 
 @app.route("/delete-buying-cart/<book_id>", methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def delete_buying_cart(book_id):
     user: User = flask_global.user
     # Get User ID
@@ -1333,14 +1321,13 @@ def delete_buying_cart(book_id):
 
 @app.route("/my-orders")
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def my_orders():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
-        abort(403)
+    if user.is_admin:
+        abort(404)
 
     user_id = user.user_id
 
