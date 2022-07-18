@@ -152,7 +152,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="addUser();">Create Customer</button>
+        <button id="submitAddUserButton" type="button" class="btn btn-primary">Create Customer</button>
       </div>
     </div>
   </div>
@@ -211,7 +211,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" onclick="deleteUser();">Delete Customer</button>
+        <button type="button" class="btn btn-danger">Delete Customer</button>
       </div>
     </div>
   </div>
@@ -221,6 +221,7 @@
 {% block scripts %}
 <script src="/static/js/manage_accounts.js"></script>
 {% if form_trigger %}
-<script>document.body.onload = () => document.getElementById("{{ form_trigger }}").click();</script>
+<script src="/static/js/manage_accounts_trigger_form.js"></script>
+<div id="formTriggerJs" class="d-none">{{ form_trigger }}</div>
 {% endif %}
 {% endblock %}

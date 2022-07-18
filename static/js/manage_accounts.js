@@ -8,6 +8,9 @@ function addUser() {
     clickButton("addUserSubmit");
 }
 
+const submitAddUserButton = getElement("submitAddUserButton");
+submitAddUserButton.addEventListener("click", addUser);
+
 const displayUsername = [].slice.call(document.querySelectorAll('.display-username'));
 let selectedUserID = null;
 function selectAccount(userID, username) {
