@@ -15,10 +15,14 @@ def create_customer(user_id, username, email, password) -> None:
     """ Creates a new customer account in the database """
 
     # Insert user data into Users table
-    insert_row("Users", (user_id, username, email, password, None, 0))
+    insert_row("Users", (user_id, username, email, password, None, 0, 0))
 
     # Insert customer details into Customers table
     insert_row("Customers", (user_id,), ("user_id",))
+
+def update_2FA(user_id: str, enabled_2FA: int) -> None:
+    """ Updates 2FA for user_id """
+    update_rows("Users", ("enabled_2FA",), (enabled_2FA,), user_id=user_id)
 
 def create_OTP(user_id, OTP) -> None:
     """ Creates a new OTP for user_id """

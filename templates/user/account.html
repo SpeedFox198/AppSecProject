@@ -72,9 +72,11 @@
           <label for="phone-no" class="col-md-2 col-form-label text-md-end">2FA</label>
           <div class="col-md-10">
             {% if twoFA_enabled %}
-              <button type="submit"><div class="form-control no-format-form" id="phone-no">Enabled</div>Disable</button>
+            <p>Enabled</p>
+              <div class="form-control no-format-form" id="phone-no"><a href="{{ url_for('twoFAChecker') }}">Disable</a></div>
             {% else %}
-            <button type="submit"><div class="form-control no-format-form" id="phone-no">Disabled</div>Enable</button>
+            <p>Disabled</p>
+            <div class="form-control no-format-form" id="phone-no"><a href="{{ url_for('twoFAChecker') }}">Enable</a></div>
             {% endif %}
           </div>
         </div>
@@ -88,8 +90,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="/static/js/account.js"></script>
 {% endblock %}

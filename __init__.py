@@ -6,6 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
+from db_fetch.customer import update_2FA
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
@@ -21,6 +22,7 @@ import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
 from functools import wraps
+import pyotp
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -310,6 +312,7 @@ def login():
                     else:
                         dbf.update_OTP(user.user_id, twoFA_code)
                     # Send email with OTP
+
                     subject = "2FA code"
                     message = "Do not reply to this email.\nPlease enter " + twoFA_code + " as your OTP to login."
 
@@ -356,6 +359,9 @@ def twoFA():
             return redirect(url_for("login"))
     else:
         return render_template("user/2FA.html", form=OTPformat)
+
+
+
 
 
 """ Logout """
@@ -417,6 +423,26 @@ def password_forget():
             return redirect(url_for("login"))
 
     return render_template("user/password/password_forget.html", form=forget_password_form)
+
+@app.route("/user/account/twoFAChecker", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)    
+def twoFAChecker():
+    # User is a Class
+    user: User = flask_global.user
+
+    if not isinstance(user, User):
+        return redirect(url_for("login"))
+    elif user.is_admin:
+        abort(403)
+    
+    twoFA_checker = bool(user.enabled_2fa)
+    print(twoFA_checker)
+    if twoFA_checker == 0:
+        update_2FA(user.user_id, 1)
+        return redirect(url_for("account"))
+    else:
+        update_2FA(user.user_id, 0)
+        return redirect(url_for("account"))
 
 
 """ Reset password page """  ### TODO: work on this SpeedFox198
@@ -641,12 +667,14 @@ def account():
     # Set username and gender to display
     account_page_form.name.data = user.name
     account_page_form.phone_number.data = user.phone_no
+    twoFA_enabled = bool(user.enabled_2fa)
     return render_template("user/account.html",
                            form=account_page_form,
                            picture_path=user.profile_pic,
                            username=user.username,
                            email=user.email,
-                           phone_no=user.phone_no)
+                           phone_no=user.phone_no,
+                           twoFA_enabled=twoFA_enabled)
 
 
 """    Admin Pages    """
