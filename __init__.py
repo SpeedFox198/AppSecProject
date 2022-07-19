@@ -368,6 +368,7 @@ def login():
     # Render page's template
     return render_template("user/login.html", form=login_form)
 
+
 @app.route("/user/login/twoFA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def twoFA():
