@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/css/user.css">
+<link rel="stylesheet" href="/static/css/adm_dashboard.css">
+{% endblock %}
+
+{% block content %}
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{% from "includes/_admin_sidebar.html" import admin_sidebar %}
+
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+"Dashboard": "#"
+}) }}
+
+{# Container to contain display for user related things #}
+<div class="container user-container">
+    <div class="row">
+        {# Render sidebar #}
+        {{ admin_sidebar("Dashboard") }}
+        <div class="col-lg-10 py-3 px-5">
+            <div class="row gx-3 gy-3">
+                <div class="col-sm">
+                    <div class="border">
+                        <div class="text-center">
+                            <i class="fas fa-users dashboard-icon"></i>
+                            <h1>{{ customer_count }}</h1>
+                            <p>Customers(s)</p>
+                        </div>
+                        <div class="dashboard-link d-flex justify-content-end px-3 py-3">
+                            <a href="{{ url_for('manage_accounts') }}" class="text-end btn defaultbtn">Manage Customers</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="border">
+                        <div class="text-center">
+                            <i class="fas fa-book-open dashboard-icon"></i>
+                            <h1>{{ book_count }}</h1>
+                            <p>Books(s)</p>
+                        </div>
+                        <div class="dashboard-link d-flex justify-content-end px-3 py-3">
+                            <a href="{{ url_for('inventory') }}" class="btn defaultbtn">Manage Books</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="border">
+                        <div class="text-center">
+                            <i class="fas fa-shopping-basket dashboard-icon"></i>
+                            <h1>{{ order_count }}</h1>
+                            <p>Orders(s)</p>
+                        </div>
+                        <div class="dashboard-link d-flex justify-content-end px-3 py-3">
+                            <a href="{{ url_for('manage_orders') }}" class="btn defaultbtn">Manage Orders</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/inventory.js"></script>
+{% endblock %}

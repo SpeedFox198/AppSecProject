@@ -227,6 +227,9 @@ def after_request(response):
 @app.route("/")
 @limiter.limit("10/second", override_defaults=False)
 def home():
+    if flask_global.user.is_admin:
+        abort(404)
+
     english_books_data = dbf.retrieve_books_by_language("English")
     chinese_books_data = dbf.retrieve_books_by_language("Chinese")
     english = [Book(*data) for data in english_books_data]
@@ -370,7 +373,10 @@ def login():
                 else:
                     # Create session to login
                     flask_global.user = user
-                    return redirect(url_for("home"))
+                    if flask_global.user.is_admin:
+                        return redirect(url_for("dashboard"))
+                    else:
+                        return redirect(url_for("home"))
 
     # Render page's template
     return render_template("user/login.html", form=login_form)
@@ -410,6 +416,7 @@ def twoFA():
 
 @app.route("/user/logout")
 @limiter.limit("10/second", override_defaults=False)
+@login_required()
 def logout():
     flask_global.user = None
     next_page = request.args.get("from", default="", type=str)
@@ -463,13 +470,12 @@ def password_forget():
 
 @app.route("/user/account/google_authenticator", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
+@login_required()
 def google_authenticator():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
+    if user.is_admin:
         abort(403)
 
     secret_token = get_cookie_value(request, "token")
@@ -493,13 +499,12 @@ def google_authenticator():
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
+@login_required()
 def google_authenticator_disable():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
+    if user.is_admin:
         abort(403)
 
     dbf.delete_2FA_token(user.user_id)
@@ -722,6 +727,17 @@ def account():
 
 """    Admin Pages    """
 
+
+@app.route("/admin/dashboard", methods=["GET"])
+@admin_check()
+def dashboard():
+    customers = dbf.number_of_customers()
+    orders = dbf.number_of_orders()
+    books = dbf.number_of_books()
+    return render_template("admin/admin_dashboard.html",
+                           customer_count=customers,
+                           order_count=orders,
+                           book_count=books)
 
 # Manage accounts page
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
