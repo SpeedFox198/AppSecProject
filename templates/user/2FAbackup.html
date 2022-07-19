@@ -15,6 +15,7 @@
                     {% endif %}
                 {% endwith %}
                 <form action="" method="POST" class="row g-3 ">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <h4 class="text-white">Setup 2FA</h4>
                     <div class="col-12 text-white">
                         <h6>Instructions:</h6>

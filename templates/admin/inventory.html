@@ -69,6 +69,7 @@
                 </button>
                 <button type="button" id="toggleModal_{{book.book_id}}" class="d-none" data-bs-toggle="modal" data-bs-target="#myModal_{{book.book_id}}"></button>
                 <form class="" action="{{url_for('delete_book', book_id=book.book_id)}}" method="POST">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                   <!-- The Modal -->
                   <div class="modal fade" id="myModal_{{book.book_id}}">
                     <div class="modal-dialog">

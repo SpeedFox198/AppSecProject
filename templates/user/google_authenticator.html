@@ -18,10 +18,11 @@
       <h5>1. Download Google Authenticator on your phone.</h5>
       <h5>2. Open The Application and press the bottom right button.</h5>
       <h5>3. Select setup key.</h5>
-      <h5>4. Copy this setup key {secret_token} and enter.</h5>
+      <h5>4. Copy this setup key {{secret_token}} and enter.</h5>
     </div>
     <div class="card-body">
       <form class="needs-validation" method="POST" action="" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         {# Flash login error message #}
         {% with messages = get_flashed_messages(category_filter=("form-error")) %}
           {% if messages %}

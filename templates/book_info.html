@@ -30,6 +30,7 @@
       <h4>$<span>{{ book.price }}</span></h4>
 
       <form method="POST" action="{{ url_for('add_to_cart') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="text" class="d-none" name="book_id" value="{{ book.book_id }}">
         <input type="number" class="quantity-selector" name="quantity" min="1" value="1">
         {# If user is not logged in, redirect to login #}

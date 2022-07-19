@@ -130,6 +130,7 @@
       </div>
       <div class="modal-body">
         <form class="needs-validation" method="POST" action="" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <div class="mb-4">
             {{ display_error_span("CreateUserUsernameError") }}
             {{ render_field(create_user_form.username, "Username should be 3-20 characters long", class="form-control", placeholder="Username") }}
@@ -195,6 +196,7 @@
 {# Delete User Modal #}
 <button type="button" class="d-none" id="deleteUserButton" data-bs-toggle="modal" data-bs-target="#deleteUser"></button>
 <form method="POST" action="" class="d-none">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
   {{ delete_user_form.user_id(id="deleteUserField")|safe }}
   <input type="reset" class="d-none" id="deleteUserReset"/>
   <input type="submit" value="SIGN UP" class="d-none" id="deleteUserSubmit"/>
