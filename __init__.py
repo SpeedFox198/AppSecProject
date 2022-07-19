@@ -35,7 +35,6 @@ from forms import (
 DEBUG = True  # Debug flag (True when debugging)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
-BANNED_CHARACTERS = ('{', '}', '<', '>', '(', ')', '&', '|', '$', '`', '!')  # For input whitelist
 
 app = Flask(__name__)
 csrf = CSRFProtect(app)
@@ -43,6 +42,7 @@ app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
 PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
+app.config['SECRET_KEY'] = os.environ.get("VERY_SECRET_KEY")
 
 limiter = Limiter(
     app,
@@ -861,6 +861,18 @@ def inventory():
     return render_template('admin/inventory.html', count=len(book_inventory), books_list=book_inventory)
 
 
+@app.route('/admin/book/<book_id>')
+@admin_check()
+def view_book(book_id):
+    book_data = dbf.retrieve_book(book_id)
+
+    if book_data is None:
+        abort(404)
+
+    book = Book(*book_data)
+    return render_template("admin/book_info_admin.html", book=book)
+
+
 def allowed_file(filename):
     # Return true if there is an extension in file, and its extension is in the allowed extensions
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -916,7 +928,7 @@ def add_book():
     return render_template('admin/add_book.html', form=add_book_form)
 
 
-@app.route('/update-book/<book_id>/', methods=['GET', 'POST'])
+@app.route('/admin/update-book/<book_id>/', methods=['GET', 'POST'])
 @admin_check()
 def update_book(book_id):
     # Get specified book
@@ -968,7 +980,7 @@ def update_book(book_id):
         return render_template('admin/update_book.html', form=update_book_form)
 
 
-@app.route('/delete-book/<book_id>/', methods=['POST'])
+@app.route('/admin/delete-book/<book_id>/', methods=['POST'])
 @admin_check()
 def delete_book(book_id):
     # Deletes book and its cover image
