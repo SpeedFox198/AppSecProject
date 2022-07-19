@@ -137,13 +137,17 @@ async function retrieveReviews() {
 }
 
 
-/* Main function */
-(async () => {
+/* Main functions */
+window.onload = () => {
     const redirectLoginButton = document.getElementById("redirectLoginButton");
-    redirectLoginButton.addEventListener("click", () => {
-        location.replace("/");
-    })
+    if (redirectLoginButton) {
+        redirectLoginButton.addEventListener("click", () => {
+            location.href = `/user/login?from=${encodeURIComponent(window.location.href)}`;
+        });
+    }
+}
 
+(async () => {
     const data = await retrieveReviews();
 
     if (data) {
