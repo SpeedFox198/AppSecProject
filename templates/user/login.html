@@ -19,9 +19,13 @@
     </div>
     <div class="card-body">
       <form id="loginForm" class="needs-validation" method="POST" action="" novalidate>
-        {# Login error message #}
+        {# Login failed message #}
         <div id="loginFailed" class="d-none flash-error alert p-2 mb-4" role="alert">
           Your account and/or password is incorrect, please try again
+        </div>
+        {# Login error message #}
+        <div id="loginError" class="d-none flash-error alert p-2 mb-4" role="alert">
+          An unexpected error has occurred, please try again later.
         </div>
         <div class="mb-4">
           {{ render_field(form.username, "Please enter your username/email", class="form-control", placeholder="Username / Email") }}
@@ -29,7 +33,7 @@
         <div class="mb-4">
           {{ render_field(form.password, "Please enter your password", class="form-control", placeholder="Password") }}
         </div>
-        <input type="submit" value="LOG IN" class="input-group btn"/>
+        <input id="loginSubmitButton" type="submit" value="LOG IN" class="input-group btn disabled"/>
       </form>
     </div>
     <div class="card-footer">

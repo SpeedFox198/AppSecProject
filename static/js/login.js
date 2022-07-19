@@ -23,10 +23,14 @@ async function post_login(username, password) {
 }
 
 const failMessage = document.getElementById("loginFailed");
+const errorMessage = document.getElementById("loginError");
+const loginButton = document.getElementById("loginSubmitButton");
 
 /* Login function */
 async function login(username, password) {
+    loginButton.classList.add("disabled");
     failMessage.classList.add("d-none");
+    errorMessage.classList.add("d-none");
     try {
         const {status} = await post_login(username, password);
         if (status) {
@@ -47,12 +51,27 @@ async function login(username, password) {
     }
     catch (err) {
         // Display login failed message
-        failMessage.classList.remove("d-none");
+        errorMessage.classList.remove("d-none");
         console.error(err);
     }
+    loginButton.classList.remove("disabled");
 }
 
 const form = document.getElementById("loginForm");
+
+function checkEntered() {
+    if (form.username.value && form.password.value) {
+        loginButton.classList.remove("disabled");
+    }
+    else {
+        loginButton.classList.add("disabled");
+    }
+}
+
+form.username.addEventListener("blur", checkEntered);
+form.username.addEventListener("input", checkEntered);
+form.password.addEventListener("blur", checkEntered);
+form.password.addEventListener("input", checkEntered);
 
 form.addEventListener("submit", event => {
     event.preventDefault();
