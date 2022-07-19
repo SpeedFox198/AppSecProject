@@ -97,29 +97,22 @@ def remove_cookies(cookies:list):
     flask_global.expired_cookies = expired_cookies
 
 
-def login_required(message=None):
+def login_required(func):
     """
     Put this in routes that user must be logged in to access with the @ sign
     For example:
-    @app.route('/user/account/")
-    @login_required()
+    @app.route('/user/account")
+    @login_required
     """
-    def decorator(func):
-        @wraps(func)
-        def decorated_function(*args, **kwargs):
-            """
-            Logged in check here
-            flash_message (str): Message to be flashed if user is not logged in 
-            """
-            if isinstance(flask_global.user, User):
-                return func(*args, **kwargs)
-            if message is None:
-                flash("You must log in to access this page")
-            elif message:
-                flash(message)
-            return redirect(url_for('login'))
-        return decorated_function
-    return decorator
+    @wraps(func)       
+    def decorated_function(*args, **kwargs):
+        """
+        Logged in check here
+        """
+        if isinstance(flask_global.user, User):
+            return func(*args, **kwargs)
+        return redirect(url_for('login'))
+    return decorated_function
 
 
 def admin_check(mode="regular"):
@@ -403,25 +396,12 @@ def twoFA():
         return render_template("user/2FA.html", form=OTPformat)
 
 
-""" Logout """
-
-
-@app.route("/user/logout")
-@limiter.limit("10/second", override_defaults=False)
-def logout():
-    flask_global.user = None
-    next_page = request.args.get("from", default="", type=str)
-    if next_page[:len(DOMAIN_NAME)] != DOMAIN_NAME:
-        next_page = url_for("home")
-    return redirect(next_page)
-
-
 """ Forgot password page """  ### TODO: work on this SpeedFox198
 
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def password_forget():
     # Create form
     forget_password_form = ForgetPasswordForm(request.form)
@@ -574,7 +554,7 @@ def password_reset(token):
 
 @app.route("/user/password/change", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def password_change():
     # Flask global error variable for css
     errors = flask_global.errors = {}
@@ -665,7 +645,7 @@ def verify_send():
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def account():
     # Get current user
     user: User = flask_global.user
@@ -1174,7 +1154,7 @@ def price_high_to_low(inventory_data):
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required("You need to be logged in to purchase items")
+@login_required
 def add_to_cart():
     # User is a Class
     user: User = flask_global.user
@@ -1237,7 +1217,7 @@ def add_to_cart():
 
 @app.route('/cart')
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def cart():
     # User is a Class
     user: User = flask_global.user
@@ -1264,7 +1244,7 @@ def cart():
 
 @app.route('/update-cart/<book_id>', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def update_cart(book_id):
     # User is a Class
     user: User = flask_global.user
@@ -1301,7 +1281,7 @@ def update_cart(book_id):
 
 @app.route("/delete-buying-cart/<book_id>", methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def delete_buying_cart(book_id):
     user: User = flask_global.user
     # Get User ID
@@ -1317,7 +1297,7 @@ def delete_buying_cart(book_id):
 
 @app.route("/my-orders")
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def my_orders():
     # User is a Class
     user: User = flask_global.user
@@ -1390,7 +1370,7 @@ def about():
 """ API Routes"""
 
 
-@app.route("/api/login", methods=["POST"])
+@app.route("/api/user/login", methods=["POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(LOGIN_SCHEMA)
 def api_login():
@@ -1403,6 +1383,13 @@ def api_login():
     flask_global.user = User(*user_data)
 
     return jsonify(status=0)        # Status 0 is success
+
+
+@app.route("/api/user/logout", methods=["POST"])
+@limiter.limit("10/second", override_defaults=False)
+def logout():
+    flask_global.user = None
+    return jsonify(status=0)  # Status 0 is success
 
 
 @app.route("/api/books/all", methods=["GET"])
