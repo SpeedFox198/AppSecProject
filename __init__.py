@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from db_fetch.customer import create_OTP
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
-from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
+from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -30,6 +30,8 @@ from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm, CreateReviewText
 )
+
+import stripe
 
 # CONSTANTS
 # TODO @everyone: set to False when deploying
@@ -54,6 +56,9 @@ limiter = Limiter(
 )
 
 url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+
+# testing mode
+stripe.api_key = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -1285,16 +1290,6 @@ def delete_buying_cart(book_id):
     return redirect(url_for('cart'))
 
 
-"""    Order Pages    """
-
-
-@app.route("/checkout", methods=['GET', 'POST'])
-@login_required()
-def checkout():
-    """ Checkout backend code here"""
-    return render_template("checkout.html")
-
-
 """ Customer Orders Page """
 
 
@@ -1302,6 +1297,12 @@ def checkout():
 @limiter.limit("10/second", override_defaults=False)
 @login_required()
 def my_orders():
+    new_order = []
+    confirm_order = []
+    ship_order = []
+    deliver_order = []
+    canceled_order = []
+
     # User is a Class
     user: User = flask_global.user
 
@@ -1310,39 +1311,24 @@ def my_orders():
 
     user_id = user.user_id
 
-    # Get orders
+    # Get order details as a list of tuples(order_id, book_id, shipping option, order pending)
+    order_details = [Order(*item) for item in dbf.get_order_details(user_id)]
+
+    for orders in order_details:
+        if orders.order_pending == "Ordered":
+            new_order.append(orders)
+        elif orders.order_pending == "Confirmed":
+            confirm_order.append(orders)
+        elif orders.order_pending == "Shipped":
+            ship_order.append(orders)
+        elif orders.order_pending == "Delivered":
+            deliver_order.append(orders)
+        elif orders.order_pending == "Cancelled":
+            canceled_order.append(orders)
+
 
     return render_template('my-orders.html')
-# def my_orders():
-#     db_order = []
-#     new_order = []
-#     confirm_order = []
-#     ship_order = []
-#     deliver_order = []
-#     canceled_order = []
-#     books_dict = {}
-#     try:
-#         db = shelve.open('database')
-#         books_dict = db['Books']
-#         db_order = db['Order']
-#         print(db_order, "orders in database")
-#         db.close()
-#     except:
-#         print("There might not have any orders as of now.")
-#     for order in db_order:
-#         print(order.get_name(), order.get_rent_item())
-#         if order.get_order_status() == 'Ordered':
-#             new_order.append(order)
-#         elif order.get_order_status() == 'Confirmed':
-#             confirm_order.append(order)
-#         elif order.get_order_status() == 'Shipped':
-#             ship_order.append(order)
-#         elif order.get_order_status() == 'Delivered':
-#             deliver_order.append(order)
-#         elif order.get_order_status() == 'Canceled':
-#             canceled_order.append(order)
-#         else:
-#             print(order, "Wrong order status")
+
 
 #     # display from most recent to the least
 #     db_order = list(reversed(db_order))
@@ -1357,6 +1343,176 @@ def my_orders():
 #                            confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
 #                            canceled_order=canceled_order, \
 #                            books_dict=books_dict)
+
+""" Checkout Pages """
+
+
+@app.route('/checkout', methods=['GET', 'POST'])
+@limiter.limit("10/second", override_defaults=False)
+@login_required()
+def checkout():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.is_admin:
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity) for items, quantity in dbf.get_shopping_cart(user_id)]
+    buy_count = len(cart_items)
+
+    # Get total price
+    total_price = 0
+    for book, quantity in cart_items:
+        total_price += book.price * quantity
+    total_price = total_price.float()
+    
+    if request.method == 'POST':
+        Orderform = OrderForm.OrderForm(request.form)
+
+    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items)
+
+
+# Create Check out session with Stripe
+@app.route('/create-checkout-session', methods=['GET', 'POST'])
+@limiter.limit("10/second", override_defaults=False)
+@login_required()
+def create_checkout_session():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.is_admin:
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity) for items, quantity in dbf.get_shopping_cart(user_id)]
+    buy_count = len(cart_items)
+
+    # Get total price
+    total_price = 0
+    for book, quantity in cart_items:
+        total_price += book.price * quantity
+
+    ship_method = request.form['ship-method']
+    print("creating checkout session...")
+
+    Orderform = OrderForm.OrderForm(request.form)
+
+    if request.method == 'POST' and Orderform.validate():
+        if ship_method == 'Standard Delivery':  # Standard Delivery
+            total_price += 5
+
+        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data, str(Orderform.contact_num.data),
+                                           Orderform.address.data, ship_method, user_cart, total_price)
+
+        total_price *= 100
+        total_price = int(total_price)
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'sgd',
+                        'product_data': {
+                            'name': 'Books',
+                        },
+                        'unit_amount': total_price,
+                    },
+                    'quantity': 1,
+                },
+            ],
+            payment_method_types=['card'],
+            mode='payment',
+            success_url='http://127.0.0.1:5000/orderconfirm',
+            cancel_url=request.referrer,
+        )
+
+        return redirect(checkout_session.url)
+    else:
+        flash(list(Orderform.errors.values())[0][0], 'warning')
+        return redirect(request.referrer)
+
+    return render_template('checkout.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items,
+                           stripe_public_key=stripe_public_key)
+
+    
+
+#
+# show confirmation page upon successful payment
+#
+
+
+@app.route("/orderconfirm")
+def orderconfirm():
+    user_id = get_user().get_user_id()
+    db_order = []
+    books_dict = {}
+    db = shelve.open('database')
+    cart_dict = db['Cart']
+    db_pending = db['Pending_Order']
+    books_dict = db['Books']
+    # in case user hand itchy go and reload the page, bring them back to home page
+    try:
+        new_order = db_pending[user_id]
+        cartvalue = cart_dict[user_id]
+
+        try:
+            db_order = db['Order']
+        except:
+            print("Error while loading data from database")
+            # return redirect(url_for("home"))
+
+        db_order.append(new_order)
+
+        print("cartvalue:", cartvalue)
+        try:
+            cartbuy = cartvalue[0]
+            print("cartbuy:", cartbuy)
+        except:
+            pass
+        if cartbuy != "":
+            for i in books_dict:
+                for x, y in zip(list(cartbuy.keys()), list(cartbuy.values())):
+                    if i == x:
+                        book = books_dict.get(i)
+                        print("qty b4", book.get_qty())
+                        newqty = int(book.get_qty()) - int(y)
+                        book.set_qty(newqty)
+                        print("qty aft", book.get_qty())
+
+        try:
+            cartrent = cartvalue[1]
+            print("cartrent:", cartrent)
+            if cartrent != "":
+                for i in books_dict:
+                    for x in cartrent:
+                        if i == x:
+                            book = books_dict.get(i)
+                            print("rent qty b4:", book.get_rented())
+                            newrented = int(book.get_rented()) + int(1)
+                            book.set_rented(newrented)
+                            print("rent qty aft:", book.get_rented())
+
+        except:
+            pass
+
+        del cart_dict[user_id]
+        del db_pending[user_id]
+        db['Books'] = books_dict
+        db['Pending_Order'] = db_pending
+        db['Order'] = db_order
+        db['Cart'] = cart_dict
+        print(db_pending, 'should not have pending order as user already check out')
+        print(cart_dict, 'updated database[cart]')
+        print(db_order, 'updated databas[order]')
+    except KeyError:
+        return redirect(url_for("home"))
+
+    db.close()
+    return render_template("order_confirmation.html")
 
 
 """    Miscellaneous Pages    """
