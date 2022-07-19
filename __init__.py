@@ -1177,17 +1177,7 @@ def add_to_cart():
 
     # Getting book_id and quantity to add
     book_id = request.form['book_id']
-    buying_quantity = request.form['quantity']
-
-    # Check if quantity entered is valid
-    try:
-        buying_quantity = int(buying_quantity)
-    except:
-        abort(400)  # Bad Request
-
-    # Ensure quantity is within correct range
-    if buying_quantity < 0 or buying_quantity > 10000:
-        abort(400)  # Bad Request
+    buying_quantity = int(request.form['quantity'])
 
     book_data = dbf.retrieve_book(book_id)
 
@@ -1197,12 +1187,20 @@ def add_to_cart():
 
     book = Book(*book_data)
 
-    # if book_id is found
-    # Checking if book_id is already in cart
-    cart_item = dbf.get_cart_item(user_id, book_id)
+    # Check if quantity entered is valid
+    if buying_quantity is None:
+        raise TypeError("Must have buying quantity")
 
     # stock left inside (basically customer can't buy more than this)
     max_quantity = book.stock
+
+    # Ensure quantity is within correct range
+    if buying_quantity < 0 or buying_quantity > max_quantity:
+        abort(400)  # Bad Request
+
+    # if book_id is found
+    # Checking if book_id is already in cart
+    cart_item = dbf.get_cart_item(user_id, book_id)
 
     # If book is not in customer's cart
     if cart_item is None:
@@ -1271,20 +1269,6 @@ def update_cart(book_id):
         print('Update book quantity: ', str(book_quantity))
 
     return redirect(url_for('cart'))
-    # cart_dict = cart_db['Cart']
-    # buy_cart = cart_dict[user_id][0]
-    # book_quantity = int(request.form['quantity'])
-    # if book_quantity == 0:
-    #     print('Oh no need to delete')
-    #     delete_buying_cart(id)
-    # else:
-    #     buy_cart[id] = book_quantity
-    #     print(buy_cart)
-    #     cart_dict[user_id][0] = buy_cart
-    #     cart_db['Cart'] = cart_dict
-    #     print(cart_dict, 'updated database')
-    #     cart_db.close()
-    # return redirect(request.referrer)
 
 
 """ Delete Cart """
@@ -1302,6 +1286,14 @@ def delete_buying_cart(book_id):
 
 
 """    Order Pages    """
+
+
+@app.route("/checkout", methods=['GET', 'POST'])
+@login_required()
+def checkout():
+    """ Checkout backend code here"""
+    return render_template("checkout.html")
+
 
 """ Customer Orders Page """
 
