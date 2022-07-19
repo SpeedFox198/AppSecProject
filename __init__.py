@@ -1270,7 +1270,7 @@ def delete_buying_cart(book_id):
 
 
 @app.route("/checkout", methods=['GET', 'POST'])
-@login_required()
+@login_required
 def checkout():
     """ Checkout backend code here"""
     return render_template("checkout.html")
