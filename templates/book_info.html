@@ -32,7 +32,12 @@
       <form method="POST" action="{{ url_for('add_to_cart') }}">
         <input type="text" class="d-none" name="book_id" value="{{ book.book_id }}">
         <input type="number" class="quantity-selector" name="quantity" min="1" value="1">
+        {# If user is not logged in, redirect to login #}
+        {% if g.user is not none %}
         <input type="submit" class="btn add-cart-button" value="ADD TO CART">
+        {% else %}
+        <button type="button" id="redirectLoginButton" class="btn add-cart-button">ADD TO CART</button>
+        {% endif %}
       </form>
 
       <h5>Description</h5>

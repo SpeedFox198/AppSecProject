@@ -139,6 +139,11 @@ async function retrieveReviews() {
 
 /* Main function */
 (async () => {
+    const redirectLoginButton = document.getElementById("redirectLoginButton");
+    redirectLoginButton.addEventListener("click", () => {
+        location.replace("/");
+    })
+
     const data = await retrieveReviews();
 
     if (data) {

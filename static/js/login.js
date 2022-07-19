@@ -1,5 +1,5 @@
 // Get domain name
-import {DOMAIN_NAME} from "./domain_name.js"
+import {DOMAIN_NAME} from "./package.js"
 
 /* retrieve get parameter value */
 function retrieveGetValue(paramName) {
