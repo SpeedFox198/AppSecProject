@@ -8,16 +8,8 @@ con = sqlite3.connect("database.db")
 
 #cur = con.cursor()
 
-#cur.execute("""CREATE TABLE Users (
-#    user_id TEXT NOT NULL,
-#    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-#    email TEXT NOT NULL UNIQUE,
-#    password TEXT NOT NULL,
-#    profile_pic TEXT,
-#    is_admin INTEGER NOT NULL,
-#    twoFA_secret_token TEXT,
-#    PRIMARY KEY (user_id)
-#);""")
+#cur.execute("""
+#""")
 # con.commit()
 
 # x = cur.execute("SELECT * FROM Customers;").fetchall()

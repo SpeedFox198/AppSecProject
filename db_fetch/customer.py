@@ -15,26 +15,21 @@ def create_customer(user_id, username, email, password) -> None:
     """ Creates a new customer account in the database """
 
     # Insert user data into Users table
-    insert_row("Users", (user_id, username, email, password, None, 0, 0))
-
+    insert_row("Users", (user_id, username, email, password, None, 0))
     # Insert customer details into Customers table
     insert_row("Customers", (user_id,), ("user_id",))
 
 def create_2FA_token(user_id, twoFA_secret_token) -> None:
     """ Creates 2FA token for user_id """
-    update_rows("Users", ("twoFA_secret_token",), (twoFA_secret_token,), user_id=user_id)
+    insert_row("twoFA", (user_id, twoFA_secret_token))
 
 def retrieve_2FA_token(user_id: str) -> Union[tuple, None]:
     """ Retrieves 2FA token for user_id """
-    return retrieve_db("Users", user_id=user_id, fetchone=True)
+    return retrieve_db("twoFA", user_id=user_id, fetchone=True)
 
 def delete_2FA_token(user_id: str) -> None:
     """ Deletes only the 2FA token from the Users database """
-    update_rows("Users", ("twoFA_secret_token",), (None,), user_id=user_id)
-
-
-
-
+    delete_rows("twoFA", user_id=user_id)
 
 def create_OTP(user_id, OTP) -> None:
     """ Creates a new OTP for user_id """

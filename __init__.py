@@ -13,17 +13,18 @@ import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
 from math import ceil
+from itsdangerous import URLSafeTimedSerializer, BadData
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
 from csp import CSP
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from sanitize import sanitize
-import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
 from functools import wraps
 from flask_wtf import CSRFProtect
 import pyotp
+import datetime
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
@@ -310,7 +311,7 @@ def OTPverification():
             dbf.create_customer(user_id, username, email, password)
 
             # Create new user session to login (placeholder values were used to create user object)
-            flask_global.user = User(user_id, "", "", "", "", 0, 0)
+            flask_global.user = User(user_id, "", "", "", "", 0)
 
             # Return redirect with session cookie
             remove_cookies(["username", "email", "password", "OTP"])
@@ -359,6 +360,7 @@ def login():
 
                 # Check if user enabled 2FA
                 enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
+                print(enable_2FA)
                 if enable_2FA:
                     add_cookie({"user_data": user_data, "user_id": user.user_id})
                     return redirect(url_for("twoFA"))
@@ -370,18 +372,18 @@ def login():
     # Render page's template
     return render_template("user/login.html", form=login_form)
 
-@app.route("/user/login/2FA", methods=["GET", "POST"])
+@app.route("/user/login/twoFA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def twoFA():
     user_id = get_cookie_value(request, "user_id")
     user_data = get_cookie_value(request, "user_data")
-    twoFA_code = dbf.retrieve_2FA_token(user_id[6])
+    twoFA_code = dbf.retrieve_2FA_token(user_id)
 
     OTPformat = OTPForm(request.form)
     print(request.method)
     if request.method == "POST":
         twoFAinput = OTPformat.otp.data
-        twoFAchecker = pyotp.TOTP(twoFA_code).verify(twoFAinput)
+        twoFAchecker = pyotp.TOTP(twoFA_code[1]).verify(twoFAinput)
         try:
             if twoFAchecker:
                 # Get user object
@@ -433,10 +435,7 @@ def password_forget():
             # Get email
             email = forget_password_form.email.data.lower()
 
-            with shelve.open("database") as db:
-                email_to_user_id = retrieve_db("EmailToUserID", db)
-
-            if email in email_to_user_id:
+            if dbf.email_exists(email):
                 # Generate token
                 token = url_serialiser.dumps(email, salt=app.config["PASSWORD_FORGET_SALT"])
 
@@ -478,8 +477,7 @@ def google_authenticator():
         verified = pyotp.TOTP(secret_token).verify(OTP_check)
         if verified:
             flash("2FA setup Complete")
-            dbf.create_2FA_token(user.user_id[6], secret_token)
-            print(dbf.retrieve_2FA_token(user.user_id[6]))
+            dbf.create_2FA_token(user.user_id, secret_token)
             remove_cookies(["token"])
             return redirect(url_for("account"))
         else:
@@ -499,7 +497,7 @@ def google_authenticator_disable():
     elif user.is_admin:
         abort(403)
 
-    dbf.delete_2FA_token(user.user_id[6])
+    dbf.delete_2FA_token(user.user_id)
     flash("2FA has been disabled")
     return redirect(url_for("account"))
 
@@ -717,7 +715,7 @@ def account():
     # Set username and gender to display
     account_page_form.name.data = user.name
     account_page_form.phone_number.data = user.phone_no
-    twoFA_enabled = bool(dbf.retrieve_2FA_token(user.user_id[6]))
+    twoFA_enabled = bool(dbf.retrieve_2FA_token(user.user_id))
     print(twoFA_enabled)
     return render_template("user/account.html",
                            form=account_page_form,
