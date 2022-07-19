@@ -68,7 +68,8 @@
               <a href="{{ url_for('account') }}">Account</a>
               <a href="{{ url_for('my_orders') }}">Orders</a>
               {% endif %}
-              <a class="login-link" href="{{ url_for('logout') }}">Logout</a>
+              <div id="csrf_token" class="d-none">{{ csrf_token() }}</div>
+              <button type="button" id="logoutButton">Logout</a>
             {% else %}
               <a class="login-link" href="{{ url_for('login') }}">Login</a>
               <a href="{{ url_for('sign_up') }}">Sign Up</a>
@@ -149,4 +150,4 @@
 </nav>
 
 {# Loads login link #}
-<script src="/static/js/navbar_login.js"></script>
+<script type="module" src="/static/js/navbar_login.js"></script>

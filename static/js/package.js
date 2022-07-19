@@ -1,5 +1,6 @@
 // Our Domain Name ٩(๑`^´๑)۶
 export const DOMAIN_NAME = "https://localhost:5000/"
+export const LOGOUT_ALLOWED_ROUTES = "/book"
 
 /* retrieve get parameter value */
 export function retrieveGetValue(paramName) {

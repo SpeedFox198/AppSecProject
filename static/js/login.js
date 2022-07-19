@@ -7,7 +7,7 @@ const form = document.getElementById("loginForm");
 
 /* Post credentials to API */
 async function post_login(username, password, csrf_token) {
-    const url = "/api/login";
+    const url = "/api/user/login";
     const response = await fetch(url, {
         "method": "POST",
         "headers": {
