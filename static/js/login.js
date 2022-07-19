@@ -15,13 +15,14 @@ function retrieveGetValue(paramName) {
 }
 
 /* Post credentials to API */
-async function post_login(username, password) {
+async function post_login(username, password, csrf_token) {
     const url = "/api/login";
     const response = await fetch(url, {
         "method": "POST",
         "headers": {
             "Accept": "application.json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": csrf_token
         },
         "body": JSON.stringify({
             "username": username,
@@ -39,10 +40,10 @@ async function post_login(username, password) {
 const failMessage = document.getElementById("loginFailed");
 
 /* Login function */
-async function login(username, password) {
+async function login(username, password, csrf_token) {
     failMessage.classList.add("d-none");
     try {
-        const {status} = await post_login(username, password);
+        const {status} = await post_login(username, password, csrf_token);
         if (status) {
             // Display login failed message
             failMessage.classList.remove("d-none");
@@ -72,6 +73,6 @@ form.addEventListener("submit", event => {
     event.preventDefault();
     event.stopPropagation();
     if (form.checkValidity()) {
-        login(form.username.value, form.password.value);
+        login(form.username.value, form.password.value, form.csrf_token.value);
     }
 });

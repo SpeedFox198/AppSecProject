@@ -22,6 +22,7 @@ import time
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
 from functools import wraps
+from flask_wtf import CSRFProtect
 import pyotp
 
 from forms import (
@@ -37,6 +38,7 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 BANNED_CHARACTERS = ('{', '}', '<', '>', '(', ')', '&', '|', '$', '`', '!')  # For input whitelist
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder

@@ -26,6 +26,7 @@
       <h2>Account settings</h2>
       <hr>
       <form method="POST" enctype="multipart/form-data" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="mb-3 row">
           <label for="picture" class="col-md-2 col-form-label text-md-end mt-auto">Picture</label>
           <div class="col-md-10">

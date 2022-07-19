@@ -18,6 +18,7 @@
     </div>
     <div class="card-body">
       <form class="needs-validation" method="POST" action="" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         {# Flash login error message #}
         {% with messages = get_flashed_messages(category_filter=("form-error")) %}
           {% if messages %}
