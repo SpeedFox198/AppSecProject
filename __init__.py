@@ -34,6 +34,7 @@ from forms import (
 # CONSTANTS
 # TODO @everyone: set to False when deploying
 DEBUG = True  # Debug flag (True when debugging)
+TOKEN_MAX_AGE = 900     # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 
@@ -51,6 +52,7 @@ limiter = Limiter(
     default_limits=["30 per second"]
 )
 
+url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -508,11 +510,12 @@ def google_authenticator_disable():
 @limiter.limit("10/second", override_defaults=False)
 def password_reset(token):
     # Get user
-    guest = get_user()
 
     # Only Guest will forget password
-    if session["UserType"] != "Guest":
-        return redirect(url_for("home"))
+    user: User = flask_global.user
+
+    if isinstance(user, User):
+        return redirect(url_for("account"))
 
     # Get email from token
     try:
@@ -521,47 +524,35 @@ def password_reset(token):
         if DEBUG: print("Invalid Token:", repr(err))  # print captured error (for debugging)
         return redirect(url_for("invalid_link"))
 
-    with shelve.open("database") as db:
-        email_to_user_id = retrieve_db("EmailToUserID", db)
-        customers_db = retrieve_db("Customers", db)
-        guests_db = retrieve_db("Guests", db)
+    # Get user
+    try:
+        user_check = dbf.retrieve_customer_details[dbf.email_exists[email]]
+    except KeyError:
+        if DEBUG: print("No user with email:", email)  # Account was deleted
+        return redirect(url_for("invalid_link"))
 
-        # Get user
-        try:
-            customer = customers_db[email_to_user_id[email]]
-        except KeyError:
-            if DEBUG: print("No user with email:", email)  # Account was deleted
-            return redirect(url_for("invalid_link"))
+    # Render form
+    reset_password_form = ResetPasswordForm(request.form)
+    if request.method == "POST":
+        if not reset_password_form.validate():
+            session["DisplayFieldError"] = True
+        else:
+            # Extract password
+            new_password = reset_password_form.new_password.data
 
-        # Render form
-        reset_password_form = ResetPasswordForm(request.form)
-        if request.method == "POST":
-            if not reset_password_form.validate():
-                session["DisplayFieldError"] = True
-            else:
-                # Extract password
-                new_password = reset_password_form.new_password.data
+            # Reset Password
+            user_check.set_password(new_password)
+            if DEBUG: print(f"Reset password for: {user_check}")
 
-                # Reset Password
-                customer.set_password(new_password)
-                if DEBUG: print(f"Reset password for: {customer}")
+            # Get user object
+            user = User(*dbf.user_auth(user_check.email, new_password))
 
-                # Delete guest account
-                guests_db.remove(guest.get_user_id())
-                if DEBUG: print(f"Deleted: {guest}")
+            # Create session to login
+            flask_global.user = user
 
-                # Log in customer
-                session["UserID"] = customer.get_user_id()
-                session["UserType"] = "Customer"
-                if DEBUG: print(f"Logged in: {customer}")
-
-                # Safe changes to database
-                db["Customers"] = customers_db
-                db["Guests"] = guests_db
-
-                # Flash message and redirect to account page
-                flash("Password has been successfully set")
-                return redirect(url_for("account"))
+            # Flash message and redirect to account page
+            flash("Password has been successfully set")
+            return redirect(url_for("account"))
 
     return render_template("user/password/password_reset.html", form=reset_password_form, email=email)
 
