@@ -373,7 +373,7 @@ def login():
 def twoFA():
     user_id = get_cookie_value(request, "user_id")
     user_data = get_cookie_value(request, "user_data")
-    twoFA_code = dbf.retrieve_2FA_token(user_id)
+    twoFA_code = dbf.retrieve_2FA_token(user_id[6])
 
     OTPformat = OTPForm(request.form)
     print(request.method)
@@ -455,7 +455,7 @@ def password_forget():
 
 #In case maybe google authenticator
 
-@app.route("/user/account/google_authenticator_enable", methods=["GET", "POST"])
+@app.route("/user/account/google_authenticator", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def google_authenticator():
     # User is a Class
@@ -476,14 +476,15 @@ def google_authenticator():
         verified = pyotp.TOTP(secret_token).verify(OTP_check)
         if verified:
             flash("2FA setup Complete")
-            dbf.create_2FA(user.user_id, secret_token)
+            dbf.create_2FA_token(user.user_id[6], secret_token)
+            print(dbf.retrieve_2FA_token(user.user_id[6]))
             remove_cookies(["token"])
             return redirect(url_for("account"))
         else:
             flash("Invalid OTP Entered! Please try again!")
             return redirect(url_for("google_authenticator"))
     else:
-        return render_template("user/account/twoFA_setup.html", form=OTP_Test, secret_token = secret_token)
+        return render_template("user/google_authenticator.html", form=OTP_Test, secret_token = secret_token)
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -496,7 +497,7 @@ def google_authenticator_disable():
     elif user.is_admin:
         abort(403)
 
-    dbf.delete_2FA_token(user.user_id)
+    dbf.delete_2FA_token(user.user_id[6])
     flash("2FA has been disabled")
     return redirect(url_for("account"))
 
@@ -714,7 +715,7 @@ def account():
     # Set username and gender to display
     account_page_form.name.data = user.name
     account_page_form.phone_number.data = user.phone_no
-    twoFA_enabled = bool(dbf.retrieve_2FA_token(user.user_id))
+    twoFA_enabled = bool(dbf.retrieve_2FA_token(user.user_id[6]))
     print(twoFA_enabled)
     return render_template("user/account.html",
                            form=account_page_form,

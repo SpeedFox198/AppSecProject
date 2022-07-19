@@ -22,15 +22,15 @@ def create_customer(user_id, username, email, password) -> None:
 
 def create_2FA_token(user_id, twoFA_secret_token) -> None:
     """ Creates 2FA token for user_id """
-    insert_row("2FA", (user_id, twoFA_secret_token))
+    update_rows("Users", ("twoFA_secret_token",), (twoFA_secret_token,), user_id=user_id)
 
 def retrieve_2FA_token(user_id: str) -> Union[tuple, None]:
     """ Retrieves 2FA token for user_id """
-    return retrieve_db("2FA", user_id=user_id, fetchone=True)
+    return retrieve_db("Users", user_id=user_id, fetchone=True)
 
 def delete_2FA_token(user_id: str) -> None:
-    """ Deletes and returns 2FA token from database """
-    delete_rows("2FA", user_id=user_id)
+    """ Deletes only the 2FA token from the Users database """
+    update_rows("Users", ("twoFA_secret_token",), (None,), user_id=user_id)
 
 
 
