@@ -194,7 +194,7 @@ def after_request(response):
     # Only renew session if login
     if isinstance(user, User):
         renewed_user_session = create_user_session(user.user_id, user.is_admin)
-        response.set_cookie(USER_SESSION_NAME, renewed_user_session, httponly=True)
+        response.set_cookie(USER_SESSION_NAME, renewed_user_session, httponly=True, secure=True)
 
     # Default log user out
     else:
@@ -203,11 +203,11 @@ def after_request(response):
 
     # Delete expired cookies
     for delete_this in expired_cookies:
-        response.set_cookie(delete_this, "", expires=0, httponly=True)
+        response.set_cookie(delete_this, "", expires=0, httponly=True, secure=True)
 
     # Set new cookies
     for name, value in new_cookies.items():
-        response.set_cookie(name, create_session(value), httponly=True)
+        response.set_cookie(name, create_session(value), httponly=True, secure=True)
 
     # Set CSP to prevent XSS
     response.headers["Content-Security-Policy"] = CSP
