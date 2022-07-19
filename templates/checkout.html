@@ -3,10 +3,7 @@
 {% block title %}BrasBasahBooks Check Out{% endblock %}
 
 {% block stylesheets %}
-
-
 <link rel="stylesheet" href="/static/css/checkout.css">
-
 {% endblock %}
 
 {% block content %}
@@ -18,7 +15,6 @@
         <h3>Shipping Information</h3>
         <form method="POST" class="row checkout-form" id="checkout" action="/create-checkout-session/{{ total_price }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-
             <h5>Shipping Address</h5>
             <div class="form-group col-12">
                 {{ render_field(form.name, class="form-control") }}
@@ -43,7 +39,7 @@
       <table>
         <thead>
           <tr>
-              <th colspan="4"><h5>In Your Cart <span>({{ (buy_count)+(rent_count) }})</span>  <a href="" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit Cart</a></h5></th>
+              <th colspan="4"><h5>In Your Cart <span>({{ buy_count }})</span>  <a href="" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit Cart</a></h5></th>
           </tr>
         </thead>
         <tbody>
@@ -57,18 +53,6 @@
                 <td style="text-align:left;">{{ books_dict[key].title }}</td>
                 <td>X{{ buy_cart[key] }}</td>
                 <td>${{ "%.2f"|format(books_dict[key].price|float) }}</td>
-            {% endfor %}
-        {% endif %}
-        {% if rent_count != 0 %}
-            <tr class="label">
-                <td colspan="4"><h6>Rent</h6></td>
-            </tr>
-            {% for book in rent_cart %}
-            <tr class="products">
-                <td><img src="{{ books_dict[book].cover_img }}"></td>
-                <td colspan="2" style="text-align:left;">{{ books_dict[book].title }}</td>
-                <td>{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</td>
-            </tr>
             {% endfor %}
         {% endif %}
           <tr class="bottom-sticky">
@@ -125,32 +109,6 @@
                 {% endfor %}
                   </tbody>
               </table>
-          {% endif %}
-          {% if rent_count != 0 %}
-          <p class="cart-label">For renting</p>
-          <div class="renting-cart">
-              <table class="table table-striped">
-                <tbody>
-                {% for book in rent_cart %}
-                    <tr>
-                        <td rowspan="col-3"><img src="{{ books_dict[book].cover_img }}" alt="book cover"></td>
-                        <td class="col-5">
-                            <h4 class="d-none d-lg-block">{{ books_dict[book].title }}</h4>
-                            <p class="d-block d-lg-none">{{ books_dict[book].title }}</p>#{{ book }}
-                        </td>
-                        <td class="col-4">
-                            <h5 class="d-none d-lg-block">{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</h5>
-                            <p class="d-block d-lg-none">{{ "$%.2f"|format((books_dict[book].price|float)*0.1) }}</p>
-                        </td>
-                        <form method="POST" action="/delete_renting_cart/{{ book }}">
-                            <td class="col-1"><button type="submit" onclick="delete_renting_cart()" name="button" style="float:right;" class="btn"><i class="fas fa-times"></i></button></td>
-                        </form>
-                    </tr>
-                {% endfor %}
-                </tbody>
-              </table>
-
-          </div>
           {% endif %}
           </div>
         </div>

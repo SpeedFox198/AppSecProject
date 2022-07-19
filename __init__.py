@@ -34,6 +34,7 @@ from forms import (
 # CONSTANTS
 # TODO @everyone: set to False when deploying
 DEBUG = True  # Debug flag (True when debugging)
+TOKEN_MAX_AGE = 900     # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 DOMAIN_NAME = "https://localhost:5000/"
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
@@ -52,6 +53,7 @@ limiter = Limiter(
     default_limits=["30 per second"]
 )
 
+url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -491,11 +493,12 @@ def google_authenticator_disable():
 @limiter.limit("10/second", override_defaults=False)
 def password_reset(token):
     # Get user
-    guest = get_user()
 
     # Only Guest will forget password
-    if session["UserType"] != "Guest":
-        return redirect(url_for("home"))
+    user: User = flask_global.user
+
+    if isinstance(user, User):
+        return redirect(url_for("account"))
 
     # Get email from token
     try:
@@ -504,47 +507,35 @@ def password_reset(token):
         if DEBUG: print("Invalid Token:", repr(err))  # print captured error (for debugging)
         return redirect(url_for("invalid_link"))
 
-    with shelve.open("database") as db:
-        email_to_user_id = retrieve_db("EmailToUserID", db)
-        customers_db = retrieve_db("Customers", db)
-        guests_db = retrieve_db("Guests", db)
+    # Get user
+    try:
+        user_check = dbf.retrieve_customer_details[dbf.email_exists[email]]
+    except KeyError:
+        if DEBUG: print("No user with email:", email)  # Account was deleted
+        return redirect(url_for("invalid_link"))
 
-        # Get user
-        try:
-            customer = customers_db[email_to_user_id[email]]
-        except KeyError:
-            if DEBUG: print("No user with email:", email)  # Account was deleted
-            return redirect(url_for("invalid_link"))
+    # Render form
+    reset_password_form = ResetPasswordForm(request.form)
+    if request.method == "POST":
+        if not reset_password_form.validate():
+            session["DisplayFieldError"] = True
+        else:
+            # Extract password
+            new_password = reset_password_form.new_password.data
 
-        # Render form
-        reset_password_form = ResetPasswordForm(request.form)
-        if request.method == "POST":
-            if not reset_password_form.validate():
-                session["DisplayFieldError"] = True
-            else:
-                # Extract password
-                new_password = reset_password_form.new_password.data
+            # Reset Password
+            user_check.set_password(new_password)
+            if DEBUG: print(f"Reset password for: {user_check}")
 
-                # Reset Password
-                customer.set_password(new_password)
-                if DEBUG: print(f"Reset password for: {customer}")
+            # Get user object
+            user = User(*dbf.user_auth(user_check.email, new_password))
 
-                # Delete guest account
-                guests_db.remove(guest.get_user_id())
-                if DEBUG: print(f"Deleted: {guest}")
+            # Create session to login
+            flask_global.user = user
 
-                # Log in customer
-                session["UserID"] = customer.get_user_id()
-                session["UserType"] = "Customer"
-                if DEBUG: print(f"Logged in: {customer}")
-
-                # Safe changes to database
-                db["Customers"] = customers_db
-                db["Guests"] = guests_db
-
-                # Flash message and redirect to account page
-                flash("Password has been successfully set")
-                return redirect(url_for("account"))
+            # Flash message and redirect to account page
+            flash("Password has been successfully set")
+            return redirect(url_for("account"))
 
     return render_template("user/password/password_reset.html", form=reset_password_form, email=email)
 
@@ -1166,17 +1157,7 @@ def add_to_cart():
 
     # Getting book_id and quantity to add
     book_id = request.form['book_id']
-    buying_quantity = request.form['quantity']
-
-    # Check if quantity entered is valid
-    try:
-        buying_quantity = int(buying_quantity)
-    except:
-        abort(400)  # Bad Request
-
-    # Ensure quantity is within correct range
-    if buying_quantity < 0 or buying_quantity > 10000:
-        abort(400)  # Bad Request
+    buying_quantity = int(request.form['quantity'])
 
     book_data = dbf.retrieve_book(book_id)
 
@@ -1186,12 +1167,20 @@ def add_to_cart():
 
     book = Book(*book_data)
 
-    # if book_id is found
-    # Checking if book_id is already in cart
-    cart_item = dbf.get_cart_item(user_id, book_id)
+    # Check if quantity entered is valid
+    if buying_quantity is None:
+        raise TypeError("Must have buying quantity")
 
     # stock left inside (basically customer can't buy more than this)
     max_quantity = book.stock
+
+    # Ensure quantity is within correct range
+    if buying_quantity < 0 or buying_quantity > max_quantity:
+        abort(400)  # Bad Request
+
+    # if book_id is found
+    # Checking if book_id is already in cart
+    cart_item = dbf.get_cart_item(user_id, book_id)
 
     # If book is not in customer's cart
     if cart_item is None:
@@ -1260,20 +1249,6 @@ def update_cart(book_id):
         print('Update book quantity: ', str(book_quantity))
 
     return redirect(url_for('cart'))
-    # cart_dict = cart_db['Cart']
-    # buy_cart = cart_dict[user_id][0]
-    # book_quantity = int(request.form['quantity'])
-    # if book_quantity == 0:
-    #     print('Oh no need to delete')
-    #     delete_buying_cart(id)
-    # else:
-    #     buy_cart[id] = book_quantity
-    #     print(buy_cart)
-    #     cart_dict[user_id][0] = buy_cart
-    #     cart_db['Cart'] = cart_dict
-    #     print(cart_dict, 'updated database')
-    #     cart_db.close()
-    # return redirect(request.referrer)
 
 
 """ Delete Cart """
@@ -1291,6 +1266,14 @@ def delete_buying_cart(book_id):
 
 
 """    Order Pages    """
+
+
+@app.route("/checkout", methods=['GET', 'POST'])
+@login_required()
+def checkout():
+    """ Checkout backend code here"""
+    return render_template("checkout.html")
+
 
 """ Customer Orders Page """
 
