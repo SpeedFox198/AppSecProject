@@ -24,7 +24,7 @@ def get_order_details(user_id):
     # query = f"""SELECT * FROM OrderDetails WHERE user_id = '{user_id}';"""
     # order_data = cur.execute(query).fetchone()
     # con.close()
-    return retrieve_db("OrderDetails", user_id=user_id, fetchone=True)
+    return retrieve_db("OrderDetails", user_id=user_id)
 
 
 def get_order_items(book_id):
@@ -35,3 +35,7 @@ def get_order_items(book_id):
     # order_items = cur.execute(query).fetchone()
     # con.close()
     return retrieve_db("OrderItems", ["quantity"], book_id=book_id, fetchone=True)
+
+
+def number_of_orders():
+    return retrieve_db("OrderDetails", columns=["COUNT(*)"])[0][0]
