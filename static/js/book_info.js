@@ -137,7 +137,16 @@ async function retrieveReviews() {
 }
 
 
-/* Main function */
+/* Main functions */
+window.onload = () => {
+    const redirectLoginButton = document.getElementById("redirectLoginButton");
+    if (redirectLoginButton) {
+        redirectLoginButton.addEventListener("click", () => {
+            location.href = `/user/login?from=${encodeURIComponent(window.location.href)}`;
+        });
+    }
+}
+
 (async () => {
     const data = await retrieveReviews();
 
