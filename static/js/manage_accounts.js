@@ -10,6 +10,8 @@ function addUser() {
 
 const submitAddUserButton = getElement("submitAddUserButton");
 submitAddUserButton.addEventListener("click", addUser);
+const submitDeleteUserButton = getElement("submitDeleteUserButton");
+submitDeleteUserButton.addEventListener("click", deleteUser);
 
 const displayUsername = [].slice.call(document.querySelectorAll('.display-username'));
 let selectedUserID = null;
