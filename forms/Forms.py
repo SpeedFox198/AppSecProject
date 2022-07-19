@@ -47,8 +47,10 @@ class OTPForm(Form):
     otp = StringField("Enter your OTP", [validators.InputRequired(message=""),
                               validators.Length(min=6, max=6, message="")])
 
-class twoFAForm(Form):
+
+class TwoFAForm(Form):
     twoFAOTP = StringField("Enter 2FA OTP:", [validators.Length(min=6, max=6), validators.DataRequired()])
+
 
 class LoginForm(Form):
     """ Login form used for logging in """
@@ -103,9 +105,11 @@ class ResetPasswordForm(Form):
                                                           validators.Length(min=8, max=80, message=""),
                                                           validators.EqualTo("new_password", message="Password entered is different")])
 
+
 class CreateReviewText(Form):
     review = TextAreaField("Review:", [validators.Length(min=20, max=2000), validators.DataRequired()])
     title = StringField("Title:", [validators.Length(min=20, max=100), validators.DataRequired()])
+
 
 class AccountPageForm(Form):
     """ Account page form used for editing account """
@@ -131,6 +135,7 @@ class CreateUserForm(SignUpForm):
     user_type = SelectField("User Type", [validators.InputRequired(message="")],
                             choices=[("", "Select User Type"), ("C", "Customer"), ("A", "Admin")],
                             default="")
+
 
 class DeleteUserForm(Form):
     """ Delete user form used when deleting new users """
