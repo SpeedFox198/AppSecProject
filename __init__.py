@@ -36,6 +36,7 @@ from forms import (
 DEBUG = True  # Debug flag (True when debugging)
 TOKEN_MAX_AGE = 900     # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
+DOMAIN_NAME = "https://localhost:5000/"
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 
 app = Flask(__name__)
@@ -411,8 +412,10 @@ def twoFA():
 @limiter.limit("10/second", override_defaults=False)
 def logout():
     flask_global.user = None
-    response = make_response()
-    return redirect(url_for("home"))
+    next_page = request.args.get("from", default="", type=str)
+    if next_page[:len(DOMAIN_NAME)] != DOMAIN_NAME:
+        next_page = url_for("home")
+    return redirect(next_page)
 
 
 """ Forgot password page """  ### TODO: work on this SpeedFox198

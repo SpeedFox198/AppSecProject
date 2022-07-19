@@ -1,5 +1,10 @@
 import {DOMAIN_NAME, retrieveGetValue} from "./package.js"
 
+const failMessage = document.getElementById("loginFailed");
+const errorMessage = document.getElementById("loginError");
+const loginButton = document.getElementById("loginSubmitButton");
+const form = document.getElementById("loginForm");
+
 /* Post credentials to API */
 async function post_login(username, password, csrf_token) {
     const url = "/api/login";
@@ -23,10 +28,6 @@ async function post_login(username, password, csrf_token) {
     }
 }
 
-const failMessage = document.getElementById("loginFailed");
-const errorMessage = document.getElementById("loginError");
-const loginButton = document.getElementById("loginSubmitButton");
-
 /* Login function */
 async function login(username, password, csrf_token) {
     loginButton.classList.add("disabled");
@@ -34,6 +35,8 @@ async function login(username, password, csrf_token) {
     errorMessage.classList.add("d-none");
     try {
         const {status} = await post_login(username, password, csrf_token);
+        form.password.value = "";  // Clear password field
+        form.classList.remove("was-validated");
         if (status) {
             // Display login failed message
             failMessage.classList.remove("d-none");
@@ -52,14 +55,14 @@ async function login(username, password, csrf_token) {
     }
     catch (err) {
         // Display login failed message
+        form.password.value = "";  // Clear password field
+        form.classList.remove("was-validated");
         errorMessage.classList.remove("d-none");
         console.error(err);
     }
-    loginButton.classList.remove("disabled");
 }
 
-const form = document.getElementById("loginForm");
-
+// Disable button if fields not filled
 function checkEntered() {
     if (form.username.value && form.password.value) {
         loginButton.classList.remove("disabled");
@@ -69,11 +72,10 @@ function checkEntered() {
     }
 }
 
-form.username.addEventListener("blur", checkEntered);
 form.username.addEventListener("input", checkEntered);
-form.password.addEventListener("blur", checkEntered);
 form.password.addEventListener("input", checkEntered);
 
+// Submit login form
 form.addEventListener("submit", event => {
     event.preventDefault();
     event.stopPropagation();
