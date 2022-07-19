@@ -1,18 +1,4 @@
-// Get domain name
-import {DOMAIN_NAME} from "./domain_name.js"
-
-/* retrieve get parameter value */
-function retrieveGetValue(paramName) {
-    let result = null;
-    let name = null;
-    let value = null;
-    const items = location.search.substring(1).split("&");
-    for (let i = 0; i < items.length; i++) {
-        [name, value] = items[i].split("=");
-        if (name === paramName) result = decodeURIComponent(value);
-    }
-    return result;
-}
+import {DOMAIN_NAME, retrieveGetValue} from "./package.js"
 
 /* Post credentials to API */
 async function post_login(username, password, csrf_token) {
