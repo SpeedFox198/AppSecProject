@@ -70,8 +70,8 @@
             {% endif %}
             <div class="dropdown-content account-link-display">
             {% if is_logged_in %}
-              <a href="{{ url_for('account') }}">Account</a>
               {% if not is_admin %}
+              <a href="{{ url_for('account') }}">Account</a>
               <a href="{{ url_for('my_orders') }}">Orders</a>
               {% endif %}
               <a class="login-link" href="{{ url_for('logout') }}">Logout</a>

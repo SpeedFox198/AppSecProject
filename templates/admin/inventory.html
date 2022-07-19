@@ -61,7 +61,7 @@
               <td>{{ book.author }}</td>
               <td>{{ book.price }}</td>
               <td>{{ book.stock }}</td>
-              <td><a href="{{ url_for('book_info', book_id=book.book_id) }}" data-bs-toggle="tooltip" title="View"><i class="actions-button fa fa-eye"></i></a></td>
+              <td><a href="{{ url_for('view_book', book_id=book.book_id) }}" data-bs-toggle="tooltip" title="View"><i class="actions-button fa fa-eye"></i></a></td>
               <td><a href="{{ url_for('update_book', book_id=book.book_id)}}" data-bs-toggle="tooltip" title="Update"><i class="actions-button fa fa-pen"></i></a></td>
               <td>
                 <button id="deleteButton_{{book.book_id}}" class="btn me-auto p-0 delete-book-button" data-bs-toggle="tooltip" title="Delete">

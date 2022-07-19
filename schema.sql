@@ -14,8 +14,13 @@ CREATE TABLE Users (
     password TEXT NOT NULL,
     profile_pic TEXT,
     is_admin INTEGER NOT NULL,
-    twoFA_secret_token TEXT,
     PRIMARY KEY (user_id)
+);
+
+CREATE TABLE twoFA (
+    user_id TEXT NOT NULL,
+    twoFA_secret_token TEXT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
 CREATE TABLE OTP (
