@@ -225,7 +225,7 @@ def after_request(response):
 @app.route("/")
 @limiter.limit("10/second", override_defaults=False)
 def home():
-    if flask_global.user.is_admin:
+    if flask_global.user and flask_global.user.is_admin:
         abort(404)
 
     english_books_data = dbf.retrieve_books_by_language("English")
@@ -455,7 +455,7 @@ def password_forget():
 
 @app.route("/user/account/google_authenticator", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def google_authenticator():
     # User is a Class
     user: User = flask_global.user
@@ -1346,7 +1346,7 @@ def my_orders():
 
 @app.route('/checkout', methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def checkout():
     # User is a Class
     user: User = flask_global.user
@@ -1375,7 +1375,7 @@ def checkout():
 # Create Check out session with Stripe
 @app.route('/create-checkout-session', methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def create_checkout_session():
     # User is a Class
     user: User = flask_global.user
