@@ -170,8 +170,19 @@ footer a:focus, footer a:hover {
   min-width: 120px;
 }
 
+#logoutButton {
+  border: 0;
+  background-color: white;
+  width: 100%;
+  text-align: left;
+}
+
+#logoutButton:focus {
+  box-shadow: none !important;
+}
+
 /* Links inside the dropdown */
-.dropdown-content a {
+.dropdown-content a, #logoutButton {
   color: #4b8282;
   padding: 5px 15px;
   text-decoration: none;
@@ -179,7 +190,7 @@ footer a:focus, footer a:hover {
 }
 
 /* Change color of dropdown links on hover */
-.dropdown-content a:hover {
+.dropdown-content a:hover, #logoutButton:hover{
   background-color: #4b8282;
   color: white;
 }

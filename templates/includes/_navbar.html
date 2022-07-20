@@ -3,10 +3,17 @@
 <!-- Brand name and Logo -->
 <nav class="navbar brand-nav d-none d-lg-block">
   <div class="container-fluid">
+    {% if is_admin %}
+    <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+      <img src="/static/img/bbblogo.png" alt="BrasBasahBooks Logo" class="d-inline-block" id="logo">
+      <span id="store_name">BrasBasahBooks</span>
+    </a>
+    {% else %}
     <a class="navbar-brand" href="/">
       <img src="/static/img/bbblogo.png" alt="BrasBasahBooks Logo" class="d-inline-block" id="logo">
       <span id="store_name">BrasBasahBooks</span>
     </a>
+    {% endif %}
   </div>
 </nav>
 <!-- Nav Bar -->
@@ -14,20 +21,7 @@
   <div class="container-fluid">
       <ul class="navbar-nav">
       {# Display a different nav bar for different admins #}
-      {% if is_admin %}
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('add_book') }}" id="first-nav-item">Add Book</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('inventory') }}">Inventory</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('manage_orders') }}">Manage Orders</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('manage_accounts') }}">Manage Accounts</a>
-        </li>
-      {% else %}
+      {% if not is_admin %}
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('home') }}" id="first-nav-item">Home</a>
         </li>
@@ -74,7 +68,8 @@
               <a href="{{ url_for('account') }}">Account</a>
               <a href="{{ url_for('my_orders') }}">Orders</a>
               {% endif %}
-              <a class="login-link" href="{{ url_for('logout') }}">Logout</a>
+              <div id="csrf_token" class="d-none">{{ csrf_token() }}</div>
+              <button type="button" id="logoutButton">Logout</a>
             {% else %}
               <a class="login-link" href="{{ url_for('login') }}">Login</a>
               <a href="{{ url_for('sign_up') }}">Sign Up</a>
@@ -155,4 +150,4 @@
 </nav>
 
 {# Loads login link #}
-<script src="/static/js/navbar_login.js"></script>
+<script type="module" src="/static/js/navbar_login.js"></script>

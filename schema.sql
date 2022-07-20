@@ -56,6 +56,7 @@ CREATE TABLE OrderDetails (
     user_id TEXT NOT NULL,
     order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     shipping_option TEXT NOT NULL,
+    order_pending TEXT NOT NULL,
     PRIMARY KEY (order_id),
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );

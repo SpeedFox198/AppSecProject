@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from db_fetch.customer import create_OTP
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
-from models import User, Book, Review, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
+from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -30,6 +30,8 @@ from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
     AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm, CreateReviewText
 )
+
+import stripe
 
 # CONSTANTS
 # TODO @everyone: set to False when deploying
@@ -54,6 +56,9 @@ limiter = Limiter(
 )
 
 url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+
+# testing mode
+stripe.api_key = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -99,29 +104,22 @@ def remove_cookies(cookies:list):
     flask_global.expired_cookies = expired_cookies
 
 
-def login_required(message=None):
+def login_required(func):
     """
     Put this in routes that user must be logged in to access with the @ sign
     For example:
-    @app.route('/user/account/")
-    @login_required()
+    @app.route('/user/account")
+    @login_required
     """
-    def decorator(func):
-        @wraps(func)
-        def decorated_function(*args, **kwargs):
-            """
-            Logged in check here
-            flash_message (str): Message to be flashed if user is not logged in 
-            """
-            if isinstance(flask_global.user, User):
-                return func(*args, **kwargs)
-            if message is None:
-                flash("You must log in to access this page")
-            elif message:
-                flash(message)
-            return redirect(url_for('login'))
-        return decorated_function
-    return decorator
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        """
+        Logged in check here
+        """
+        if isinstance(flask_global.user, User):
+            return func(*args, **kwargs)
+        return redirect(url_for('login'))
+    return decorated_function
 
 
 def admin_check(mode="regular"):
@@ -227,6 +225,9 @@ def after_request(response):
 @app.route("/")
 @limiter.limit("10/second", override_defaults=False)
 def home():
+    if flask_global.user and flask_global.user.is_admin:
+        abort(404)
+
     english_books_data = dbf.retrieve_books_by_language("English")
     chinese_books_data = dbf.retrieve_books_by_language("Chinese")
     english = [Book(*data) for data in english_books_data]
@@ -370,10 +371,14 @@ def login():
                 else:
                     # Create session to login
                     flask_global.user = user
-                    return redirect(url_for("home"))
+                    if flask_global.user.is_admin:
+                        return redirect(url_for("dashboard"))
+                    else:
+                        return redirect(url_for("home"))
 
     # Render page's template
     return render_template("user/login.html", form=login_form)
+
 
 @app.route("/user/login/twoFA", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -403,19 +408,6 @@ def twoFA():
             return redirect(url_for("login"))
     else:
         return render_template("user/2FA.html", form=OTPformat)
-
-
-""" Logout """
-
-
-@app.route("/user/logout")
-@limiter.limit("10/second", override_defaults=False)
-def logout():
-    flask_global.user = None
-    next_page = request.args.get("from", default="", type=str)
-    if next_page[:len(DOMAIN_NAME)] != DOMAIN_NAME:
-        next_page = url_for("home")
-    return redirect(next_page)
 
 
 """ Forgot password page """  ### TODO: work on this SpeedFox198
@@ -462,13 +454,12 @@ def password_forget():
 
 @app.route("/user/account/google_authenticator", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def google_authenticator():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
+    if user.is_admin:
         abort(403)
 
     secret_token = get_cookie_value(request, "token")
@@ -492,13 +483,12 @@ def google_authenticator():
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
+@login_required
 def google_authenticator_disable():
     # User is a Class
     user: User = flask_global.user
 
-    if not isinstance(user, User):
-        return redirect(url_for("login"))
-    elif user.is_admin:
+    if user.is_admin:
         abort(403)
 
     dbf.delete_2FA_token(user.user_id)
@@ -565,7 +555,7 @@ def password_reset(token):
 
 @app.route("/user/password/change", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def password_change():
     # Flask global error variable for css
     errors = flask_global.errors = {}
@@ -656,7 +646,7 @@ def verify_send():
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def account():
     # Get current user
     user: User = flask_global.user
@@ -721,6 +711,18 @@ def account():
 
 
 """    Admin Pages    """
+
+
+@app.route("/admin/dashboard", methods=["GET"])
+@admin_check()
+def dashboard():
+    customers = dbf.number_of_customers()
+    orders = dbf.number_of_orders()
+    books = dbf.number_of_books()
+    return render_template("admin/admin_dashboard.html",
+                           customer_count=customers,
+                           order_count=orders,
+                           book_count=books)
 
 
 # Manage accounts page
@@ -1165,7 +1167,7 @@ def price_high_to_low(inventory_data):
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required("You need to be logged in to purchase items")
+@login_required
 def add_to_cart():
     # User is a Class
     user: User = flask_global.user
@@ -1177,17 +1179,7 @@ def add_to_cart():
 
     # Getting book_id and quantity to add
     book_id = request.form['book_id']
-    buying_quantity = request.form['quantity']
-
-    # Check if quantity entered is valid
-    try:
-        buying_quantity = int(buying_quantity)
-    except:
-        abort(400)  # Bad Request
-
-    # Ensure quantity is within correct range
-    if buying_quantity < 0 or buying_quantity > 10000:
-        abort(400)  # Bad Request
+    buying_quantity = int(request.form['quantity'])
 
     book_data = dbf.retrieve_book(book_id)
 
@@ -1197,12 +1189,20 @@ def add_to_cart():
 
     book = Book(*book_data)
 
-    # if book_id is found
-    # Checking if book_id is already in cart
-    cart_item = dbf.get_cart_item(user_id, book_id)
+    # Check if quantity entered is valid
+    if buying_quantity is None:
+        raise TypeError("Must have buying quantity")
 
     # stock left inside (basically customer can't buy more than this)
     max_quantity = book.stock
+
+    # Ensure quantity is within correct range
+    if buying_quantity < 0 or buying_quantity > max_quantity:
+        abort(400)  # Bad Request
+
+    # if book_id is found
+    # Checking if book_id is already in cart
+    cart_item = dbf.get_cart_item(user_id, book_id)
 
     # If book is not in customer's cart
     if cart_item is None:
@@ -1228,7 +1228,7 @@ def add_to_cart():
 
 @app.route('/cart')
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def cart():
     # User is a Class
     user: User = flask_global.user
@@ -1255,7 +1255,7 @@ def cart():
 
 @app.route('/update-cart/<book_id>', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def update_cart(book_id):
     # User is a Class
     user: User = flask_global.user
@@ -1271,20 +1271,6 @@ def update_cart(book_id):
         print('Update book quantity: ', str(book_quantity))
 
     return redirect(url_for('cart'))
-    # cart_dict = cart_db['Cart']
-    # buy_cart = cart_dict[user_id][0]
-    # book_quantity = int(request.form['quantity'])
-    # if book_quantity == 0:
-    #     print('Oh no need to delete')
-    #     delete_buying_cart(id)
-    # else:
-    #     buy_cart[id] = book_quantity
-    #     print(buy_cart)
-    #     cart_dict[user_id][0] = buy_cart
-    #     cart_db['Cart'] = cart_dict
-    #     print(cart_dict, 'updated database')
-    #     cart_db.close()
-    # return redirect(request.referrer)
 
 
 """ Delete Cart """
@@ -1292,7 +1278,7 @@ def update_cart(book_id):
 
 @app.route("/delete-buying-cart/<book_id>", methods=['GET', 'POST'])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def delete_buying_cart(book_id):
     user: User = flask_global.user
     # Get User ID
@@ -1301,15 +1287,19 @@ def delete_buying_cart(book_id):
     return redirect(url_for('cart'))
 
 
-"""    Order Pages    """
-
 """ Customer Orders Page """
 
 
 @app.route("/my-orders")
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
+@login_required
 def my_orders():
+    new_order = []
+    confirm_order = []
+    ship_order = []
+    deliver_order = []
+    canceled_order = []
+
     # User is a Class
     user: User = flask_global.user
 
@@ -1318,39 +1308,24 @@ def my_orders():
 
     user_id = user.user_id
 
-    # Get orders
+    # Get order details as a list of tuples(order_id, book_id, shipping option, order pending)
+    order_details = [Order(*item) for item in dbf.get_order_details(user_id)]
+
+    for orders in order_details:
+        if orders.order_pending == "Ordered":
+            new_order.append(orders)
+        elif orders.order_pending == "Confirmed":
+            confirm_order.append(orders)
+        elif orders.order_pending == "Shipped":
+            ship_order.append(orders)
+        elif orders.order_pending == "Delivered":
+            deliver_order.append(orders)
+        elif orders.order_pending == "Cancelled":
+            canceled_order.append(orders)
+
 
     return render_template('my-orders.html')
-# def my_orders():
-#     db_order = []
-#     new_order = []
-#     confirm_order = []
-#     ship_order = []
-#     deliver_order = []
-#     canceled_order = []
-#     books_dict = {}
-#     try:
-#         db = shelve.open('database')
-#         books_dict = db['Books']
-#         db_order = db['Order']
-#         print(db_order, "orders in database")
-#         db.close()
-#     except:
-#         print("There might not have any orders as of now.")
-#     for order in db_order:
-#         print(order.get_name(), order.get_rent_item())
-#         if order.get_order_status() == 'Ordered':
-#             new_order.append(order)
-#         elif order.get_order_status() == 'Confirmed':
-#             confirm_order.append(order)
-#         elif order.get_order_status() == 'Shipped':
-#             ship_order.append(order)
-#         elif order.get_order_status() == 'Delivered':
-#             deliver_order.append(order)
-#         elif order.get_order_status() == 'Canceled':
-#             canceled_order.append(order)
-#         else:
-#             print(order, "Wrong order status")
+
 
 #     # display from most recent to the least
 #     db_order = list(reversed(db_order))
@@ -1365,6 +1340,176 @@ def my_orders():
 #                            confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
 #                            canceled_order=canceled_order, \
 #                            books_dict=books_dict)
+
+""" Checkout Pages """
+
+
+@app.route('/checkout', methods=['GET', 'POST'])
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def checkout():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.is_admin:
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity) for items, quantity in dbf.get_shopping_cart(user_id)]
+    buy_count = len(cart_items)
+
+    # Get total price
+    total_price = 0
+    for book, quantity in cart_items:
+        total_price += book.price * quantity
+    total_price = total_price.float()
+    
+    if request.method == 'POST':
+        Orderform = OrderForm.OrderForm(request.form)
+
+    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items)
+
+
+# Create Check out session with Stripe
+@app.route('/create-checkout-session', methods=['GET', 'POST'])
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def create_checkout_session():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.is_admin:
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity) for items, quantity in dbf.get_shopping_cart(user_id)]
+    buy_count = len(cart_items)
+
+    # Get total price
+    total_price = 0
+    for book, quantity in cart_items:
+        total_price += book.price * quantity
+
+    ship_method = request.form['ship-method']
+    print("creating checkout session...")
+
+    Orderform = OrderForm.OrderForm(request.form)
+
+    if request.method == 'POST' and Orderform.validate():
+        if ship_method == 'Standard Delivery':  # Standard Delivery
+            total_price += 5
+
+        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data, str(Orderform.contact_num.data),
+                                           Orderform.address.data, ship_method, user_cart, total_price)
+
+        total_price *= 100
+        total_price = int(total_price)
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'sgd',
+                        'product_data': {
+                            'name': 'Books',
+                        },
+                        'unit_amount': total_price,
+                    },
+                    'quantity': 1,
+                },
+            ],
+            payment_method_types=['card'],
+            mode='payment',
+            success_url='http://127.0.0.1:5000/orderconfirm',
+            cancel_url=request.referrer,
+        )
+
+        return redirect(checkout_session.url)
+    else:
+        flash(list(Orderform.errors.values())[0][0], 'warning')
+        return redirect(request.referrer)
+
+    return render_template('checkout.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items,
+                           stripe_public_key=stripe_public_key)
+
+    
+
+#
+# show confirmation page upon successful payment
+#
+
+
+@app.route("/orderconfirm")
+def orderconfirm():
+    user_id = get_user().get_user_id()
+    db_order = []
+    books_dict = {}
+    db = shelve.open('database')
+    cart_dict = db['Cart']
+    db_pending = db['Pending_Order']
+    books_dict = db['Books']
+    # in case user hand itchy go and reload the page, bring them back to home page
+    try:
+        new_order = db_pending[user_id]
+        cartvalue = cart_dict[user_id]
+
+        try:
+            db_order = db['Order']
+        except:
+            print("Error while loading data from database")
+            # return redirect(url_for("home"))
+
+        db_order.append(new_order)
+
+        print("cartvalue:", cartvalue)
+        try:
+            cartbuy = cartvalue[0]
+            print("cartbuy:", cartbuy)
+        except:
+            pass
+        if cartbuy != "":
+            for i in books_dict:
+                for x, y in zip(list(cartbuy.keys()), list(cartbuy.values())):
+                    if i == x:
+                        book = books_dict.get(i)
+                        print("qty b4", book.get_qty())
+                        newqty = int(book.get_qty()) - int(y)
+                        book.set_qty(newqty)
+                        print("qty aft", book.get_qty())
+
+        try:
+            cartrent = cartvalue[1]
+            print("cartrent:", cartrent)
+            if cartrent != "":
+                for i in books_dict:
+                    for x in cartrent:
+                        if i == x:
+                            book = books_dict.get(i)
+                            print("rent qty b4:", book.get_rented())
+                            newrented = int(book.get_rented()) + int(1)
+                            book.set_rented(newrented)
+                            print("rent qty aft:", book.get_rented())
+
+        except:
+            pass
+
+        del cart_dict[user_id]
+        del db_pending[user_id]
+        db['Books'] = books_dict
+        db['Pending_Order'] = db_pending
+        db['Order'] = db_order
+        db['Cart'] = cart_dict
+        print(db_pending, 'should not have pending order as user already check out')
+        print(cart_dict, 'updated database[cart]')
+        print(db_order, 'updated databas[order]')
+    except KeyError:
+        return redirect(url_for("home"))
+
+    db.close()
+    return render_template("order_confirmation.html")
 
 
 """    Miscellaneous Pages    """
@@ -1381,7 +1526,7 @@ def about():
 """ API Routes"""
 
 
-@app.route("/api/login", methods=["POST"])
+@app.route("/api/user/login", methods=["POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(LOGIN_SCHEMA)
 def api_login():
@@ -1394,6 +1539,13 @@ def api_login():
     flask_global.user = User(*user_data)
 
     return jsonify(status=0)        # Status 0 is success
+
+
+@app.route("/api/user/logout", methods=["POST"])
+@limiter.limit("10/second", override_defaults=False)
+def logout():
+    flask_global.user = None
+    return jsonify(status=0)  # Status 0 is success
 
 
 @app.route("/api/books/all", methods=["GET"])

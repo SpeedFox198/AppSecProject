@@ -22,6 +22,10 @@ def retrieve_book(id_of_book: str) -> Union[tuple, None]:
     return retrieve_db("Books", book_id=id_of_book, fetchone=True)
 
 
+def number_of_books():
+    return retrieve_db("Books", columns=["COUNT(*)"])[0][0]
+
+
 """ Admin-triggered Functions """
 
 
