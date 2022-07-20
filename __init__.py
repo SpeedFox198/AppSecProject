@@ -423,7 +423,6 @@ def logout():
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required()
 def password_forget():
     # Create form
     forget_password_form = ForgetPasswordForm(request.form)
@@ -523,16 +522,16 @@ def password_reset(token):
     # Get email from token
     try:
         email = url_serialiser.loads(token, salt=app.config["PASSWORD_FORGET_SALT"], max_age=TOKEN_MAX_AGE)
-    except BadData as err:  # Token expired or Bad Signature
-        if DEBUG: print("Invalid Token:", repr(err))  # print captured error (for debugging)
-        return redirect(url_for("invalid_link"))
+    except BadData:  # Token expired or Bad Signature
+        flash("Token expired or invalid")
+        return redirect(url_for("home"))
 
     # Get user
     try:
-        user_check = dbf.retrieve_customer_details[dbf.email_exists[email]]
-    except KeyError:
-        if DEBUG: print("No user with email:", email)  # Account was deleted
-        return redirect(url_for("invalid_link"))
+        user_check = dbf.retrieve_user_id(email)
+    except:
+        flash("Token expired or invalid")
+        return redirect(url_for("home"))
 
     # Render form
     reset_password_form = ResetPasswordForm(request.form)
@@ -544,11 +543,12 @@ def password_reset(token):
             new_password = reset_password_form.new_password.data
 
             # Reset Password
-            user_check.set_password(new_password)
+            print(user_check)
+            dbf.change_password(user_check, new_password)
             if DEBUG: print(f"Reset password for: {user_check}")
 
             # Get user object
-            user = User(*dbf.user_auth(user_check.email, new_password))
+            user = User(*dbf.user_auth(email, new_password))
 
             # Create session to login
             flask_global.user = user

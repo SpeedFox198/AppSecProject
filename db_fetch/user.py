@@ -16,6 +16,15 @@ def user_auth(username: str, password: str) -> Union[tuple, None]:
         fetchone=True
     )
 
+
 def retrieve_user(user_id: str) -> Union[tuple, None]:
     """ Returns user_data using user_id """
     return retrieve_db("Users", user_id=user_id, fetchone=True)
+
+
+def retrieve_user_id(email: str) -> Union[str, None]:
+    """ Returns user_id using email """
+    data = retrieve_db("Users", columns=["user_id"], email=email, fetchone=True)
+    if data:
+        return data[0]
+    
