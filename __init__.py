@@ -23,6 +23,7 @@ from flask_expects_json import expects_json
 from jsonschema import ValidationError
 from functools import wraps
 from flask_wtf import CSRFProtect
+from urllib.parse import unquote
 import pyotp
 import datetime
 
@@ -331,39 +332,6 @@ def login():
         return redirect(url_for("account"))
 
     login_form = LoginForm(request.form)
-    if request.method == "POST":
-        if not login_form.validate():
-            # Flash login error message
-            flash("Your account and/or password is incorrect, please try again", "form-error")
-        else:
-            # Extract username/email and password from login form
-            username = login_form.username.data.lower()
-            password = login_form.password.data
-
-            # Check username/email
-            user_data = dbf.user_auth(username, password)
-
-            # If user_data is not successfully retrieved (username/email/password is/are wrong)
-            if user_data is None:
-
-                # Flash login error message
-                flash("Your account and/or password is incorrect, please try again", "form-error")
-
-            # If login credentials are correct
-            else:
-                # Get user object
-                user = User(*user_data)
-
-                # Check if user enabled 2FA
-                enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
-                print(enable_2FA)
-                if enable_2FA:
-                    add_cookie({"user_data": user_data, "user_id": user.user_id})
-                    return redirect(url_for("twoFA"))
-                else:
-                    # Create session to login
-                    flask_global.user = user
-                    return redirect(url_for("home"))
 
     # Render page's template
     return render_template("user/login.html", form=login_form)
@@ -376,8 +344,14 @@ def twoFA():
     user_data = get_cookie_value(request, "user_data")
     twoFA_code = dbf.retrieve_2FA_token(user_id)
 
+    next_page = unquote(request.args.get("from", default="", type=str))
+
     OTPformat = OTPForm(request.form)
-    print(request.method)
+
+    if not (user_id and user_data and twoFA_code):
+        remove_cookies(["user_id", "user_data"])
+        return redirect(url_for("login"))
+
     if request.method == "POST":
         twoFAinput = OTPformat.otp.data
         twoFAchecker = pyotp.TOTP(twoFA_code[1]).verify(twoFAinput)
@@ -389,11 +363,16 @@ def twoFA():
                 # Create session to login
                 flask_global.user = user
                 remove_cookies(["user_id", "user_data"])
-                return redirect(url_for("home"))
+
+                if next_page and next_page[:len(DOMAIN_NAME)] == DOMAIN_NAME:
+                    return redirect(next_page)
+                else:
+                    return redirect(url_for("home"))
             else:
                 flash("Invalid OTP Entered! Please try again!")
-                return redirect(url_for("twoFA"))
+                return redirect(request.full_path)
         except:
+            remove_cookies(["user_id", "user_data"])
             return redirect(url_for("login"))
     else:
         return render_template("user/2FA.html", form=OTPformat)
@@ -1362,16 +1341,24 @@ def api_login():
     password = flask_global.data["password"]
     user_data = dbf.user_auth(username, password)
     if user_data is None:
-        return jsonify(status=1)    # Status 1 for not success
+        return jsonify(status=1)  # Status 1 for not success
 
-    flask_global.user = User(*user_data)
+    user = User(*user_data)
+    enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
+    if not enable_2FA:
+        # Log user in
+        flask_global.user = User(*user_data)
+    else:
+        # Go to 2FA
+        add_cookie({"user_data": user_data, "user_id": user.user_id})
 
-    return jsonify(status=0)        # Status 0 is success
+    # Status 0 for success
+    return jsonify(status=0, enable_2FA=enable_2FA)
 
 
 @app.route("/api/user/logout", methods=["POST"])
 @limiter.limit("10/second", override_defaults=False)
-def logout():
+def api_logout():
     flask_global.user = None
     return jsonify(status=0)  # Status 0 is success
 

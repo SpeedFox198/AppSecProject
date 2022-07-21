@@ -34,22 +34,27 @@ async function login(username, password, csrf_token) {
     failMessage.classList.add("d-none");
     errorMessage.classList.add("d-none");
     try {
-        const {status} = await post_login(username, password, csrf_token);
+        const {status, enable_2FA} = await post_login(username, password, csrf_token);
         form.password.value = "";  // Clear password field
         form.classList.remove("was-validated");
         if (status) {
             // Display login failed message
             failMessage.classList.remove("d-none");
         }
-        else {
-            // Login success, redirect to prev page
+        else { // Login success
             let nextPage = retrieveGetValue("from");
-            if (nextPage && nextPage.substring(0, DOMAIN_NAME.length) === DOMAIN_NAME) {
-                location.replace(nextPage);
+            if (!enable_2FA) {  // 2FA is not enabled
+                // Redirect to prev page
+                if (nextPage && nextPage.substring(0, DOMAIN_NAME.length) === DOMAIN_NAME) {
+                    location.replace(nextPage);
+                }
+                else {  // Next page link has been modified, redirect to home
+                    console.error("⁽⁽(੭ꐦ •̀Д•́ )੭*⁾⁾ ᑦᵒᔿᵉ ᵒᐢᵎᵎ");
+                    location.replace("/");
+                }
             }
-            else {  // next page link has been modified, redirect to home
-                console.error("⁽⁽(੭ꐦ •̀Д•́ )੭*⁾⁾ ᑦᵒᔿᵉ ᵒᐢᵎᵎ");
-                location.replace("/");
+            else {  // 2FA is enabled
+                location.replace(`/user/login/twoFA?from=${encodeURIComponent(nextPage)}`);
             }
         }
     }
