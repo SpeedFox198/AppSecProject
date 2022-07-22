@@ -533,6 +533,15 @@ def password_reset(token):
 @limiter.limit("10/second", override_defaults=False)
 @login_required
 def password_change():
+    # Get current user
+    user: User = flask_global.user
+
+    # If user is not logged in
+    if not user:
+        return redirect(url_for("login"))
+
+    if user.is_admin:
+        abort(404)
     # Flask global error variable for css
     errors = flask_global.errors = {}
 
@@ -578,47 +587,7 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
-# Needs to be changed
-# TODO: needs to change
-# NOTE: sending email is done by Royston
-"""Verification page in case"""
-
-
-# Send verification link page
-@app.route("/user/verify")
-def verify_send():
-    # Get user
-    user = get_user()
-
-    # If not customer or email is verified
-    if not isinstance(user, Customer) or user.is_verified():
-        return redirect(url_for("home"))
-
-    # Configure noreplybbb02@gmail.com
-    # app.config.from_pyfile("config/noreply_email.cfg")
-    # mail.init_app(app)
-
-    # Get email
-    email = user.get_email()
-
-    # Generate token
-    token = url_serialiser.dumps(email, salt=app.config["VERIFY_EMAIL_SALT"])
-
-    # Send message to email entered
-    msg = Message(subject="Verify Email",
-                  sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
-                  recipients=[email])
-    link = url_for("verify", token=token, _external=True)
-    msg.html = f"Click <a href='{link}'>here</a> to verify your email.<br />(Link expires after 15 minutes)"
-    mail.send(msg)
-
-    flash(f"Verification email sent to {email}")
-    return redirect(url_for("account"))
-
-"""    User Pages    """
-
 """ View account page """
-
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)

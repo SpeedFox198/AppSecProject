@@ -1,11 +1,11 @@
 import base64
+from Google import get_service
 from email.message import EmailMessage
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from Google import get_service
 
 def gmail_send(email, subject, content):
     """Create and send an email message

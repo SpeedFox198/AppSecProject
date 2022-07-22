@@ -23,6 +23,12 @@ CREATE TABLE twoFA (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
+CREATE TABLE Timeout (
+    user_id TEXT NOT NULL,
+    timeout_time INTEGER,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+)
+
 CREATE TABLE OTP (
     user_id TEXT NOT NULL,
     otp TEXT NOT NULL,

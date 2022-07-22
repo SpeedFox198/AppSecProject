@@ -10,7 +10,7 @@ con = sqlite3.connect("database.db")
 
 #cur.execute("""
 #""")
-# con.commit()
+#con.commit()
 
 # x = cur.execute("SELECT * FROM Customers;").fetchall()
 # for i in x:

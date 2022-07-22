@@ -47,6 +47,14 @@ def delete_OTP(user_id: str) -> None:
     """ Deletes and returns OTP from database """
     delete_rows("OTP", user_id=user_id)
 
+def create_lockout_time(user_id, date) -> None:
+    """ Creates a timeout time """
+    insert_row("Timeout", (user_id, date))
+
+def delete_lockout_time(user_id: str) -> None:
+    """ Deletes and returns lockout time from database """
+    delete_rows("Timeout", user_id=user_id)
+
 def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
     """ Returns details of customer """
     return retrieve_db(
