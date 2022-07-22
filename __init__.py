@@ -61,6 +61,11 @@ url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 # testing mode
 stripe.api_key = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
 
+
+def allowed_file(filename):
+    # Return true if there is an extension in file, and its extension is in the allowed extensions
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def get_user():
     """ Returns user if cookie is correct, else returns None """
 
@@ -321,7 +326,7 @@ def OTPverification():
             dbf.create_customer(user_id, username, email, password)
 
             # Create new user session to login (placeholder values were used to create user object)
-            flask_global.user = User(user_id, "", "", "", "", 0)
+            flask_global.user = User(user_id, "", "", "", "", "customer")
 
             # Return redirect with session cookie
             remove_cookies(["username", "email", "password", "OTP"])
@@ -813,9 +818,6 @@ def view_book(book_id):
     return render_template("admin/book_info_admin.html", book=book)
 
 
-def allowed_file(filename):
-    # Return true if there is an extension in file, and its extension is in the allowed extensions
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
@@ -1310,7 +1312,7 @@ def checkout():
     total_price = 0
     for book, quantity in cart_items:
         total_price += book.price * quantity
-    total_price = total_price.float()
+    total_price = float(total_price)
     
     if request.method == 'POST':
         Orderform = OrderForm.OrderForm(request.form)
