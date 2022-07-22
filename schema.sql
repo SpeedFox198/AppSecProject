@@ -6,6 +6,8 @@
 -- DROP TABLE IF EXISTS OrderItems;
 -- DROP TABLE IF EXISTS CartItems;
 -- DROP TABLE IF EXISTS Reviews;
+-- DROP TABLE IF EXISTS TwoFA;
+-- DROP TABLE IF EXISTS Timeout;
 
 CREATE TABLE Users (
     user_id TEXT NOT NULL,
@@ -13,11 +15,11 @@ CREATE TABLE Users (
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     profile_pic TEXT,
-    is_admin INTEGER NOT NULL,
+    role TEXT NOT NULL,
     PRIMARY KEY (user_id)
 );
 
-CREATE TABLE twoFA (
+CREATE TABLE TwoFA (
     user_id TEXT NOT NULL,
     twoFA_secret_token TEXT,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
@@ -27,7 +29,7 @@ CREATE TABLE Timeout (
     user_id TEXT NOT NULL,
     timeout_time INTEGER,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
-)
+);
 
 CREATE TABLE OTP (
     user_id TEXT NOT NULL,

@@ -12,9 +12,9 @@ _MAX_TIME = timedelta(hours=3)
 
 class UserSession:
     """ Defines a user session """
-    def __init__(self, user_id:str, is_admin:bool=False) -> None:
+    def __init__(self, user_id:str, role:str) -> None:
         self.user_id = user_id
-        self.is_admin = is_admin
+        self.role = role
         self.last_active = datetime.now()
 
     def is_expired(self):
@@ -22,9 +22,9 @@ class UserSession:
         return datetime.now() - self.last_active >= _MAX_TIME
 
 
-def create_user_session(user_id:str, is_admin:bool=False) -> bytes:
+def create_user_session(user_id:str, role:str) -> bytes:
     """ Creates and returns user session cookie """
-    return _cs(UserSession(user_id, bool(is_admin)))
+    return _cs(UserSession(user_id, role))
 
 
 def retrieve_user_session(request) -> Union[UserSession, None]:

@@ -15,7 +15,7 @@ def create_customer(user_id, username, email, password) -> None:
     """ Creates a new customer account in the database """
 
     # Insert user data into Users table
-    insert_row("Users", (user_id, username, email, password, None, 0))
+    insert_row("Users", (user_id, username, email, password, None, "customer"))
     # Insert customer details into Customers table
     insert_row("Customers", (user_id,), ("user_id",))
 
@@ -86,11 +86,11 @@ def change_password(user_id: str, password: str) -> None:
 
 def retrieve_these_customers(limit:int, offset: int) -> list[tuple]:
     """ Retrieves and returns a list of max 10 customers starting from offset """
-    return retrieve_db("Users NATURAL JOIN Customers", limit=limit, offset=offset, is_admin=0)
+    return retrieve_db("Users NATURAL JOIN Customers", limit=limit, offset=offset, role="customer")
 
 ## TODO: name too similar to `retrieve_customer_details` function above ^ (curr line 24)
 def retrieve_customer_detail(user_id: str):
-    return retrieve_db("Users NATURAL JOIN Customers", fetchone=True, is_admin=0, or_and=1, user_id=user_id)
+    return retrieve_db("Users NATURAL JOIN Customers", fetchone=True, role="customer", or_and=1, user_id=user_id)
 
 
 def number_of_customers() -> int:
