@@ -59,7 +59,7 @@ limiter = Limiter(
 url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 # testing mode
-stripe.api_key = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
+stripe.api_key = 'sk_test_51LNFSvLeIrXIJDLVEVQ8XVgIIhIWcKy0d7WVM5mM7TIBTxNLNMFUcN5Gx3zcmTKHyxJkrxiB98qZzdt5qYYrPM55002ARsY3yC'
 
 
 def allowed_file(filename):
@@ -1277,10 +1277,37 @@ def price_high_to_low(inventory_data):
     return sort_dict
 
 
-"""    Start of Cart Pages    """
+"""  View Shopping Cart  """
 
 
-# TODO: SpeedFox198 Marence: maybe shldn't abort 400, and shld reply with {"error":1}
+@app.route('/cart')
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def cart():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.role == "admin":
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity)
+                  for items, quantity in dbf.get_shopping_cart(user_id)]
+    buy_count = len(cart_items)
+
+    # Get total price
+    total_price = 0
+    for book, quantity in cart_items:
+        total_price += book.price * quantity
+
+    return render_template('cart.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items)
+
+
+"""    Add to Shopping Cart    """
+
+
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
@@ -1339,32 +1366,6 @@ def add_to_cart():
 
     return redirect(request.referrer)  # Return to catalogue if book_id is not in inventory
 
-
-""" View Shopping Cart"""
-
-
-@app.route('/cart')
-@limiter.limit("10/second", override_defaults=False)
-@login_required
-def cart():
-    # User is a Class
-    user: User = flask_global.user
-
-    if user.role == "admin":
-        abort(404)
-
-    user_id = user.user_id
-
-    # Get cart items as a list of tuples, [(Book object, quantity)]
-    cart_items = [(Book(*dbf.retrieve_book(items)), quantity) for items, quantity in dbf.get_shopping_cart(user_id)]
-    buy_count = len(cart_items)
-
-    # Get total price
-    total_price = 0
-    for book, quantity in cart_items:
-        total_price += book.price * quantity
-
-    return render_template('cart.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items)
 
 
 """ Update Shopping Cart """
@@ -1486,7 +1487,7 @@ def checkout():
     if request.method == 'POST':
         Orderform = OrderForm.OrderForm(request.form)
 
-    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items)
+    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items, subtotal=subtotal)
 
 
 # Create Check out session with Stripe
@@ -1550,7 +1551,7 @@ def create_checkout_session():
         return redirect(request.referrer)
 
     return render_template('checkout.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items,
-                           stripe_public_key=stripe_public_key)
+                           stripe_public_key=stripe_public_key, subtotal=subtotal)
 
     
 
