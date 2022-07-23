@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from db_fetch.customer import create_OTP
+from db_fetch.customer import create_lockout_time, delete_failed_logins
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
@@ -293,15 +293,18 @@ def sign_up():
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
-        add_cookie({"username": username, "email": email, "password": password})
         one_time_pass = generateOTP()
+        user_id = generate_uuid5(username)
+        dateregister = datetime.datetime.now()
         print(one_time_pass)
+        dbf.create_otp(user_id, username, password, email, one_time_pass, dateregister)
         # Send email with OTP
         subject = "OTP for registration"
         message = "Do not reply to this email.\nPlease enter " + one_time_pass + " as your OTP to complete your registration."
 
         gmail_send(email, subject, message)
-        add_cookie({"OTP": one_time_pass})
+        add_cookie({"Temp_User_ID": user_id})
+
         return redirect(url_for("OTPverification"))
 
     # Render sign up page
@@ -311,11 +314,26 @@ def sign_up():
 @app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():
-    email = get_cookie_value(request, "email")
-    username = get_cookie_value(request, "username")
-    password = get_cookie_value(request, "password")
-    one_time_pass = get_cookie_value(request, "OTP")
-
+    temp_user_id = get_cookie_value("Temp_User_ID")
+    if temp_user_id is None:
+        return redirect(url_for("sign_up"))
+    else:
+        pass
+    temporary_data = dbf.retrieve_otp(temp_user_id)
+    if temporary_data is None:
+        return redirect(url_for("sign_up"))
+    else:
+        pass
+    username = temporary_data[1]
+    password = temporary_data[2]
+    email = temporary_data[3]
+    one_time_pass = temporary_data[4]
+    dateregister = temporary_data[5]
+    time_check = datetime.datetime.now() - dateregister
+    if time_check.seconds > 300:
+        dbf.delete_otp(temp_user_id)
+        flash("OTP expired please try again", "OTP-expired")
+        return redirect(url_for("sign_up"))
     OTPformat = OTPForm(request.form)
     print(request.method)
     if request.method == "POST":
@@ -329,7 +347,6 @@ def OTPverification():
             flask_global.user = User(user_id, "", "", "", "", "customer")
 
             # Return redirect with session cookie
-            remove_cookies(["username", "email", "password", "OTP"])
             return redirect(url_for("home"))
 
         else:
@@ -380,6 +397,8 @@ def twoFA():
 
                 # Create session to login
                 flask_global.user = user
+                if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                    dbf.delete_failed_logins(user.user_id)
                 remove_cookies(["user_id", "user_data"])
 
                 if next_page and next_page[:len(DOMAIN_NAME)] == DOMAIN_NAME:
@@ -528,7 +547,10 @@ def password_reset(token):
 
             # Create session to login
             flask_global.user = user
-
+            if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                dbf.delete_failed_logins(user.user_id)
+            if bool(dbf.retrieve_lockout_time):
+                dbf.delete_lockout_time(user.user_id)
             # Flash message and redirect to account page
             flash("Password has been successfully set")
             return redirect(url_for("account"))
@@ -1607,11 +1629,31 @@ def api_login():
     username = flask_global.data["username"]
     password = flask_global.data["password"]
     user_data = dbf.user_auth(username, password)
+    time_check = datetime.datetime.now()
     if user_data is None:
-        return jsonify(status=1)  # Status 1 for not success
-
+        print("Check 1")
+        if bool(dbf.retrieve_user_by_username(username)):
+            print("Check 2")
+            if dbf.retrieve_failed_login(username)[1] >= 5:
+                create_lockout_time(username, time_check)
+                delete_failed_logins(username)
+                print("Your account has been locked for 5 minutes")
+                return jsonify(status=1)
+            elif dbf.retrieve_failed_login(username)[1] < 5:
+                dbf.update_failed_login(username, dbf.retrieve_failed_login(username)[1] + 1)
+                return jsonify(status=1)
+        else:
+            dbf.create_failed_login(username, 1)
+            return jsonify(status=1)           
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
+    if dbf.retrieve_lockout_time(user.user_id) is not None:
+        if time_check > dbf.retrieve_lockout_time(user.user_id):
+            print("Your account is still locked")
+            return jsonify(status=1)
+        else:
+            dbf.delete_lockout_time(user.user_id)
+            print("Your account is unlocked")
     if not enable_2FA:
         # Log user in
         flask_global.user = User(*user_data)
