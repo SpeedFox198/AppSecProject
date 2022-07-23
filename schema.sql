@@ -13,7 +13,7 @@
 CREATE TABLE Users (
     user_id TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    email TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
     password TEXT NOT NULL,
     profile_pic TEXT,
     role TEXT NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE Timeout (
 CREATE TABLE OTP (
     user_id TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    email TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
     password TEXT NOT NULL,
     otp TEXT NOT NULL,
     otp_date_released INTEGER NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE Books (
     book_id TEXT NOT NULL,
     language TEXT NOT NULL,
     genre TEXT NOT NULL,
-    title TEXT NOT NULL,
+    title TEXT NOT NULL COLLATE NOCASE,
     stock INTEGER NOT NULL,
     price INTEGER NOT NULL,
     author TEXT NOT NULL,
