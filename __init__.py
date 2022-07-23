@@ -7,8 +7,10 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from db_fetch.customer import create_lockout_time, delete_failed_logins
-from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
-from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
+from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
+    USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
+from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, \
+    BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -37,7 +39,7 @@ import stripe
 # CONSTANTS
 # TODO @everyone: set to False when deploying
 DEBUG = True  # Debug flag (True when debugging)
-TOKEN_MAX_AGE = 900     # Max age of token (15 mins)
+TOKEN_MAX_AGE = 900  # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 DOMAIN_NAME = "https://localhost:5000/"
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
@@ -66,6 +68,7 @@ def allowed_file(filename):
     # Return true if there is an extension in file, and its extension is in the allowed extensions
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def get_user():
     """ Returns user if cookie is correct, else returns None """
 
@@ -92,7 +95,7 @@ def get_user():
             return User(*user_data)
 
 
-def add_cookie(cookies:dict):
+def add_cookie(cookies: dict):
     """ Adds cookies """
     if not isinstance(cookies, dict):
         raise TypeError("Expected dictionary")
@@ -101,7 +104,7 @@ def add_cookie(cookies:dict):
     flask_global.new_cookies = new_cookies
 
 
-def remove_cookies(cookies:list):
+def remove_cookies(cookies: list):
     """ Remove cookies """
     if not isinstance(cookies, list):
         raise TypeError("Expected list")
@@ -117,6 +120,7 @@ def login_required(func):
     @app.route('/user/account")
     @login_required
     """
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         """
@@ -125,6 +129,7 @@ def login_required(func):
         if isinstance(flask_global.user, User):
             return func(*args, **kwargs)
         return redirect(url_for('login'))
+
     return decorated_function
 
 
@@ -140,6 +145,7 @@ def role_check(roles: list[str], mode="regular"):
     @app.route('/admin/inventory')
     @role_check(["admin", "staff"])
     """
+
     def decorator(func):
         @wraps(func)
         def decorated_function(*args, **kwargs):
@@ -157,7 +163,9 @@ def role_check(roles: list[str], mode="regular"):
                     return jsonify(message="The resource you requested does not exist."), 404
             # Execute routes after
             return func(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 
@@ -186,7 +194,8 @@ def before_request():
     flask_global.user = get_user()  # Get user
 
 
-""" After request """ ##TODO: add SECURE in header
+""" After request """  ##TODO: add SECURE in header
+
 
 @app.after_request
 def after_request(response):
@@ -236,7 +245,7 @@ def after_request(response):
 @app.route("/")
 @limiter.limit("10/second", override_defaults=False)
 def home():
-    if flask_global.user and flask_global.user.role == "admin":
+    if flask_global.user and flask_global.user.role in ["admin", "staff"]:
         return redirect(url_for("dashboard"))
 
     english_books_data = dbf.retrieve_books_by_language("English")
@@ -442,7 +451,8 @@ def password_forget():
 
                 # Send message to email entered
                 subject = "Reset Your Password"
-                message = "Do not reply to this email.\nPlease click on ths link to reset your password." + url_for("password_reset", token=token, _external=True)
+                message = "Do not reply to this email.\nPlease click on ths link to reset your password." + url_for(
+                    "password_reset", token=token, _external=True)
 
                 gmail_send(email, subject, message)
 
@@ -455,7 +465,8 @@ def password_forget():
 
     return render_template("user/password/password_forget.html", form=forget_password_form)
 
-#In case maybe google authenticator
+
+# In case maybe google authenticator
 
 @app.route("/user/account/google_authenticator", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -484,7 +495,8 @@ def google_authenticator():
             flash("Invalid OTP Entered! Please try again!")
             return redirect(url_for("google_authenticator"))
     else:
-        return render_template("user/google_authenticator.html", form=OTP_Test, secret_token = secret_token)
+        return render_template("user/google_authenticator.html", form=OTP_Test, secret_token=secret_token)
+
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -499,6 +511,7 @@ def google_authenticator_disable():
     dbf.delete_2FA_token(user.user_id)
     flash("2FA has been disabled")
     return redirect(url_for("account"))
+
 
 """ Reset password page """  ### TODO: work on this SpeedFox198
 
@@ -540,7 +553,6 @@ def password_reset(token):
             # Reset Password
             print(user_check)
             dbf.change_password(user_check, new_password)
-            if DEBUG: print(f"Reset password for: {user_check}")
 
             # Get user object
             user = User(*dbf.user_auth(email, new_password))
@@ -615,7 +627,9 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
+
 """ View account page """
+
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -687,15 +701,23 @@ def account():
 
 
 @app.route("/admin/dashboard", methods=["GET"])
-@role_check(["admin"])
+@role_check(["admin", "staff"])
 def dashboard():
     customers = dbf.number_of_customers()
     orders = dbf.number_of_orders()
-    books = dbf.number_of_books()
-    return render_template("admin/admin_dashboard.html",
-                           customer_count=customers,
-                           order_count=orders,
-                           book_count=books)
+    book_count = dbf.number_of_books()
+    staff = dbf.number_of_staff()
+    if flask_global.user.role == "admin":
+        return render_template("admin/admin_dashboard.html",
+                               customer_count=customers,
+                               order_count=orders,
+                               book_count=book_count,
+                               staff_count=staff)
+
+    elif flask_global.user.role == "staff":
+        return render_template("admin/staff_dashboard.html",
+                               order_count=orders,
+                               book_count=book_count)
 
 
 # Manage accounts page
@@ -1419,7 +1441,6 @@ def my_orders():
         elif orders.order_pending == "Cancelled":
             canceled_order.append(orders)
 
-
     return render_template('my-orders.html')
 
 
@@ -1461,11 +1482,12 @@ def checkout():
     for book, quantity in cart_items:
         total_price += book.price * quantity
     total_price = float(total_price)
-    
+
     if request.method == 'POST':
         Orderform = OrderForm.OrderForm(request.form)
 
-    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items)
+    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count,
+                           cart_items=cart_items)
 
 
 # Create Check out session with Stripe
@@ -1499,7 +1521,8 @@ def create_checkout_session():
         if ship_method == 'Standard Delivery':  # Standard Delivery
             total_price += 5
 
-        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data, str(Orderform.contact_num.data),
+        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data,
+                                           str(Orderform.contact_num.data),
                                            Orderform.address.data, ship_method, user_cart, total_price)
 
         total_price *= 100
@@ -1531,7 +1554,6 @@ def create_checkout_session():
     return render_template('checkout.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items,
                            stripe_public_key=stripe_public_key)
 
-    
 
 #
 # show confirmation page upon successful payment
@@ -1644,7 +1666,7 @@ def api_login():
                 return jsonify(status=1)
         else:
             dbf.create_failed_login(username, 1)
-            return jsonify(status=1)           
+            return jsonify(status=1)
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
     if dbf.retrieve_lockout_time(user.user_id) is not None:
@@ -1780,7 +1802,7 @@ def api_single_user(user_id):
 
         return jsonify(output)
 
-    #elif request.method == "DELETE":
+    # elif request.method == "DELETE":
     #    if admin_check("api"):
     #        return admin_check("api")
     #

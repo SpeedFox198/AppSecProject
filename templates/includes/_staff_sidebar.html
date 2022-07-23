@@ -1,11 +1,11 @@
 {% from "includes/_render_sidebar.html" import render_sidebar %}
-{% macro admin_sidebar(active) %}
+{% macro staff_sidebar(active) %}
   {% set links_dict = {
     "Dashboard": url_for("dashboard"),
     "Inventory": url_for("inventory"),
     "Add Book": url_for("add_book"),
-    "Manage Customers": url_for("manage_users"),
-    "Manage Staff": url_for("manage_staff")
+    "Manage Orders": url_for("manage_orders"),
+    "Manage Reviews": url_for("manage_reviews")
   } %}
   {% do links_dict.update({active: "#"}) %}
   {{ render_sidebar(links_dict) }}
