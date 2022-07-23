@@ -295,7 +295,7 @@ def sign_up():
 
         one_time_pass = generateOTP()
         user_id = generate_uuid5(username)
-        dateregister = datetime.now()
+        dateregister = datetime.datetime.now()
         print(one_time_pass)
         dbf.create_otp(user_id, username, password, email, one_time_pass, dateregister)
         # Send email with OTP
@@ -329,7 +329,7 @@ def OTPverification():
     email = temporary_data[3]
     one_time_pass = temporary_data[4]
     dateregister = temporary_data[5]
-    time_check = datetime.now() - dateregister
+    time_check = datetime.datetime.now() - dateregister
     if time_check.seconds > 300:
         dbf.delete_otp(temp_user_id)
         flash("OTP expired please try again", "OTP-expired")
@@ -545,7 +545,10 @@ def password_reset(token):
 
             # Create session to login
             flask_global.user = user
-
+            if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                dbf.delete_failed_logins(user.user_id)
+            if bool(dbf.retrieve_lockout_time):
+                dbf.delete_lockout_time(user.user_id)
             # Flash message and redirect to account page
             flash("Password has been successfully set")
             return redirect(url_for("account"))
@@ -1500,7 +1503,7 @@ def api_login():
     username = flask_global.data["username"]
     password = flask_global.data["password"]
     user_data = dbf.user_auth(username, password)
-    time_check = datetime.now()
+    time_check = datetime.datetime.now()
     if user_data is None:
         if dbf.retrieve_user_id_by_username(username):
             if dbf.retrieve_failed_login(username)[1] >= 5:

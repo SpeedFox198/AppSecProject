@@ -8,6 +8,7 @@
 -- DROP TABLE IF EXISTS Reviews;
 -- DROP TABLE IF EXISTS TwoFA;
 -- DROP TABLE IF EXISTS Timeout;
+-- DROP TABLE IF EXISTS FailedAttempts;
 
 CREATE TABLE Users (
     user_id TEXT NOT NULL,

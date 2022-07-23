@@ -33,19 +33,19 @@ def delete_2FA_token(user_id: str) -> None:
 
 def create_failed_login(username: str, attempt_no: str) -> None:
     """ Creates failed login entry """
-    insert_row("FailedLogin", (username, attempt_no))
+    insert_row("FailedAttempts", (username, attempt_no))
 
 def retrieve_failed_login(username: str) -> Union[tuple, None]:
     """ Retrieves and returns failed login from database """
-    return retrieve_db("FailedLogin", username=username, fetchone=True)
+    return retrieve_db("FailedAttempts", username=username, fetchone=True)
 
 def update_failed_login(username: str, attempt_no: str) -> None:
     """ Updates failed login entry """
-    update_rows("FailedLogin", ("attempt_no",), (attempt_no,), username=username)
+    update_rows("FailedAttempts", ("attempt_no",), (attempt_no,), username=username)
 
 def delete_failed_logins(username: str) -> None:
     """ Deletes and returns failed login from database """
-    delete_rows("FailedLogin", username=username)
+    delete_rows("FailedAttempts", username=username)
 
 def create_lockout_time(user_id, date) -> None:
     """ Creates a timeout time """
