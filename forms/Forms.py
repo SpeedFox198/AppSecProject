@@ -3,9 +3,9 @@ Form classes used by BrasBasahBooks web app
 """
 
 # Import WTForms
-from wtforms import Form, validators, StringField, RadioField,\
-                    TextAreaField, EmailField, PasswordField, FileField,\
-                    SelectField, IntegerField, DecimalField
+from wtforms import Form, validators, StringField, RadioField, \
+    TextAreaField, EmailField, PasswordField, FileField, \
+    SelectField, IntegerField, DecimalField, ValidationError
 
 # Import custom validations (for password field)
 from .Validations import ContainsLower, ContainsUpper, ContainsNumSymbol, ValidUsername
@@ -132,9 +132,9 @@ class CreateUserForm(SignUpForm):
     """ Create user form used when creating new users """
 
     # User Type
-    user_type = SelectField("User Type", [validators.InputRequired(message="")],
-                            choices=[("", "Select User Type"), ("C", "Customer"), ("A", "Admin")],
-                            default="")
+    role = SelectField("User Type", validators=[validators.InputRequired(message="")],
+                       choices=[("", "Select User Type"), ("customer", "Customer"), ("staff", "Staff")],
+                       default="")
 
 
 class DeleteUserForm(Form):

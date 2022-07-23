@@ -24,7 +24,7 @@ def retrieve_user(user_id: str) -> Union[tuple, None]:
 
 def retrieve_user_id(email: str) -> Union[str, None]:
     """ Returns user_id using email """
-    data = retrieve_db("Users", columns=["user_id"], email=email, fetchone=True)
+    data:tuple = retrieve_db("Users", columns=["user_id"], email=email, fetchone=True)
     if data:
         return data[0]
 
