@@ -3,14 +3,14 @@ import sqlite3
 con = sqlite3.connect("database.db")
 
 # Very scary code, resets your database
-# with open("schema.sql") as f:
-#     con.executescript(f.read())
+with open("schema.sql") as f:
+    con.executescript(f.read())
 
 #cur = con.cursor()
 
 #cur.execute("""
 #""")
-# con.commit()
+#con.commit()
 
 # x = cur.execute("SELECT * FROM Customers;").fetchall()
 # for i in x:

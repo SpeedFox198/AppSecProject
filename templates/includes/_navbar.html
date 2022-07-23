@@ -1,5 +1,5 @@
 {% set is_logged_in = g.user is not none %}
-{% set is_admin = is_logged_in and g.user.is_admin %}
+{% set is_admin = is_logged_in and g.user.role in ["admin", "staff"] %}
 <!-- Brand name and Logo -->
 <nav class="navbar brand-nav d-none d-lg-block">
   <div class="container-fluid">

@@ -61,6 +61,11 @@ url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 # testing mode
 stripe.api_key = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
 
+
+def allowed_file(filename):
+    # Return true if there is an extension in file, and its extension is in the allowed extensions
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def get_user():
     """ Returns user if cookie is correct, else returns None """
 
@@ -91,7 +96,7 @@ def add_cookie(cookies:dict):
     """ Adds cookies """
     if not isinstance(cookies, dict):
         raise TypeError("Expected dictionary")
-    new_cookies:dict = flask_global.get(NEW_COOKIES, default={})
+    new_cookies: dict = flask_global.get(NEW_COOKIES, default={})
     new_cookies.update(cookies)
     flask_global.new_cookies = new_cookies
 
@@ -100,7 +105,7 @@ def remove_cookies(cookies:list):
     """ Remove cookies """
     if not isinstance(cookies, list):
         raise TypeError("Expected list")
-    expired_cookies:list = flask_global.get(EXPIRED_COOKIES, default=[])
+    expired_cookies: list = flask_global.get(EXPIRED_COOKIES, default=[])
     expired_cookies.extend(cookies)
     flask_global.expired_cookies = expired_cookies
 
@@ -123,12 +128,17 @@ def login_required(func):
     return decorated_function
 
 
-def admin_check(mode="regular"):
+def role_check(roles: list[str], mode="regular"):
     """
-    Put this in routes that need admin check with the @ sign
+    Put this in routes that only allow selected roles with the @ sign
     For example:
     @app.route('/admin/manage-account")
-    @admin_check()
+    @role_check(["admin"])
+
+    You can also add multiple roles for the route
+    E.g:
+    @app.route('/admin/inventory')
+    @role_check(["admin", "staff"])
     """
     def decorator(func):
         @wraps(func)
@@ -140,7 +150,7 @@ def admin_check(mode="regular"):
             Checks if there is a logged-in session and if the user is an admin
             """
             user: User = flask_global.user
-            if not isinstance(user, User) or not user.is_admin:
+            if not isinstance(user, User) or user.role not in roles:
                 if mode == "regular":
                     abort(404)
                 elif mode == "api":
@@ -176,7 +186,7 @@ def before_request():
     flask_global.user = get_user()  # Get user
 
 
-""" After request """##TODO: add SECURE in header
+""" After request """ ##TODO: add SECURE in header
 
 @app.after_request
 def after_request(response):
@@ -196,7 +206,7 @@ def after_request(response):
 
     # Only renew session if login
     if isinstance(user, User):
-        renewed_user_session = create_user_session(user.user_id, user.is_admin)
+        renewed_user_session = create_user_session(user.user_id, user.role)
         response.set_cookie(USER_SESSION_NAME, renewed_user_session, httponly=True, secure=True)
 
     # Default log user out
@@ -226,7 +236,7 @@ def after_request(response):
 @app.route("/")
 @limiter.limit("10/second", override_defaults=False)
 def home():
-    if flask_global.user and flask_global.user.is_admin:
+    if flask_global.user and flask_global.user.role == "admin":
         abort(404)
 
     english_books_data = dbf.retrieve_books_by_language("English")
@@ -316,7 +326,7 @@ def OTPverification():
             dbf.create_customer(user_id, username, email, password)
 
             # Create new user session to login (placeholder values were used to create user object)
-            flask_global.user = User(user_id, "", "", "", "", 0)
+            flask_global.user = User(user_id, "", "", "", "", "customer")
 
             # Return redirect with session cookie
             remove_cookies(["username", "email", "password", "OTP"])
@@ -435,7 +445,7 @@ def google_authenticator():
     # User is a Class
     user: User = flask_global.user
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(403)
 
     secret_token = get_cookie_value(request, "token")
@@ -464,7 +474,7 @@ def google_authenticator_disable():
     # User is a Class
     user: User = flask_global.user
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(403)
 
     dbf.delete_2FA_token(user.user_id)
@@ -533,6 +543,11 @@ def password_reset(token):
 @limiter.limit("10/second", override_defaults=False)
 @login_required
 def password_change():
+    # Get current user
+    user: User = flask_global.user
+
+    if user.role == "admin":
+        abort(404)
     # Flask global error variable for css
     errors = flask_global.errors = {}
 
@@ -578,47 +593,7 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
-# Needs to be changed
-# TODO: needs to change
-# NOTE: sending email is done by Royston
-"""Verification page in case"""
-
-
-# Send verification link page
-@app.route("/user/verify")
-def verify_send():
-    # Get user
-    user = get_user()
-
-    # If not customer or email is verified
-    if not isinstance(user, Customer) or user.is_verified():
-        return redirect(url_for("home"))
-
-    # Configure noreplybbb02@gmail.com
-    # app.config.from_pyfile("config/noreply_email.cfg")
-    # mail.init_app(app)
-
-    # Get email
-    email = user.get_email()
-
-    # Generate token
-    token = url_serialiser.dumps(email, salt=app.config["VERIFY_EMAIL_SALT"])
-
-    # Send message to email entered
-    msg = Message(subject="Verify Email",
-                  sender=("BrasBasahBooks", "noreplybbb02@gmail.com"),
-                  recipients=[email])
-    link = url_for("verify", token=token, _external=True)
-    msg.html = f"Click <a href='{link}'>here</a> to verify your email.<br />(Link expires after 15 minutes)"
-    mail.send(msg)
-
-    flash(f"Verification email sent to {email}")
-    return redirect(url_for("account"))
-
-"""    User Pages    """
-
 """ View account page """
-
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -631,7 +606,7 @@ def account():
     if not user:
         return redirect(url_for("login"))
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(404)
 
     # Get account page form
@@ -690,7 +665,7 @@ def account():
 
 
 @app.route("/admin/dashboard", methods=["GET"])
-@admin_check()
+@role_check(["admin"])
 def dashboard():
     customers = dbf.number_of_customers()
     orders = dbf.number_of_orders()
@@ -703,7 +678,7 @@ def dashboard():
 
 # Manage accounts page
 @app.route("/admin/manage-accounts", methods=["GET", "POST"])
-@admin_check()
+@role_check(["admin"])
 def manage_accounts():
     # Flask global error variable for css
     flask_global.errors = {}
@@ -822,7 +797,7 @@ def manage_accounts():
 
 
 @app.route('/admin/inventory')
-@admin_check()
+@role_check(["admin", "staff"])
 def inventory():
     inventory_data = dbf.retrieve_inventory()
 
@@ -832,7 +807,7 @@ def inventory():
 
 
 @app.route('/admin/book/<book_id>')
-@admin_check()
+@role_check(["admin", "staff"])
 def view_book(book_id):
     book_data = dbf.retrieve_book(book_id)
 
@@ -843,9 +818,6 @@ def view_book(book_id):
     return render_template("admin/book_info_admin.html", book=book)
 
 
-def allowed_file(filename):
-    # Return true if there is an extension in file, and its extension is in the allowed extensions
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
@@ -854,7 +826,7 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
-@admin_check()
+@role_check(["admin", "staff"])
 def add_book():
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
@@ -899,7 +871,7 @@ def add_book():
 
 
 @app.route('/admin/update-book/<book_id>/', methods=['GET', 'POST'])
-@admin_check()
+@role_check(["admin", "staff"])
 def update_book(book_id):
     # Get specified book
     if not dbf.retrieve_book(book_id):
@@ -950,8 +922,8 @@ def update_book(book_id):
         return render_template('admin/update_book.html', form=update_book_form)
 
 
-@app.route('/admin/delete-book/<book_id>/', methods=['POST'])
-@admin_check()
+@app.route('/staff/delete-book/<book_id>/', methods=['POST'])
+@role_check(["admin", "staff"])
 def delete_book(book_id):
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
@@ -966,7 +938,7 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
-@admin_check()
+@role_check(["staff"])
 def manage_orders():
     return "sorry for removing your code"
 
@@ -1002,7 +974,7 @@ def book_review(id, reviewPageNumber):
     if not user:
         return redirect(url_for("login"))
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(404)
 
     createReview = CreateReviewText(request.form)
@@ -1148,7 +1120,7 @@ def add_to_cart():
     # User is a Class
     user: User = flask_global.user
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(404)
 
     user_id = user.user_id
@@ -1209,7 +1181,7 @@ def cart():
     # User is a Class
     user: User = flask_global.user
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(404)
 
     user_id = user.user_id
@@ -1279,7 +1251,7 @@ def my_orders():
     # User is a Class
     user: User = flask_global.user
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(404)
 
     user_id = user.user_id
@@ -1327,7 +1299,7 @@ def checkout():
     # User is a Class
     user: User = flask_global.user
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(404)
 
     user_id = user.user_id
@@ -1340,7 +1312,7 @@ def checkout():
     total_price = 0
     for book, quantity in cart_items:
         total_price += book.price * quantity
-    total_price = total_price.float()
+    total_price = float(total_price)
     
     if request.method == 'POST':
         Orderform = OrderForm.OrderForm(request.form)
@@ -1356,7 +1328,7 @@ def create_checkout_session():
     # User is a Class
     user: User = flask_global.user
 
-    if user.is_admin:
+    if user.role == "admin":
         abort(404)
 
     user_id = user.user_id
@@ -1577,7 +1549,7 @@ def api_single_book(book_id):
 @app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
-@admin_check("api")
+@role_check(["admin"], "api")
 def api_users():
     if request.method == "GET":
 
@@ -1622,7 +1594,7 @@ def api_users():
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
-@admin_check("api")
+@role_check(["admin"], "api")
 def api_single_user(user_id):
     if request.method == "GET":
         user_data = dbf.retrieve_customer_detail(user_id)
@@ -1672,6 +1644,31 @@ def api_reviews(book_id):
     reviews = [Review(*review).to_dict() for review in dbf.retrieve_reviews(book_id)]
     ratings = dbf.retrieve_reviews_ratings(book_id)
     return jsonify(reviews=reviews, ratings=ratings)
+
+
+@app.route('/api/reviews/<book_id>', methods=["DELETE"])
+@limiter.limit("10/second", override_defaults=False)
+@role_check(["staff"], "api")
+def api_delete_reviews(book_id):  # created delete route bc staff only can delete but everyone can read reviews
+    if not dbf.retrieve_book(book_id):
+        return jsonify(status=1, message="Book does not exist"), 404
+
+    dbf.delete_book(book_id)
+    return jsonify(status=0)
+
+
+@app.route('/api/orders/<user_id>')
+@limiter.limit("10/second", override_defaults=False)
+@role_check(["staff"], "api")
+def api_orders(user_id):
+    return "asdf"
+
+
+@app.route('/api/orders/<user_id>')
+@limiter.limit("10/second", override_defaults=False)
+@role_check(["staff"], "api")
+def api_delete_orders(user_id):
+    return "zxcv"
 
 
 """    Error Handlers    """

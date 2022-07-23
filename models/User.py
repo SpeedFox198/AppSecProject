@@ -20,7 +20,7 @@ class User:
     email: str
     password: str
     _profile_pic: str
-    is_admin: int
+    role: str
     name: str = None
     credit_card_no: str = None
     address: str = None

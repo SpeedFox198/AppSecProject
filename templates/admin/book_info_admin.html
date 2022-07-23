@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block stylesheets %}
+
+<link rel="stylesheet" href="/static/css/books.css">
+
+{% endblock %}
+
+{% block content %}
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+  "Home": url_for("home"),
+  "All Books": url_for("books", sort_this="all"),
+  book.title: "#"
+}) }}
+<div class="container display-section p-3 mb-4">
+  <div class="row book-info">
+    <div class="col-4">
+      <img src="{{ book.cover_img }}">
+    </div>
+    <div class="col-8">
+      <h2>{{ book.title }}</h2>
+      <p>By: {{ book.author }}</p>
+      <p>Language: <span>{{ book.language }}</span></p>
+      <p>Genre: <span>{{ book.genre }}</span></p>
+      <h4>$<span>{{ book.price }}</span></h4>
+      <h5>Description</h5>
+      <p>{{ book.description }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
