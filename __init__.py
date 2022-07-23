@@ -661,7 +661,7 @@ def account():
                            twoFA_enabled=twoFA_enabled)
 
 
-"""    Admin Pages    """
+"""    Admin/Staff Pages    """
 
 
 @app.route("/admin/dashboard", methods=["GET"])
@@ -677,9 +677,9 @@ def dashboard():
 
 
 # Manage accounts page
-@app.route("/admin/manage-accounts", methods=["GET", "POST"])
+@app.route("/admin/manage-users", methods=["GET", "POST"])
 @role_check(["admin"])
-def manage_accounts():
+def manage_users():
     # Flask global error variable for css
     flask_global.errors = {}
     errors = flask_global.errors
@@ -745,7 +745,7 @@ def manage_accounts():
                 user_id = generate_uuid5(username)  # Generate new unique user id for customer
                 dbf.create_customer(user_id, username, email, password)
                 flash(f"Created new customer: {username}")
-                return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+                return redirect(f"{url_for('manage_users')}?page={active_page}")
 
         # Else, form was invalid
         else:
@@ -796,6 +796,126 @@ def manage_accounts():
     )
 
 
+@app.route('/admin/manage-staff', methods=["GET", "POST"])
+@role_check(["admin"])
+def manage_staff():
+    # Flask global error variable for css
+    flask_global.errors = {}
+    errors = flask_global.errors
+
+    # Get page number
+    active_page = request.args.get("page", default=1, type=int)
+
+    # Get sign up form
+    create_staff_form = CreateUserForm(request.form)
+    delete_staff_form = DeleteUserForm(request.form)
+
+    form_trigger = "addUserButton"  # id of form to trigger on page load
+
+    # If GET request to page (no forms sent)
+    if request.method == "GET":
+        form_trigger = ""
+
+    # Else, POST request to delete/create user
+    else:
+
+        # If action is to delete user (and POST request is valid)
+        if delete_staff_form.validate() and delete_staff_form.user_id.data:
+
+            # Delete selected user
+            user_id = delete_staff_form.user_id.data
+
+            # Try deleting the user (False if user doesn't exist)
+            deleted_staff = dbf.delete_staff(user_id)
+
+            # If customer exists in database (and is deleted)
+            if deleted_staff:
+                deleted_staff = User(*deleted_staff)
+                # Flash success message
+                flash(f"Deleted staff: {deleted_staff.username}")
+
+            # Else user is not in database
+            else:
+                # Flash warning message
+                flash("Staff does not exist", "warning")
+
+            # Redirect to prevent form resubmission
+            return redirect(f"{url_for('manage_staff')}?page={active_page}")
+
+        # If action is to create user (and POST request is valid)
+        elif create_staff_form.validate():
+            # Extract data from sign up form
+            username = create_staff_form.username.data
+            email = create_staff_form.email.data.lower()
+            password = create_staff_form.password.data
+
+            # Ensure that username is not registered yet
+            if dbf.username_exists(username):
+                errors["DisplayFieldError"] = errors["CreateUserUsernameError"] = True
+                flash("Username taken", "create-user-username-error")
+
+            # Ensure that email is not registered yet
+            elif dbf.email_exists(email):
+                errors["DisplayFieldError"] = errors["CreateUserEmailError"] = True
+                flash("Email already registered", "create-user-email-error")
+
+            # If username and email are not used, create customer
+            else:
+                user_id = generate_uuid5(username)  # Generate new unique user id for customer
+                dbf.create_staff(user_id, username, email, password)
+                flash(f"Created new staff: {username}")
+                return redirect(f"{url_for('manage_staff')}?page={active_page}")
+
+        # Else, form was invalid
+        else:
+            errors["DisplayFieldError"] = True
+
+    # Get total number of customers
+    staff_count = dbf.number_of_staff()
+    print(staff_count)
+
+    # Set page number
+    last_page = ceil(staff_count / ACCOUNTS_PER_PAGE) or 1
+    if active_page < 1:
+        active_page = 1
+    elif active_page > last_page:
+        active_page = last_page
+
+    # Get users to be displayed
+    offset = (active_page - 1) * ACCOUNTS_PER_PAGE  # Offset for SQL query
+    display_users = [User(*data) for data in dbf.retrieve_all_staff(ACCOUNTS_PER_PAGE, offset)]
+
+    first_index = (active_page - 1) * ACCOUNTS_PER_PAGE
+
+    # Get page list
+    if last_page <= 5:
+        page_list = [i for i in range(1, last_page + 1)]
+    else:
+        center_item = active_page
+        if center_item < 3:
+            center_item = 3
+        elif center_item > last_page - 2:
+            center_item = last_page - 2
+        page_list = [i for i in range(center_item - 2, center_item + 2 + 1)]
+    prev_page = active_page - 1 if active_page - 1 > 0 else active_page
+    next_page = active_page + 1 if active_page + 1 <= last_page else last_page
+
+    # Get entries range
+    entries_range = (first_index + 1, first_index + len(display_users))
+
+    return render_template(
+        "admin/manage_staff.html",
+        display_users=display_users,
+        active_page=active_page, page_list=page_list,
+        prev_page=prev_page, next_page=next_page,
+        first_page=1, last_page=last_page,
+        entries_range=entries_range, total_entries=staff_count,
+        form_trigger=form_trigger,
+        create_user_form=create_staff_form,
+        delete_user_form=delete_staff_form
+    )
+
+
 @app.route('/admin/inventory')
 @role_check(["admin", "staff"])
 def inventory():
@@ -816,8 +936,6 @@ def view_book(book_id):
 
     book = Book(*book_data)
     return render_template("admin/book_info_admin.html", book=book)
-
-
 
 
 lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
@@ -922,7 +1040,7 @@ def update_book(book_id):
         return render_template('admin/update_book.html', form=update_book_form)
 
 
-@app.route('/staff/delete-book/<book_id>/', methods=['POST'])
+@app.route('/admin/delete-book/<book_id>/', methods=['POST'])
 @role_check(["admin", "staff"])
 def delete_book(book_id):
     # Deletes book and its cover image
@@ -941,6 +1059,12 @@ def delete_book(book_id):
 @role_check(["staff"])
 def manage_orders():
     return "sorry for removing your code"
+
+
+@app.route("/staff/manage-reviews")
+@role_check(["staff"])
+def manage_reviews():
+    dbf.retrieve_inventory()
 
 
 """    Books Pages    """
@@ -1506,7 +1630,7 @@ def api_logout():
     return jsonify(status=0)  # Status 0 is success
 
 
-@app.route("/api/books/all", methods=["GET"])
+@app.route("/api/books", methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
 def api_all_books():
     books_data = dbf.retrieve_inventory()
@@ -1564,13 +1688,9 @@ def api_users():
         output = [dict(user_id=row[0],
                        username=row[1],
                        email=row[2],
-                       # password=row[3],
                        profile_pic=row[4],
                        is_admin=row[5],
                        name=row[6],
-                       # credit_card_no=row[7],
-                       # address=row[8],
-                       # phone_no=row[9],
                        )
                   for row in users_data]
 
@@ -1659,10 +1779,10 @@ def api_delete_reviews(book_id):  # created delete route bc staff only can delet
     return jsonify(status=0)
 
 
-@app.route('/api/orders/<user_id>')
+@app.route('/api/orders')
 @limiter.limit("10/second", override_defaults=False)
 @role_check(["staff"], "api")
-def api_orders(user_id):
+def api_orders():
     return "asdf"
 
 
