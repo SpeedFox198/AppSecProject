@@ -31,25 +31,29 @@ def delete_2FA_token(user_id: str) -> None:
     """ Deletes only the 2FA token from the Users database """
     delete_rows("twoFA", user_id=user_id)
 
-def create_OTP(user_id, OTP) -> None:
-    """ Creates a new OTP for user_id """
-    insert_row("OTP", (user_id, OTP))
+def create_failed_login(username: str, attempt_no: str) -> None:
+    """ Creates failed login entry """
+    insert_row("FailedLogin", (username, attempt_no))
 
-def retrieve_OTP(user_id: str) -> Union[tuple, None]:
-    """ Retrieves OTP for user_id """
-    return retrieve_db("OTP", user_id=user_id, fetchone=True)
+def retrieve_failed_login(username: str) -> Union[tuple, None]:
+    """ Retrieves and returns failed login from database """
+    return retrieve_db("FailedLogin", username=username, fetchone=True)
 
-def update_OTP(user_id: str, OTP: str) -> None:
-    """ Updates OTP for user_id """
-    update_rows("OTP", ("OTP",), (OTP,), user_id=user_id)
+def update_failed_login(username: str, attempt_no: str) -> None:
+    """ Updates failed login entry """
+    update_rows("FailedLogin", ("attempt_no",), (attempt_no,), username=username)
 
-def delete_OTP(user_id: str) -> None:
-    """ Deletes and returns OTP from database """
-    delete_rows("OTP", user_id=user_id)
+def delete_failed_logins(username: str) -> None:
+    """ Deletes and returns failed login from database """
+    delete_rows("FailedLogin", username=username)
 
 def create_lockout_time(user_id, date) -> None:
     """ Creates a timeout time """
     insert_row("Timeout", (user_id, date))
+
+def retrieve_lockout_time(user_id: str) -> Union[tuple, None]:
+    """ Retrieves and returns lockout time from database """
+    return retrieve_db("Timeout", user_id=user_id, fetchone=True)
 
 def delete_lockout_time(user_id: str) -> None:
     """ Deletes and returns lockout time from database """
@@ -64,6 +68,22 @@ def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
         fetchone=True
     )
 
+def create_otp(user_id: str, username: str, password: str, email: str, otp: str, otp_time: str) -> None:
+    """ Creates OTP for temporary login """
+    insert_row("OTP", (user_id, username, password, email, otp, otp_time))
+
+""" Retrieves and returns OTP for all credentials """
+def retrieve_otp(user_id: str) -> Union[tuple, None]:
+    """ Retrieves and returns OTP for all credentials """
+    return retrieve_db("OTP", user_id=user_id, fetchone=True)
+
+def update_otp(user_id: str, username: str, password: str, email: str, otp: str, otp_time: str) -> None:
+    """ Updates OTP for user_id """
+    update_rows("OTP", ("username", "password", "email", "otp", "otp_time"), (username, password, email, otp, otp_time), user_id=user_id)
+
+def delete_otp(user_id: str) -> Union[tuple, None]:
+    """ Deletes and returns OTP from database """
+    return delete_rows("OTP", user_id=user_id)
 
 def update_customer_account(details1, details2):
     con = sqlite3.connect(DATABASE)

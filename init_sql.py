@@ -3,14 +3,18 @@ import sqlite3
 con = sqlite3.connect("database.db")
 
 # Very scary code, resets your database
-with open("schema.sql") as f:
-    con.executescript(f.read())
+#with open("schema.sql") as f:
+    #con.executescript(f.read())
 
-#cur = con.cursor()
+cur = con.cursor()
 
-#cur.execute("""
-#""")
-#con.commit()
+cur.execute("""CREATE TABLE FailedAttempts (
+    username TEXT NOT NULL,
+    attempts INTEGER NOT NULL,
+    FOREIGN KEY (username) REFERENCES Users(username)
+);
+""")
+con.commit()
 
 # x = cur.execute("SELECT * FROM Customers;").fetchall()
 # for i in x:

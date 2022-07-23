@@ -16,13 +16,18 @@ CREATE TABLE Users (
     password TEXT NOT NULL,
     profile_pic TEXT,
     role TEXT NOT NULL,
-    PRIMARY KEY (user_id)
+    PRIMARY KEY (user_id, username)
 );
 
 CREATE TABLE TwoFA (
     user_id TEXT NOT NULL,
     twoFA_secret_token TEXT,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+CREATE TABLE FailedAttempts (
+    username TEXT NOT NULL,
+    attempts INTEGER NOT NULL,
+    FOREIGN KEY (username) REFERENCES Users(username)
 );
 
 CREATE TABLE Timeout (
@@ -33,7 +38,11 @@ CREATE TABLE Timeout (
 
 CREATE TABLE OTP (
     user_id TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
     otp TEXT NOT NULL,
+    otp_date_released INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 

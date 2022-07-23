@@ -27,4 +27,9 @@ def retrieve_user_id(email: str) -> Union[str, None]:
     data = retrieve_db("Users", columns=["user_id"], email=email, fetchone=True)
     if data:
         return data[0]
-    
+
+def retrieve_user_id_by_username(username: str) -> Union[str, None]:
+    """ Returns user_id using username """
+    data = retrieve_db("Users", columns=["user_id"], username=username, fetchone=True)
+    if data:
+        return data[0]
