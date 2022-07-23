@@ -397,6 +397,8 @@ def twoFA():
 
                 # Create session to login
                 flask_global.user = user
+                if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                    dbf.delete_failed_logins(user.user_id)
                 remove_cookies(["user_id", "user_data"])
 
                 if next_page and next_page[:len(DOMAIN_NAME)] == DOMAIN_NAME:
