@@ -495,3 +495,10 @@ button.nav-link:focus {
   padding-top: 20px;
   padding-bottom: 20px;
 }
+
+/* 啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊 */
+/* 哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈 */
+/* Cuz bootstrap decided to use data: which violates our CSP */
+.btn-close {
+  background: transparent url("/static/img/cross.svg") center/1em auto no-repeat !important;
+}

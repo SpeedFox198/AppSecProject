@@ -73,7 +73,7 @@
           <div class="col-md d-flex flex-column">
             <div class="form-group grid-form-spacer">
               <label for="bookCoverField">Book Cover</label>
-              <input type="file" class="form-control" id="bookCoverField" required name="bookimg" accept="image/*" onchange="showBook();">
+              <input type="file" class="form-control" id="bookCoverField" required name="bookimg" accept="image/*">
               <div class="book-cover-field mt-2">
                 <div class="img-wrapper img-2-3 img-thumbnail">
                     <img class="d-none" id="bookcover" alt="Book Cover" src="">
@@ -91,14 +91,7 @@
   </div>
 </div>
 {% endblock %}
-{% block scripts %}
-<script>
-function showBook() {
-  let field = document.getElementById("bookCoverField");
-  let bookcover = document.getElementById('bookcover');
-  bookcover.src = window.URL.createObjectURL(field.files[0]);
-  bookcover.classList.remove("d-none");
-}
-</script>
-{% endblock %}
 
+{% block scripts %}
+<script src="/static/js/add_book.js"></script>
+{% endblock %}

@@ -37,7 +37,7 @@
             </div>
             <label for="picture" tabindex="0" class="profile-pic-input align-bottom">Upload Image</label>
           </div>
-          {{ render_field(form.picture, accept="image/*", class="d-none", id="picture", onchange="document.getElementById('profilePic').src = window.URL.createObjectURL(this.files[0])") }}
+          {{ render_field(form.picture, accept="image/*", class="d-none", id="picture") }}
         </div>
         <div class="mb-3 row">
           <label for="username" class="col-md-2 col-form-label text-md-end">Username</label>
@@ -91,4 +91,8 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/account.js"></script>
 {% endblock %}

@@ -13,7 +13,7 @@
 CREATE TABLE Users (
     user_id TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    email TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
     password TEXT NOT NULL,
     profile_pic TEXT,
     role TEXT NOT NULL,
@@ -26,24 +26,31 @@ CREATE TABLE TwoFA (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 CREATE TABLE FailedAttempts (
-    username TEXT NOT NULL,
-    attempts INTEGER NOT NULL,
+    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    attempts INTEGER,
     FOREIGN KEY (username) REFERENCES Users(username)
 );
 
 CREATE TABLE Timeout (
-    user_id TEXT NOT NULL,
-    timeout_time INTEGER,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    timeout_year INTEGER NOT NULL,
+    timeout_month INTEGER NOT NULL,
+    timeout_day INTEGER NOT NULL,
+    timeout_hour INTEGER NOT NULL,
+    timeout_minute INTEGER NOT NULL,
+    timeout_second INTEGER NOT NULL,
+    FOREIGN KEY (username) REFERENCES Users(username)
 );
 
 CREATE TABLE OTP (
     user_id TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
     otp TEXT NOT NULL,
-    otp_date_released INTEGER NOT NULL,
+    otp_year INTEGER NOT NULL,
+    otp_month INTEGER NOT NULL,
+    otp_day INTEGER NOT NULL,
+    otp_hour INTEGER NOT NULL,
+    otp_minute INTEGER NOT NULL,
+    otp_second INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
@@ -60,7 +67,7 @@ CREATE TABLE Books (
     book_id TEXT NOT NULL,
     language TEXT NOT NULL,
     genre TEXT NOT NULL,
-    title TEXT NOT NULL,
+    title TEXT NOT NULL COLLATE NOCASE,
     stock INTEGER NOT NULL,
     price INTEGER NOT NULL,
     author TEXT NOT NULL,
