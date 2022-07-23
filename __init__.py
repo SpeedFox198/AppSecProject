@@ -16,7 +16,7 @@ from math import ceil
 from itsdangerous import URLSafeTimedSerializer, BadData
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
-from csp import CSP
+from csp import get_csp
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from sanitize import sanitize
 from flask_expects_json import expects_json
@@ -223,7 +223,8 @@ def after_request(response):
         response.set_cookie(name, create_session(value), httponly=True, secure=True)
 
     # Set CSP to prevent XSS
-    response.headers["Content-Security-Policy"] = CSP
+    allow_blob = flask_global.get("allow_blob", default=False)
+    response.headers["Content-Security-Policy"] = get_csp(blob=allow_blob)
 
     return response
 
@@ -651,7 +652,10 @@ def account():
     account_page_form.name.data = user.name
     account_page_form.phone_number.data = user.phone_no
     twoFA_enabled = bool(dbf.retrieve_2FA_token(user.user_id))
-    print(twoFA_enabled)
+
+    # Allow blob on this site only (for CSP)
+    flask_global.allow_blob = True
+
     return render_template("user/account.html",
                            form=account_page_form,
                            picture_path=user.profile_pic,
@@ -866,6 +870,9 @@ def add_book():
 
             dbf.book_add(book_details)
             flash("Book successfully added!")
+
+    # Allow blob on this site only (for CSP)
+    flask_global.allow_blob = True
 
     return render_template('admin/add_book.html', form=add_book_form)
 
