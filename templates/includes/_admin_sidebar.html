@@ -5,7 +5,8 @@
     "Inventory": url_for("inventory"),
     "Add Book": url_for("add_book"),
     "Manage Orders": url_for("manage_orders"),
-    "Manage Accounts": url_for("manage_accounts"),
+    "Manage Customers": url_for("manage_users"),
+    "Manage Staff": url_for("manage_staff")
   } %}
   {% do links_dict.update({active: "#"}) %}
   {{ render_sidebar(links_dict) }}

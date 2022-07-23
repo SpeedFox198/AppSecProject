@@ -13,3 +13,4 @@ from .book import *
 from .review import *
 from .order import *
 from .cart import *
+from .staff import *
