@@ -237,7 +237,7 @@ def after_request(response):
 @limiter.limit("10/second", override_defaults=False)
 def home():
     if flask_global.user and flask_global.user.role == "admin":
-        abort(404)
+        return redirect(url_for("dashboard"))
 
     english_books_data = dbf.retrieve_books_by_language("English")
     chinese_books_data = dbf.retrieve_books_by_language("Chinese")
@@ -986,6 +986,8 @@ def book_review(id, reviewPageNumber):
 @app.route("/books/<sort_this>")
 @limiter.limit("10/second", override_defaults=False)
 def books(sort_this):
+    if flask_global.user and flask_global.user.role == "admin":
+        abort(403)
     sort_dict = {}
     books_dict = {}
     language_list = set()
