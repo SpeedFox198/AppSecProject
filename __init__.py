@@ -295,15 +295,22 @@ def sign_up():
 
         one_time_pass = generateOTP()
         user_id = generate_uuid5(username)
-        dateregister = datetime.datetime.now()
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
+        day = datetime.datetime.now().day
+        hour = datetime.datetime.now().hour
+        minute = datetime.datetime.now().minute
+        second = datetime.datetime.now().second
         print(one_time_pass)
-        dbf.create_otp(user_id, username, password, email, one_time_pass, dateregister)
+        if dbf.retrieve_otp(user_id):
+            dbf.delete_otp(user_id)
+        dbf.create_otp(user_id, one_time_pass, year, month, day, hour, minute, second)
         # Send email with OTP
         subject = "OTP for registration"
         message = "Do not reply to this email.\nPlease enter " + one_time_pass + " as your OTP to complete your registration."
 
         gmail_send(email, subject, message)
-        add_cookie({"Temp_User_ID": user_id})
+        add_cookie({"Temp_User_ID": user_id, "Temp_User_Email": email, "Temp_User_Password": password, "Temp_User_Username": username})
 
         return redirect(url_for("OTPverification"))
 
@@ -314,7 +321,10 @@ def sign_up():
 @app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():
-    temp_user_id = get_cookie_value("Temp_User_ID")
+    temp_user_id = get_cookie_value(request, "Temp_User_ID")
+    username = get_cookie_value(request, "Temp_User_Username")
+    email = get_cookie_value(request, "Temp_User_Email")
+    password = get_cookie_value(request, "Temp_User_Password")
     if temp_user_id is None:
         return redirect(url_for("sign_up"))
     else:
@@ -324,11 +334,14 @@ def OTPverification():
         return redirect(url_for("sign_up"))
     else:
         pass
-    username = temporary_data[1]
-    password = temporary_data[2]
-    email = temporary_data[3]
-    one_time_pass = temporary_data[4]
-    dateregister = temporary_data[5]
+    one_time_pass = temporary_data[1]
+    year = temporary_data[2]
+    month = temporary_data[3]
+    day = temporary_data[4]
+    hour = temporary_data[5]
+    minute = temporary_data[6]
+    second = temporary_data[7]
+    dateregister = datetime.datetime(year, month, day, hour, minute, second)
     time_check = datetime.datetime.now() - dateregister
     if time_check.seconds > 300:
         dbf.delete_otp(temp_user_id)
@@ -345,6 +358,7 @@ def OTPverification():
 
             # Create new user session to login (placeholder values were used to create user object)
             flask_global.user = User(user_id, "", "", "", "", "customer")
+            remove_cookies(["Temp_User_ID", "Temp_User_Email", "Temp_User_Password", "Temp_User_Username"])
 
             # Return redirect with session cookie
             return redirect(url_for("home"))
@@ -1510,25 +1524,44 @@ def api_login():
         print("Check 1")
         if bool(dbf.retrieve_user_by_username(username)):
             print("Check 2")
-            if dbf.retrieve_failed_login(username)[1] >= 5:
-                create_lockout_time(username, time_check)
+            if bool(dbf.retrieve_failed_login(username)) == False:
+                print("Check 3")
+                dbf.create_failed_login(username, 1)
+                return jsonify(status=1) 
+            if dbf.retrieve_failed_login(username)[1] == 5:
+                print("Check 4")
+                year = datetime.datetime.now().year
+                month = datetime.datetime.now().month
+                day = datetime.datetime.now().day
+                hour = datetime.datetime.now().hour
+                minute = datetime.datetime.now().minute
+                second = datetime.datetime.now().second
+                create_lockout_time(username, year, month, day, hour, minute, second)
                 delete_failed_logins(username)
-                print("Your account has been locked for 5 minutes")
+                print("Your account has been locked for 30 minutes")
                 return jsonify(status=1)
-            elif dbf.retrieve_failed_login(username)[1] < 5:
+            if dbf.retrieve_failed_login(username)[1] < 5 and dbf.retrieve_failed_login(username)[1] > 0:
+                print("Check 5")
                 dbf.update_failed_login(username, dbf.retrieve_failed_login(username)[1] + 1)
                 return jsonify(status=1)
         else:
-            dbf.create_failed_login(username, 1)
             return jsonify(status=1)           
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
-    if dbf.retrieve_lockout_time(user.user_id) is not None:
-        if time_check > dbf.retrieve_lockout_time(user.user_id):
+    if dbf.retrieve_lockout_time(username) is not None:
+        year = dbf.retrieve_lockout_time(username)[1]
+        month = dbf.retrieve_lockout_time(username)[2]
+        day = dbf.retrieve_lockout_time(username)[3]
+        hour = dbf.retrieve_lockout_time(username)[4]
+        minute = dbf.retrieve_lockout_time(username)[5]
+        second = dbf.retrieve_lockout_time(username)[6]
+        lockout_time = datetime.datetime(year, month, day, hour, minute, second)
+        difference_time = time_check - lockout_time
+        if difference_time.seconds < 1800:
             print("Your account is still locked")
             return jsonify(status=1)
         else:
-            dbf.delete_lockout_time(user.user_id)
+            dbf.delete_lockout_time(username)
             print("Your account is unlocked")
     if not enable_2FA:
         # Log user in

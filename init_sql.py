@@ -6,10 +6,19 @@ con = sqlite3.connect("database.db")
 # with open("schema.sql") as f:
 #     con.executescript(f.read())
 
-# cur = con.cursor()
-# cur.execute("""
-# """)
-#con.commit()
+cur = con.cursor()
+cur.execute("""CREATE TABLE Timeout (
+    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    timeout_year INTEGER NOT NULL,
+    timeout_month INTEGER NOT NULL,
+    timeout_day INTEGER NOT NULL,
+    timeout_hour INTEGER NOT NULL,
+    timeout_minute INTEGER NOT NULL,
+    timeout_second INTEGER NOT NULL,
+    FOREIGN KEY (username) REFERENCES Users(username)
+);
+""")
+con.commit()
 
 # x = cur.execute("SELECT * FROM Customers;").fetchall()
 # for i in x:

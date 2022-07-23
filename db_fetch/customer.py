@@ -6,7 +6,7 @@ Contains functions that interacts with customer accounts
 """
 from .general import *
 from .user import retrieve_user 
-
+import datetime
 
 """ Customer-triggered Functions """
 
@@ -41,23 +41,23 @@ def retrieve_failed_login(username: str) -> Union[tuple, None]:
 
 def update_failed_login(username: str, attempt_no: str) -> None:
     """ Updates failed login entry """
-    update_rows("FailedAttempts", ("attempt_no",), (attempt_no,), username=username)
+    update_rows("FailedAttempts", ("attempts",), (attempt_no,), username=username)
 
 def delete_failed_logins(username: str) -> None:
     """ Deletes and returns failed login from database """
     delete_rows("FailedAttempts", username=username)
 
-def create_lockout_time(user_id, date) -> None:
+def create_lockout_time(username, year, month, day, hour, minute, second) -> None:
     """ Creates a timeout time """
-    insert_row("Timeout", (user_id, date))
+    insert_row("Timeout", (username, year, month, day, hour, minute, second))
 
-def retrieve_lockout_time(user_id: str) -> Union[tuple, None]:
+def retrieve_lockout_time(username: str) -> Union[tuple, None]:
     """ Retrieves and returns lockout time from database """
-    return retrieve_db("Timeout", user_id=user_id, fetchone=True)
+    return retrieve_db("Timeout", username=username , fetchone=True)
 
-def delete_lockout_time(user_id: str) -> None:
+def delete_lockout_time(username: str) -> None:
     """ Deletes and returns lockout time from database """
-    delete_rows("Timeout", user_id=user_id)
+    delete_rows("Timeout", username_id=username)
 
 def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
     """ Returns details of customer """
@@ -68,20 +68,20 @@ def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
         fetchone=True
     )
 
-def create_otp(user_id: str, username: str, password: str, email: str, otp: str, otp_time: str) -> None:
+def create_otp(user_id, otp, year, month, day, hour, minute, second) -> None:
     """ Creates OTP for temporary login """
-    insert_row("OTP", (user_id, username, password, email, otp, otp_time))
+    insert_row("OTP", (user_id, otp, year, month, day, hour, minute, second))
 
 """ Retrieves and returns OTP for all credentials """
-def retrieve_otp(user_id: str) -> Union[tuple, None]:
+def retrieve_otp(user_id) -> Union[tuple, None]:
     """ Retrieves and returns OTP for all credentials """
     return retrieve_db("OTP", user_id=user_id, fetchone=True)
 
-def update_otp(user_id: str, username: str, password: str, email: str, otp: str, otp_time: str) -> None:
+def update_otp(user_id, otp, year, month, day, hour, minute, second) -> None:
     """ Updates OTP for user_id """
-    update_rows("OTP", ("username", "password", "email", "otp", "otp_time"), (username, password, email, otp, otp_time), user_id=user_id)
+    update_rows("OTP", ("otp", "year", "month", "day", "hour", "minute", "second"), (otp, year, month, day, hour, minute, second), user_id=user_id)
 
-def delete_otp(user_id: str) -> Union[tuple, None]:
+def delete_otp(user_id) -> Union[tuple, None]:
     """ Deletes and returns OTP from database """
     return delete_rows("OTP", user_id=user_id)
 
