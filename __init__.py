@@ -1505,10 +1505,13 @@ def api_login():
     user_data = dbf.user_auth(username, password)
     time_check = datetime.datetime.now()
     if user_data is None:
-        if dbf.retrieve_user_id_by_username(username):
+        print("Check 1")
+        if bool(dbf.retrieve_user_by_username(username)):
+            print("Check 2")
             if dbf.retrieve_failed_login(username)[1] >= 5:
                 create_lockout_time(username, time_check)
                 delete_failed_logins(username)
+                print("Your account has been locked for 5 minutes")
                 return jsonify(status=1)
             elif dbf.retrieve_failed_login(username)[1] < 5:
                 dbf.update_failed_login(username, dbf.retrieve_failed_login(username)[1] + 1)
@@ -1516,14 +1519,15 @@ def api_login():
         else:
             dbf.create_failed_login(username, 1)
             return jsonify(status=1)           
-        return jsonify(status=1)  # Status 1 for not success
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
     if dbf.retrieve_lockout_time(user.user_id) is not None:
         if time_check > dbf.retrieve_lockout_time(user.user_id):
+            print("Your account is still locked")
             return jsonify(status=1)
         else:
             dbf.delete_lockout_time(user.user_id)
+            print("Your account is unlocked")
     if not enable_2FA:
         # Log user in
         flask_global.user = User(*user_data)
