@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
-from db_fetch.customer import create_OTP
+from db_fetch.customer import create_lockout_time, delete_failed_logins
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
 from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
@@ -16,7 +16,7 @@ from math import ceil
 from itsdangerous import URLSafeTimedSerializer, BadData
 from OTP import generateOTP
 from GoogleEmailSend import gmail_send
-from csp import CSP
+from csp import get_csp
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from sanitize import sanitize
 from flask_expects_json import expects_json
@@ -223,7 +223,8 @@ def after_request(response):
         response.set_cookie(name, create_session(value), httponly=True, secure=True)
 
     # Set CSP to prevent XSS
-    response.headers["Content-Security-Policy"] = CSP
+    allow_blob = flask_global.get("allow_blob", default=False)
+    response.headers["Content-Security-Policy"] = get_csp(blob=allow_blob)
 
     return response
 
@@ -237,7 +238,7 @@ def after_request(response):
 @limiter.limit("10/second", override_defaults=False)
 def home():
     if flask_global.user and flask_global.user.role == "admin":
-        abort(404)
+        return redirect(url_for("dashboard"))
 
     english_books_data = dbf.retrieve_books_by_language("English")
     chinese_books_data = dbf.retrieve_books_by_language("Chinese")
@@ -293,15 +294,18 @@ def sign_up():
             flash("Password cannot contain username", "sign-up-password-error")
             return render_template("user/sign_up.html", form=sign_up_form)
 
-        add_cookie({"username": username, "email": email, "password": password})
         one_time_pass = generateOTP()
+        user_id = generate_uuid5(username)
+        dateregister = datetime.datetime.now()
         print(one_time_pass)
+        dbf.create_otp(user_id, username, password, email, one_time_pass, dateregister)
         # Send email with OTP
         subject = "OTP for registration"
         message = "Do not reply to this email.\nPlease enter " + one_time_pass + " as your OTP to complete your registration."
 
         gmail_send(email, subject, message)
-        add_cookie({"OTP": one_time_pass})
+        add_cookie({"Temp_User_ID": user_id})
+
         return redirect(url_for("OTPverification"))
 
     # Render sign up page
@@ -311,11 +315,26 @@ def sign_up():
 @app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():
-    email = get_cookie_value(request, "email")
-    username = get_cookie_value(request, "username")
-    password = get_cookie_value(request, "password")
-    one_time_pass = get_cookie_value(request, "OTP")
-
+    temp_user_id = get_cookie_value("Temp_User_ID")
+    if temp_user_id is None:
+        return redirect(url_for("sign_up"))
+    else:
+        pass
+    temporary_data = dbf.retrieve_otp(temp_user_id)
+    if temporary_data is None:
+        return redirect(url_for("sign_up"))
+    else:
+        pass
+    username = temporary_data[1]
+    password = temporary_data[2]
+    email = temporary_data[3]
+    one_time_pass = temporary_data[4]
+    dateregister = temporary_data[5]
+    time_check = datetime.datetime.now() - dateregister
+    if time_check.seconds > 300:
+        dbf.delete_otp(temp_user_id)
+        flash("OTP expired please try again", "OTP-expired")
+        return redirect(url_for("sign_up"))
     OTPformat = OTPForm(request.form)
     print(request.method)
     if request.method == "POST":
@@ -329,7 +348,6 @@ def OTPverification():
             flask_global.user = User(user_id, "", "", "", "", "customer")
 
             # Return redirect with session cookie
-            remove_cookies(["username", "email", "password", "OTP"])
             return redirect(url_for("home"))
 
         else:
@@ -380,6 +398,8 @@ def twoFA():
 
                 # Create session to login
                 flask_global.user = user
+                if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                    dbf.delete_failed_logins(user.user_id)
                 remove_cookies(["user_id", "user_data"])
 
                 if next_page and next_page[:len(DOMAIN_NAME)] == DOMAIN_NAME:
@@ -528,7 +548,10 @@ def password_reset(token):
 
             # Create session to login
             flask_global.user = user
-
+            if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                dbf.delete_failed_logins(user.user_id)
+            if bool(dbf.retrieve_lockout_time):
+                dbf.delete_lockout_time(user.user_id)
             # Flash message and redirect to account page
             flash("Password has been successfully set")
             return redirect(url_for("account"))
@@ -651,7 +674,10 @@ def account():
     account_page_form.name.data = user.name
     account_page_form.phone_number.data = user.phone_no
     twoFA_enabled = bool(dbf.retrieve_2FA_token(user.user_id))
-    print(twoFA_enabled)
+
+    # Allow blob on this site only (for CSP)
+    flask_global.allow_blob = True
+
     return render_template("user/account.html",
                            form=account_page_form,
                            picture_path=user.profile_pic,
@@ -661,7 +687,7 @@ def account():
                            twoFA_enabled=twoFA_enabled)
 
 
-"""    Admin Pages    """
+"""    Admin/Staff Pages    """
 
 
 @app.route("/admin/dashboard", methods=["GET"])
@@ -677,9 +703,9 @@ def dashboard():
 
 
 # Manage accounts page
-@app.route("/admin/manage-accounts", methods=["GET", "POST"])
+@app.route("/admin/manage-users", methods=["GET", "POST"])
 @role_check(["admin"])
-def manage_accounts():
+def manage_users():
     # Flask global error variable for css
     flask_global.errors = {}
     errors = flask_global.errors
@@ -745,7 +771,7 @@ def manage_accounts():
                 user_id = generate_uuid5(username)  # Generate new unique user id for customer
                 dbf.create_customer(user_id, username, email, password)
                 flash(f"Created new customer: {username}")
-                return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+                return redirect(f"{url_for('manage_users')}?page={active_page}")
 
         # Else, form was invalid
         else:
@@ -796,6 +822,126 @@ def manage_accounts():
     )
 
 
+@app.route('/admin/manage-staff', methods=["GET", "POST"])
+@role_check(["admin"])
+def manage_staff():
+    # Flask global error variable for css
+    flask_global.errors = {}
+    errors = flask_global.errors
+
+    # Get page number
+    active_page = request.args.get("page", default=1, type=int)
+
+    # Get sign up form
+    create_staff_form = CreateUserForm(request.form)
+    delete_staff_form = DeleteUserForm(request.form)
+
+    form_trigger = "addUserButton"  # id of form to trigger on page load
+
+    # If GET request to page (no forms sent)
+    if request.method == "GET":
+        form_trigger = ""
+
+    # Else, POST request to delete/create user
+    else:
+
+        # If action is to delete user (and POST request is valid)
+        if delete_staff_form.validate() and delete_staff_form.user_id.data:
+
+            # Delete selected user
+            user_id = delete_staff_form.user_id.data
+
+            # Try deleting the user (False if user doesn't exist)
+            deleted_staff = dbf.delete_staff(user_id)
+
+            # If customer exists in database (and is deleted)
+            if deleted_staff:
+                deleted_staff = User(*deleted_staff)
+                # Flash success message
+                flash(f"Deleted staff: {deleted_staff.username}")
+
+            # Else user is not in database
+            else:
+                # Flash warning message
+                flash("Staff does not exist", "warning")
+
+            # Redirect to prevent form resubmission
+            return redirect(f"{url_for('manage_staff')}?page={active_page}")
+
+        # If action is to create user (and POST request is valid)
+        elif create_staff_form.validate():
+            # Extract data from sign up form
+            username = create_staff_form.username.data
+            email = create_staff_form.email.data.lower()
+            password = create_staff_form.password.data
+
+            # Ensure that username is not registered yet
+            if dbf.username_exists(username):
+                errors["DisplayFieldError"] = errors["CreateUserUsernameError"] = True
+                flash("Username taken", "create-user-username-error")
+
+            # Ensure that email is not registered yet
+            elif dbf.email_exists(email):
+                errors["DisplayFieldError"] = errors["CreateUserEmailError"] = True
+                flash("Email already registered", "create-user-email-error")
+
+            # If username and email are not used, create customer
+            else:
+                user_id = generate_uuid5(username)  # Generate new unique user id for customer
+                dbf.create_staff(user_id, username, email, password)
+                flash(f"Created new staff: {username}")
+                return redirect(f"{url_for('manage_staff')}?page={active_page}")
+
+        # Else, form was invalid
+        else:
+            errors["DisplayFieldError"] = True
+
+    # Get total number of customers
+    staff_count = dbf.number_of_staff()
+    print(staff_count)
+
+    # Set page number
+    last_page = ceil(staff_count / ACCOUNTS_PER_PAGE) or 1
+    if active_page < 1:
+        active_page = 1
+    elif active_page > last_page:
+        active_page = last_page
+
+    # Get users to be displayed
+    offset = (active_page - 1) * ACCOUNTS_PER_PAGE  # Offset for SQL query
+    display_users = [User(*data) for data in dbf.retrieve_all_staff(ACCOUNTS_PER_PAGE, offset)]
+
+    first_index = (active_page - 1) * ACCOUNTS_PER_PAGE
+
+    # Get page list
+    if last_page <= 5:
+        page_list = [i for i in range(1, last_page + 1)]
+    else:
+        center_item = active_page
+        if center_item < 3:
+            center_item = 3
+        elif center_item > last_page - 2:
+            center_item = last_page - 2
+        page_list = [i for i in range(center_item - 2, center_item + 2 + 1)]
+    prev_page = active_page - 1 if active_page - 1 > 0 else active_page
+    next_page = active_page + 1 if active_page + 1 <= last_page else last_page
+
+    # Get entries range
+    entries_range = (first_index + 1, first_index + len(display_users))
+
+    return render_template(
+        "admin/manage_staff.html",
+        display_users=display_users,
+        active_page=active_page, page_list=page_list,
+        prev_page=prev_page, next_page=next_page,
+        first_page=1, last_page=last_page,
+        entries_range=entries_range, total_entries=staff_count,
+        form_trigger=form_trigger,
+        create_user_form=create_staff_form,
+        delete_user_form=delete_staff_form
+    )
+
+
 @app.route('/admin/inventory')
 @role_check(["admin", "staff"])
 def inventory():
@@ -816,8 +962,6 @@ def view_book(book_id):
 
     book = Book(*book_data)
     return render_template("admin/book_info_admin.html", book=book)
-
-
 
 
 lang_list = [('', 'Select'), ('English', 'English'), ('Chinese', 'Chinese'), ('Malay', 'Malay'), ('Tamil', 'Tamil')]
@@ -866,6 +1010,9 @@ def add_book():
 
             dbf.book_add(book_details)
             flash("Book successfully added!")
+
+    # Allow blob on this site only (for CSP)
+    flask_global.allow_blob = True
 
     return render_template('admin/add_book.html', form=add_book_form)
 
@@ -922,7 +1069,7 @@ def update_book(book_id):
         return render_template('admin/update_book.html', form=update_book_form)
 
 
-@app.route('/staff/delete-book/<book_id>/', methods=['POST'])
+@app.route('/admin/delete-book/<book_id>/', methods=['POST'])
 @role_check(["admin", "staff"])
 def delete_book(book_id):
     # Deletes book and its cover image
@@ -941,6 +1088,12 @@ def delete_book(book_id):
 @role_check(["staff"])
 def manage_orders():
     return "sorry for removing your code"
+
+
+@app.route("/staff/manage-reviews")
+@role_check(["staff"])
+def manage_reviews():
+    dbf.retrieve_inventory()
 
 
 """    Books Pages    """
@@ -986,6 +1139,8 @@ def book_review(id, reviewPageNumber):
 @app.route("/books/<sort_this>")
 @limiter.limit("10/second", override_defaults=False)
 def books(sort_this):
+    if flask_global.user and flask_global.user.role == "admin":
+        abort(403)
     sort_dict = {}
     books_dict = {}
     language_list = set()
@@ -1482,11 +1637,31 @@ def api_login():
     username = flask_global.data["username"]
     password = flask_global.data["password"]
     user_data = dbf.user_auth(username, password)
+    time_check = datetime.datetime.now()
     if user_data is None:
-        return jsonify(status=1)  # Status 1 for not success
-
+        print("Check 1")
+        if bool(dbf.retrieve_user_by_username(username)):
+            print("Check 2")
+            if dbf.retrieve_failed_login(username)[1] >= 5:
+                create_lockout_time(username, time_check)
+                delete_failed_logins(username)
+                print("Your account has been locked for 5 minutes")
+                return jsonify(status=1)
+            elif dbf.retrieve_failed_login(username)[1] < 5:
+                dbf.update_failed_login(username, dbf.retrieve_failed_login(username)[1] + 1)
+                return jsonify(status=1)
+        else:
+            dbf.create_failed_login(username, 1)
+            return jsonify(status=1)           
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
+    if dbf.retrieve_lockout_time(user.user_id) is not None:
+        if time_check > dbf.retrieve_lockout_time(user.user_id):
+            print("Your account is still locked")
+            return jsonify(status=1)
+        else:
+            dbf.delete_lockout_time(user.user_id)
+            print("Your account is unlocked")
     if not enable_2FA:
         # Log user in
         flask_global.user = User(*user_data)
@@ -1505,7 +1680,7 @@ def api_logout():
     return jsonify(status=0)  # Status 0 is success
 
 
-@app.route("/api/books/all", methods=["GET"])
+@app.route("/api/books", methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
 def api_all_books():
     books_data = dbf.retrieve_inventory()
@@ -1563,13 +1738,9 @@ def api_users():
         output = [dict(user_id=row[0],
                        username=row[1],
                        email=row[2],
-                       # password=row[3],
                        profile_pic=row[4],
                        is_admin=row[5],
                        name=row[6],
-                       # credit_card_no=row[7],
-                       # address=row[8],
-                       # phone_no=row[9],
                        )
                   for row in users_data]
 
@@ -1658,10 +1829,10 @@ def api_delete_reviews(book_id):  # created delete route bc staff only can delet
     return jsonify(status=0)
 
 
-@app.route('/api/orders/<user_id>')
+@app.route('/api/orders')
 @limiter.limit("10/second", override_defaults=False)
 @role_check(["staff"], "api")
-def api_orders(user_id):
+def api_orders():
     return "asdf"
 
 

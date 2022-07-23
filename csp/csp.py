@@ -7,7 +7,7 @@ Stores the Content Security Policy used by the web app
 
 
 # Wrote it in a json-style format for easier management
-csp = {
+_csp = {
     "default-src": [
         "\'none\'"                      # Default deny all
     ],
@@ -24,8 +24,7 @@ csp = {
         "https://code.jquery.com"       # For jQuery
     ],
     "img-src": [
-        "\'self\'",
-        "data:"                         # For loading images from data scheme
+        "\'self\'"
     ],
     "connect-src": [
         "\'self\'"
@@ -42,6 +41,17 @@ csp = {
     ]
 }
 
+# For loading profile pic
+_img_src_blob_scp = _csp.copy()
+_img_src_blob_scp["img-src"] = _img_src_blob_scp["img-src"] + ["blob:"]
 
 # Formats csp into string in the proper format of a Content Security Policy
-CSP = "".join(f"{key} {' '.join(value)};" for key, value in csp.items())
+_DEFAULT_CSP = "".join(f"{key} {' '.join(value)};" for key, value in _csp.items())
+_IMG_SRC_BLOB_SCP = "".join(f"{key} {' '.join(value)};" for key, value in _img_src_blob_scp.items())
+
+def get_csp(blob=False) -> str:
+    """ Returns the Content Security Policy """
+    csp = _DEFAULT_CSP
+    if blob:
+        csp = _IMG_SRC_BLOB_SCP
+    return csp

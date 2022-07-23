@@ -1,2 +1,2 @@
 # File to allow imports
-from .csp import CSP
+from .csp import get_csp
