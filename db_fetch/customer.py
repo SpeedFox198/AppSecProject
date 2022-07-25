@@ -4,6 +4,7 @@ Customer Functions
 
 Contains functions that interacts with customer accounts
 """
+from cmath import e
 from .general import *
 from .user import retrieve_user 
 import datetime
@@ -95,14 +96,12 @@ def update_customer_account(details1, details2):
     con.commit()
     con.close()
 
-
 def change_password(user_id: str, password: str) -> None:
     """ Updates user's password to new value """
     update_rows("Users", ("password",), (password,), user_id=user_id)
 
 
 """ Admin-triggered Functions """
-
 
 def retrieve_these_customers(limit:int, offset: int) -> list[tuple]:
     """ Retrieves and returns a list of max 10 customers starting from offset """

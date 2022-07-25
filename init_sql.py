@@ -7,8 +7,18 @@ con = sqlite3.connect("database.db")
 #     con.executescript(f.read())
 
 cur = con.cursor()
-# cur.execute("""
-# """)
+cur.execute("""CREATE TABLE OTP (
+    user_id TEXT NOT NULL,
+    otp TEXT NOT NULL,
+    otp_year INTEGER NOT NULL,
+    otp_month INTEGER NOT NULL,
+    otp_day INTEGER NOT NULL,
+    otp_hour INTEGER NOT NULL,
+    otp_minute INTEGER NOT NULL,
+    otp_second INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+""")
 
 # Generate data if we need to fill in
 # q1 = """ INSERT into Books VALUES ('19a4cc17-117a-4a20-8ad6-cc3c243e68a7', 'English', 'Classic', "Jabriel's Python Manifesto", 30, 25, 'Jabriel Seah', 'This 3rd edition features decorators, TimSorts, awesome stacks and queues, and async/await. Definitely, one of the python books of all time. Ultra Poggers.', '19a4cc17-117a-4a20-8ad6-cc3c243e68a7_python2.jpg'); """
