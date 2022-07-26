@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Manage Reviews{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/css/user.css">
+<link rel="stylesheet" href="/static/css/adm_dashboard.css">
+{% endblock %}
+
+{% block content %}
+{% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+{% from "includes/_staff_sidebar.html" import staff_sidebar %}
+
+{# Render breadcrumbs #}
+{{ render_breadcrumb({
+"Dashboard": url_for('dashboard'),
+"Manage Reviews": "#"
+}) }}
+
+{# Container to contain display for user related things #}
+<div class="container user-container">
+    <div class="row">
+        {# Render sidebar #}
+        {{ staff_sidebar("Manage Reviews") }}
+        <div class="col-lg-10 py-3 px-5">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Cover</th>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th colspan="3">Reviews</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                  {% for book in books_list %}
+                    <tr>
+                      <td>{{ book.book_id }}</td>
+                      <td>
+                        <img src="{{ book.cover_img }}" alt="{{ book.title }}" class="inventory-book-cover">
+                      </td>
+                      <td>{{ book.title }}</td>
+                      <td>{{ book.author }}</td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

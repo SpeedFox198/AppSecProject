@@ -3,6 +3,16 @@ from base64 import b64encode, b64decode
 from hmac import digest, compare_digest
 from typing import Union, Any
 from os import environ
+# import logging
+
+# Logging
+# logging.basicConfig(
+#     filename="log/monitor_deserialisation.log",
+#     filemode="a",
+#     format="%(asctime)s [%(levelname)s]: %(message)s",
+#     datefmt="%Y-%m-%d %H:%M:%S",
+#     level=logging.WARNING
+# )
 
 # Get secret key (you ain't gonna see it in plain text lol)
 _SECRET_KEY = environ.get("VERY_SECRET_KEY")
@@ -17,14 +27,19 @@ _DIGEST_METHOD = "sha512"
 def create_session(data) -> bytes:
     """ Creates and returns a regular session cookie """
 
-    # Serialise data
-    session = b64encode(dumps(data))
+    try:
+        # Serialise data
+        session = b64encode(dumps(data))
+    except Exception as e:
+        # logging.critical(f"Error while serialising: {e}")
+        # logging.critical(f"Bad data: {data}")
+        return b""
+    else:
+        # Generate signature
+        signature = b64encode(digest(_SECRET_KEY, session, _DIGEST_METHOD))
 
-    # Generate signature
-    signature = b64encode(digest(_SECRET_KEY, session, _DIGEST_METHOD))
-
-    # Return session cookie
-    return session + _SEPARATOR + signature
+        # Return session cookie
+        return session + _SEPARATOR + signature
 
 
 def retrieve_session(session:str) -> Union[Any, None]:
@@ -38,16 +53,23 @@ def retrieve_session(session:str) -> Union[Any, None]:
             a = digest(_SECRET_KEY, values[0], _DIGEST_METHOD)
             b = b64decode(values[-1])
 
-            # Check for integrity of session
-            if compare_digest(a, b):
-
-                # Returns user session object if session is valid
-                return loads(b64decode(values[0]))
-
         # If error occurs when comparing/decoding
         # Bad session was provided, return None
         except Exception as e:
-            return None
+            ...
+            # logging.warning(f"Invalid session: {session}")
+
+        else:
+
+            try:
+                # Check for integrity of session
+                if compare_digest(a, b):
+                    # Returns user session object if session is valid
+                    return loads(b64decode(values[0]))
+            except Exception as e:
+                ...
+                # logging.critical(f"Error while deserialising: {e}")
+                # logging.critical(f"Malicious session: {session}")
 
 
 def get_cookie_value(request, name:str) -> Union[Any, None]:
