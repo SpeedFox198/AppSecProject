@@ -10,6 +10,7 @@
 
 {% block content %}
 {% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
+
 {# Render breadcrumbs #}
 {{ render_breadcrumb({
   "Home": url_for("home"),
@@ -54,7 +55,7 @@
   {% if g.user %}
     <div class="row px-3 my-2">
       <div> {# TODO: review page #}
-        <a href="{# go to review page #}" class="btn defaultbtn">Write Your Own Review</a>
+        <a href="/book/{{book_id}}/book_review" class="btn defaultbtn">Write Your Own Review</a>
       </div>
     </div>
   {% endif %}

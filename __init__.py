@@ -50,7 +50,7 @@ app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
 PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
-app.config['SECRET_KEY'] = os.environ.get("VERY_SECRET_KEY")
+app.config["SECRET_KEY"] = os.environ.get("VERY_SECRET_KEY")
 
 limiter = Limiter(
     app,
@@ -133,17 +133,17 @@ def login_required(func):
     return decorated_function
 
 
-def role_check(roles: list[str], mode="regular"):
+def roles_required(roles: list[str], mode="regular"):
     """
     Put this in routes that only allow selected roles with the @ sign
     For example:
     @app.route('/admin/manage-account")
-    @role_check(["admin"])
+    @roles_required(["admin"])
 
     You can also add multiple roles for the route
     E.g:
     @app.route('/admin/inventory')
-    @role_check(["admin", "staff"])
+    @roles_required(["admin", "staff"])
     """
 
     def decorator(func):
@@ -311,6 +311,7 @@ def sign_up():
         second = datetime.datetime.now().second
         print(one_time_pass)
         if dbf.retrieve_otp(user_id):
+            print("deleted")
             dbf.delete_otp(user_id)
         dbf.create_otp(user_id, one_time_pass, year, month, day, hour, minute, second)
         # Send email with OTP
@@ -349,6 +350,7 @@ def OTPverification():
     hour = temporary_data[5]
     minute = temporary_data[6]
     second = temporary_data[7]
+    print(one_time_pass)
     dateregister = datetime.datetime(year, month, day, hour, minute, second)
     time_check = datetime.datetime.now() - dateregister
     if time_check.seconds > 300:
@@ -570,10 +572,16 @@ def password_reset(token):
 
             # Create session to login
             flask_global.user = user
-            if bool(dbf.retrieve_failed_login(user.user_id[1])):
-                dbf.delete_failed_logins(user.user_id)
-            if bool(dbf.retrieve_lockout_time):
-                dbf.delete_lockout_time(user.user_id)
+
+            print(user)
+            user_username = user.username
+            print(user_username)
+            if bool(dbf.retrieve_failed_login(user_username)):
+                print("Check 1")
+                dbf.delete_failed_logins(user_username)
+            if bool(dbf.retrieve_lockout_time(user_username)):
+                print("Check 2")
+                dbf.delete_lockout_time(user_username)
             # Flash message and redirect to account page
             flash("Password has been successfully set")
             return redirect(url_for("account"))
@@ -683,7 +691,7 @@ def account():
             if "picture" in request.files:
                 profile_pic = request.files["picture"]
                 if profile_pic and allowed_file(profile_pic.filename):
-                    profile_pic_filename = f"{user.user_id}_{profile_pic.filename}"
+                    profile_pic_filename = f"{user.user_id}.png"
                     profile_pic.save(os.path.join(PROFILE_PIC_UPLOAD_FOLDER, profile_pic_filename))
 
             # Apparently account details were needed to be split because profile picture is in user table
@@ -715,7 +723,7 @@ def account():
 
 
 @app.route("/admin/dashboard", methods=["GET"])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def dashboard():
     customers = dbf.number_of_customers()
     orders = dbf.number_of_orders()
@@ -736,7 +744,7 @@ def dashboard():
 
 # Manage accounts page
 @app.route("/admin/manage-users", methods=["GET", "POST"])
-@role_check(["admin"])
+@roles_required(["admin"])
 def manage_users():
     # Flask global error variable for css
     flask_global.errors = {}
@@ -855,7 +863,7 @@ def manage_users():
 
 
 @app.route('/admin/manage-staff', methods=["GET", "POST"])
-@role_check(["admin"])
+@roles_required(["admin"])
 def manage_staff():
     # Flask global error variable for css
     flask_global.errors = {}
@@ -930,7 +938,6 @@ def manage_staff():
 
     # Get total number of customers
     staff_count = dbf.number_of_staff()
-    print(staff_count)
 
     # Set page number
     last_page = ceil(staff_count / ACCOUNTS_PER_PAGE) or 1
@@ -975,7 +982,7 @@ def manage_staff():
 
 
 @app.route('/admin/inventory')
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def inventory():
     inventory_data = dbf.retrieve_inventory()
 
@@ -985,7 +992,7 @@ def inventory():
 
 
 @app.route('/admin/book/<book_id>')
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def view_book(book_id):
     book_data = dbf.retrieve_book(book_id)
 
@@ -1002,7 +1009,7 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def add_book():
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
@@ -1023,7 +1030,7 @@ def add_book():
 
         if book_img and allowed_file(book_img.filename):
             book_id = generate_uuid4()
-            book_img_filename = f"{book_id}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            book_img_filename = f"{book_id}.png"  # Generate unique name string for files
             path = os.path.join(BOOK_UPLOAD_FOLDER, book_img_filename)
             book_img.save(path)
             image = Image.open(path)
@@ -1050,7 +1057,7 @@ def add_book():
 
 
 @app.route('/admin/update-book/<book_id>/', methods=['GET', 'POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def update_book(book_id):
     # Get specified book
     if not dbf.retrieve_book(book_id):
@@ -1070,7 +1077,7 @@ def update_book(book_id):
         book_img_filename = selected_book._cover_img
 
         if book_img and allowed_file(book_img.filename):
-            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            book_img_filename = f"{generate_uuid4()}.png"  # Generate unique name string for files
             path = os.path.join(BOOK_UPLOAD_FOLDER, book_img_filename)
             book_img.save(path)
             image = Image.open(path)
@@ -1102,10 +1109,10 @@ def update_book(book_id):
 
 
 @app.route('/admin/delete-book/<book_id>/', methods=['POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def delete_book(book_id):
     # Deletes book and its cover image
-    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+    selected_book = Book(*dbf.retrieve_book(book_id))
     book_cover_img = selected_book.cover_img[1:]  # Strip the leading slash for relative path
     print(book_cover_img)
     if os.path.isfile(book_cover_img):
@@ -1117,15 +1124,17 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
-@role_check(["staff"])
+@roles_required(["staff"])
 def manage_orders():
     return "sorry for removing your code"
 
 
 @app.route("/staff/manage-reviews")
-@role_check(["staff"])
+@roles_required(["staff"])
 def manage_reviews():
-    dbf.retrieve_inventory()
+    books_list = [Book(*rows) for rows in dbf.retrieve_inventory()]
+    reviews_count_list = []
+    return render_template('staff/manage_reviews.html', books_list=books_list)
 
 
 """    Books Pages    """
@@ -1137,6 +1146,9 @@ def manage_reviews():
 @app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def book_info(book_id):
+    if flask_global.user and flask_global.user.role in ["admin", "staff"]:
+        return redirect(url_for('dashboard'))
+
     # Get book details
     book_data = dbf.retrieve_book(book_id)
 
@@ -1144,14 +1156,15 @@ def book_info(book_id):
     if book_data is None:
         abort(404)
 
+    book_id = book_data[0]
     book = Book(*book_data)
 
-    return render_template("book_info.html", book=book)
+    return render_template("book_info.html", book=book, book_id=book_id)
 
 
 # TODO: @Miku @SpeedFox198 work on this (perhaps we not using this?)
-@app.route("/my-orders/review/<order_id>", methods=["GET", "POST"])
-def book_review(id, reviewPageNumber):
+@app.route("/book/<book_id>/book_review", methods=["GET", "POST"])
+def book_review(book_id):
     # Get current user
     user: User = flask_global.user
 
@@ -1162,7 +1175,24 @@ def book_review(id, reviewPageNumber):
     if user.role == "admin":
         abort(404)
 
+    # Get book details
+    book_data = dbf.retrieve_book(book_id)
+
+    if book_data is None:
+        abort(404)
+
+    book_id  = book_data[0]
+    book = Book(*book_data)
     createReview = CreateReviewText(request.form)
+    if request.method == "POST":
+        if createReview.validate():
+            dbf.add_review(book_id, user.user_id, request.form.get("rate"), createReview.review.data)
+            flash("Review successfully added!")
+            return redirect(url_for("book_info", book_id=book_id))
+        else:
+            flash("Review not added!")
+            return redirect(url_for("book_info", book_id=book_id))
+    return render_template("review.html", book=book, form=createReview, book_id = book_id)
 
 
 """ Search Results Page """
@@ -1670,9 +1700,57 @@ def api_login():
     user_data = dbf.user_auth(username, password)
     time_check = datetime.datetime.now()
     if user_data is None:
-        return jsonify(status=1)
+        print("Check 1")
+        if bool(dbf.retrieve_user_by_username(username)):
+            print("Check 2")
+            if bool(dbf.retrieve_failed_login(username)) == False:
+                print("Check 3")
+                dbf.create_failed_login(username, 1)
+                return jsonify(status=1)
+            if dbf.retrieve_failed_login(username)[1] == 5:
+                print("Check 4")
+                year = datetime.datetime.now().year
+                month = datetime.datetime.now().month
+                day = datetime.datetime.now().day
+                hour = datetime.datetime.now().hour
+                minute = datetime.datetime.now().minute
+                second = datetime.datetime.now().second
+                create_lockout_time(username, year, month, day, hour, minute, second)
+                delete_failed_logins(username)
+                print("Your account has been locked for 30 minutes")
+                email = dbf.retrieve_email_by_username(username)
+                subject = "ALERT - Account Locked"
+                message = "Your account has been locked for 30 minutes, someone has tried to login to your account 5 times. If this was not you, change your password immediately."
+                gmail_send(email, subject, message)
+                return jsonify(status=1)
+            if dbf.retrieve_failed_login(username)[1] < 5 and dbf.retrieve_failed_login(username)[1] > 0:
+                print("Check 5")
+                dbf.update_failed_login(username, dbf.retrieve_failed_login(username)[1] + 1)
+                return jsonify(status=1)
+        else:
+            print("Check 6")
+            return jsonify(status=1)
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
+    if dbf.retrieve_lockout_time(username) is not None:
+        year = dbf.retrieve_lockout_time(username)[1]
+        month = dbf.retrieve_lockout_time(username)[2]
+        day = dbf.retrieve_lockout_time(username)[3]
+        hour = dbf.retrieve_lockout_time(username)[4]
+        minute = dbf.retrieve_lockout_time(username)[5]
+        second = dbf.retrieve_lockout_time(username)[6]
+        lockout_time = datetime.datetime(year, month, day, hour, minute, second)
+        print(time_check)
+        print(lockout_time)
+        difference_time = time_check - lockout_time
+        print(difference_time)
+        print(difference_time.seconds)
+        if difference_time.seconds < 1800:
+            print("Your account is still locked")
+            return jsonify(status=1)
+        else:
+            dbf.delete_lockout_time(username)
+            print("Your account is unlocked")
     if not enable_2FA:
         # Log user in
         flask_global.user = User(*user_data)
@@ -1736,7 +1814,7 @@ def api_single_book(book_id):
 @app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
-@role_check(["admin"], "api")
+@roles_required(["admin"], "api")
 def api_users():
     if request.method == "GET":
 
@@ -1777,7 +1855,7 @@ def api_users():
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["admin"], "api")
+@roles_required(["admin"], "api")
 def api_single_user(user_id):
     if request.method == "GET":
         user_data = dbf.retrieve_customer_detail(user_id)
@@ -1831,25 +1909,31 @@ def api_reviews(book_id):
 
 @app.route('/api/reviews/<book_id>', methods=["DELETE"])
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_delete_reviews(book_id):  # created delete route bc staff only can delete but everyone can read reviews
-    if not dbf.retrieve_book(book_id):
-        return jsonify(status=1, message="Book does not exist"), 404
+    user_id = request.args.get("user_id")
+    deleted_review = dbf.retrieve_selected_review(book_id=book_id, user_id=user_id)
 
-    dbf.delete_book(book_id)
-    return jsonify(status=0)
+    if user_id is None:
+        return jsonify(status=1, error="Parameter 'user_id' is required."), 400
+
+    if not deleted_review:
+        return jsonify(status=1, error="Review does not exist"), 404
+
+    dbf.delete_review(book_id=book_id, user_id=user_id)
+    return jsonify(status=0, message="Review deleted!")
 
 
 @app.route('/api/orders')
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_orders():
     return "asdf"
 
 
 @app.route('/api/orders/<user_id>')
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_delete_orders(user_id):
     return "zxcv"
 
