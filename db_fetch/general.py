@@ -12,7 +12,6 @@ import sqlite3
 DATABASE = r"database.db"
 
 
-# TODO: @SpeedFox198 -make sure only 1 connection- TODO TODO TODO TODO TODO TODO
 def execute_db(query: str, parameters=None, fetchone=False) -> Union[list[tuple], tuple, None]:
     """ Execute sql query with parameters """
 
