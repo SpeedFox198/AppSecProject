@@ -25,7 +25,7 @@ Our web application is an online bookstore. It provides the service of purchasin
 
 **Python Version:** 3.8 and above required.
 
-You may install all using: `pip3 install -r requirements.txt`
+Install requirements using: `pip3 install -r requirements.txt`
 
 ## Task Allocation
 
