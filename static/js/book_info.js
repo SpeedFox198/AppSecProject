@@ -86,11 +86,12 @@ function createRatings(ratings) {
         theStarsDiv.appendChild(theStar);
         x += 2;
     }
-    if (value < x) {
+    if (value+1 == x) {
         let theStar = createElementClass("i", "fas fa-star-half-alt");
         theStarsDiv.appendChild(theStar);
+        x += 1
     }
-    for (let i=x; i < 10; i+=2) {
+    for (let i=x; i <= 10; i+=2) {
         let theStar = createElementClass("i", "far fa-star");
         theStarsDiv.appendChild(theStar);
     }
