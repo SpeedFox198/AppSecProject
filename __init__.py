@@ -1187,7 +1187,7 @@ def book_review(book_id):
         else:
             flash("Review not added!")
             return redirect(url_for("book_info", book_id=book_id))
-    return render_template("book_review.html", book=book, form=createReview, book_id = book_id)
+    return render_template("review.html", book=book, form=createReview, book_id = book_id)
 
 
 """ Search Results Page """
