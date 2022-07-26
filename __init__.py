@@ -48,7 +48,7 @@ app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
 PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
-app.config['SECRET_KEY'] = os.environ.get("VERY_SECRET_KEY")
+app.config["SECRET_KEY"] = os.environ.get("VERY_SECRET_KEY")
 
 limiter = Limiter(
     app,
