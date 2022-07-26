@@ -133,17 +133,17 @@ def login_required(func):
     return decorated_function
 
 
-def role_check(roles: list[str], mode="regular"):
+def roles_required(roles: list[str], mode="regular"):
     """
     Put this in routes that only allow selected roles with the @ sign
     For example:
     @app.route('/admin/manage-account")
-    @role_check(["admin"])
+    @roles_required(["admin"])
 
     You can also add multiple roles for the route
     E.g:
     @app.route('/admin/inventory')
-    @role_check(["admin", "staff"])
+    @roles_required(["admin", "staff"])
     """
 
     def decorator(func):
@@ -715,7 +715,7 @@ def account():
 
 
 @app.route("/admin/dashboard", methods=["GET"])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def dashboard():
     customers = dbf.number_of_customers()
     orders = dbf.number_of_orders()
@@ -736,7 +736,7 @@ def dashboard():
 
 # Manage accounts page
 @app.route("/admin/manage-users", methods=["GET", "POST"])
-@role_check(["admin"])
+@roles_required(["admin"])
 def manage_users():
     # Flask global error variable for css
     flask_global.errors = {}
@@ -855,7 +855,7 @@ def manage_users():
 
 
 @app.route('/admin/manage-staff', methods=["GET", "POST"])
-@role_check(["admin"])
+@roles_required(["admin"])
 def manage_staff():
     # Flask global error variable for css
     flask_global.errors = {}
@@ -930,7 +930,6 @@ def manage_staff():
 
     # Get total number of customers
     staff_count = dbf.number_of_staff()
-    print(staff_count)
 
     # Set page number
     last_page = ceil(staff_count / ACCOUNTS_PER_PAGE) or 1
@@ -975,7 +974,7 @@ def manage_staff():
 
 
 @app.route('/admin/inventory')
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def inventory():
     inventory_data = dbf.retrieve_inventory()
 
@@ -985,7 +984,7 @@ def inventory():
 
 
 @app.route('/admin/book/<book_id>')
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def view_book(book_id):
     book_data = dbf.retrieve_book(book_id)
 
@@ -1002,7 +1001,7 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def add_book():
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
@@ -1050,7 +1049,7 @@ def add_book():
 
 
 @app.route('/admin/update-book/<book_id>/', methods=['GET', 'POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def update_book(book_id):
     # Get specified book
     if not dbf.retrieve_book(book_id):
@@ -1102,7 +1101,7 @@ def update_book(book_id):
 
 
 @app.route('/admin/delete-book/<book_id>/', methods=['POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def delete_book(book_id):
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
@@ -1117,13 +1116,13 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
-@role_check(["staff"])
+@roles_required(["staff"])
 def manage_orders():
     return "sorry for removing your code"
 
 
 @app.route("/staff/manage-reviews")
-@role_check(["staff"])
+@roles_required(["staff"])
 def manage_reviews():
     dbf.retrieve_inventory()
 
@@ -1736,7 +1735,7 @@ def api_single_book(book_id):
 @app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
-@role_check(["admin"], "api")
+@roles_required(["admin"], "api")
 def api_users():
     if request.method == "GET":
 
@@ -1777,7 +1776,7 @@ def api_users():
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["admin"], "api")
+@roles_required(["admin"], "api")
 def api_single_user(user_id):
     if request.method == "GET":
         user_data = dbf.retrieve_customer_detail(user_id)
@@ -1831,25 +1830,31 @@ def api_reviews(book_id):
 
 @app.route('/api/reviews/<book_id>', methods=["DELETE"])
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_delete_reviews(book_id):  # created delete route bc staff only can delete but everyone can read reviews
-    if not dbf.retrieve_book(book_id):
-        return jsonify(status=1, message="Book does not exist"), 404
+    user_id = request.args.get("user_id")
+    deleted_review = dbf.retrieve_selected_review(book_id=book_id, user_id=user_id)
 
-    dbf.delete_book(book_id)
-    return jsonify(status=0)
+    if user_id is None:
+        return jsonify(status=1, error="Parameter 'user_id' is required."), 400
+
+    if not deleted_review:
+        return jsonify(status=1, error="Review does not exist"), 404
+
+    dbf.delete_review(book_id=book_id, user_id=user_id)
+    return jsonify(status=0, message="Review deleted!")
 
 
 @app.route('/api/orders')
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_orders():
     return "asdf"
 
 
 @app.route('/api/orders/<user_id>')
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_delete_orders(user_id):
     return "zxcv"
 

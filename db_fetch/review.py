@@ -33,3 +33,13 @@ def add_review(book_id: str, user_id: str, stars: int, content: str) -> None:
         [book_id, user_id, stars, content],
         ["book_id", "user_id", "stars", "content"]
     )
+
+
+def retrieve_selected_review(book_id, user_id):
+    """Checks if review exists, mostly used for deletion"""
+    return retrieve_db("Reviews", book_id=book_id, or_and=1, user_id=user_id)
+
+
+def delete_review(book_id, user_id):
+    """Delete review based on book_id and the user_id"""
+    delete_rows("Reviews", book_id=book_id, or_and=1, user_id=user_id)
