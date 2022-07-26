@@ -10,6 +10,7 @@
 {% block content %}
 {% from "includes/_render_breadcrumb.html" import render_breadcrumb %}
 {% from "includes/_admin_sidebar.html" import admin_sidebar %}
+{% from "includes/_staff_sidebar.html" import staff_sidebar %}
 {% from "includes/_form.html" import render_field %}
 
 
@@ -24,7 +25,11 @@
 <div class="container user-container">
   <div class="row">
     {# Render sidebar #}
+    {% if g.user.role == "admin" %}
     {{ admin_sidebar("Add Book") }}
+    {% elif g.user.role == "staff" %}
+    {{ staff_sidebar("Add Book") }}
+    {% endif %}
     <div class="d-flex flex-column col-lg-10 py-3 px-5">
       <h2>Add Book</h2>
       <hr>

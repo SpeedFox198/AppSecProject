@@ -54,7 +54,7 @@
   {% if g.user %}
     <div class="row px-3 my-2">
       <div> {# TODO: review page #}
-        <a href="{# go to review page #}" class="btn defaultbtn">Write Your Own Review</a>
+        <a href="{{ url_for('book_review')}}" class="btn defaultbtn">Write Your Own Review</a>
       </div>
     </div>
   {% endif %}

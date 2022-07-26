@@ -7,8 +7,10 @@ from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
 from db_fetch.customer import create_lockout_time, delete_failed_logins
-from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
-from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
+from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
+    USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
+from models import User, Book, Review, Order, UPLOAD_FOLDER as _PROFILE_PIC_PATH, \
+    BOOK_IMG_UPLOAD_FOLDER as _BOOK_IMG_PATH
 import db_fetch as dbf
 import os  # For saving and deleting images
 from PIL import Image
@@ -37,7 +39,7 @@ import stripe
 # CONSTANTS
 # TODO @everyone: set to False when deploying
 DEBUG = True  # Debug flag (True when debugging)
-TOKEN_MAX_AGE = 900     # Max age of token (15 mins)
+TOKEN_MAX_AGE = 900  # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 DOMAIN_NAME = "https://localhost:5000/"
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
@@ -59,12 +61,13 @@ limiter = Limiter(
 url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 # testing mode
-stripe.api_key = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
+stripe.api_key = 'sk_test_51LNFSvLeIrXIJDLVEVQ8XVgIIhIWcKy0d7WVM5mM7TIBTxNLNMFUcN5Gx3zcmTKHyxJkrxiB98qZzdt5qYYrPM55002ARsY3yC'
 
 
 def allowed_file(filename):
     # Return true if there is an extension in file, and its extension is in the allowed extensions
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def get_user():
     """ Returns user if cookie is correct, else returns None """
@@ -92,7 +95,7 @@ def get_user():
             return User(*user_data)
 
 
-def add_cookie(cookies:dict):
+def add_cookie(cookies: dict):
     """ Adds cookies """
     if not isinstance(cookies, dict):
         raise TypeError("Expected dictionary")
@@ -101,7 +104,7 @@ def add_cookie(cookies:dict):
     flask_global.new_cookies = new_cookies
 
 
-def remove_cookies(cookies:list):
+def remove_cookies(cookies: list):
     """ Remove cookies """
     if not isinstance(cookies, list):
         raise TypeError("Expected list")
@@ -117,6 +120,7 @@ def login_required(func):
     @app.route('/user/account")
     @login_required
     """
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         """
@@ -125,21 +129,23 @@ def login_required(func):
         if isinstance(flask_global.user, User):
             return func(*args, **kwargs)
         return redirect(url_for('login'))
+
     return decorated_function
 
 
-def role_check(roles: list[str], mode="regular"):
+def roles_required(roles: list[str], mode="regular"):
     """
     Put this in routes that only allow selected roles with the @ sign
     For example:
     @app.route('/admin/manage-account")
-    @role_check(["admin"])
+    @roles_required(["admin"])
 
     You can also add multiple roles for the route
     E.g:
     @app.route('/admin/inventory')
-    @role_check(["admin", "staff"])
+    @roles_required(["admin", "staff"])
     """
+
     def decorator(func):
         @wraps(func)
         def decorated_function(*args, **kwargs):
@@ -186,7 +192,8 @@ def before_request():
     flask_global.user = get_user()  # Get user
 
 
-""" After request """ ##TODO: add SECURE in header
+""" After request """  ##TODO: add SECURE in header
+
 
 @app.after_request
 def after_request(response):
@@ -237,7 +244,7 @@ def after_request(response):
 @app.route("/")
 @limiter.limit("10/second", override_defaults=False)
 def home():
-    if flask_global.user and flask_global.user.role == "admin":
+    if flask_global.user and flask_global.user.role in ["admin", "staff"]:
         return redirect(url_for("dashboard"))
 
     english_books_data = dbf.retrieve_books_by_language("English")
@@ -296,15 +303,23 @@ def sign_up():
 
         one_time_pass = generateOTP()
         user_id = generate_uuid5(username)
-        dateregister = datetime.datetime.now()
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
+        day = datetime.datetime.now().day
+        hour = datetime.datetime.now().hour
+        minute = datetime.datetime.now().minute
+        second = datetime.datetime.now().second
         print(one_time_pass)
-        dbf.create_otp(user_id, username, password, email, one_time_pass, dateregister)
+        if dbf.retrieve_otp(user_id):
+            print("deleted")
+            dbf.delete_otp(user_id)
+        dbf.create_otp(user_id, one_time_pass, year, month, day, hour, minute, second)
         # Send email with OTP
         subject = "OTP for registration"
         message = "Do not reply to this email.\nPlease enter " + one_time_pass + " as your OTP to complete your registration."
 
         gmail_send(email, subject, message)
-        add_cookie({"Temp_User_ID": user_id})
+        add_cookie({"Temp_User_ID": user_id, "Temp_User_Email": email, "Temp_User_Password": password, "Temp_User_Username": username})
 
         return redirect(url_for("OTPverification"))
 
@@ -315,7 +330,10 @@ def sign_up():
 @app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def OTPverification():
-    temp_user_id = get_cookie_value("Temp_User_ID")
+    temp_user_id = get_cookie_value(request, "Temp_User_ID")
+    username = get_cookie_value(request, "Temp_User_Username")
+    email = get_cookie_value(request, "Temp_User_Email")
+    password = get_cookie_value(request, "Temp_User_Password")
     if temp_user_id is None:
         return redirect(url_for("sign_up"))
     else:
@@ -325,11 +343,15 @@ def OTPverification():
         return redirect(url_for("sign_up"))
     else:
         pass
-    username = temporary_data[1]
-    password = temporary_data[2]
-    email = temporary_data[3]
-    one_time_pass = temporary_data[4]
-    dateregister = temporary_data[5]
+    one_time_pass = temporary_data[1]
+    year = temporary_data[2]
+    month = temporary_data[3]
+    day = temporary_data[4]
+    hour = temporary_data[5]
+    minute = temporary_data[6]
+    second = temporary_data[7]
+    print(one_time_pass)
+    dateregister = datetime.datetime(year, month, day, hour, minute, second)
     time_check = datetime.datetime.now() - dateregister
     if time_check.seconds > 300:
         dbf.delete_otp(temp_user_id)
@@ -346,6 +368,7 @@ def OTPverification():
 
             # Create new user session to login (placeholder values were used to create user object)
             flask_global.user = User(user_id, "", "", "", "", "customer")
+            remove_cookies(["Temp_User_ID", "Temp_User_Email", "Temp_User_Password", "Temp_User_Username"])
 
             # Return redirect with session cookie
             return redirect(url_for("home"))
@@ -443,7 +466,8 @@ def password_forget():
 
                 # Send message to email entered
                 subject = "Reset Your Password"
-                message = "Do not reply to this email.\nPlease click on ths link to reset your password." + url_for("password_reset", token=token, _external=True)
+                message = "Do not reply to this email.\nPlease click on ths link to reset your password." + url_for(
+                    "password_reset", token=token, _external=True)
 
                 gmail_send(email, subject, message)
 
@@ -485,7 +509,8 @@ def google_authenticator():
             flash("Invalid OTP Entered! Please try again!")
             return redirect(url_for("google_authenticator"))
     else:
-        return render_template("user/google_authenticator.html", form=OTP_Test, secret_token = secret_token)
+        return render_template("user/google_authenticator.html", form=OTP_Test, secret_token=secret_token)
+
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -541,17 +566,22 @@ def password_reset(token):
             # Reset Password
             print(user_check)
             dbf.change_password(user_check, new_password)
-            if DEBUG: print(f"Reset password for: {user_check}")
 
             # Get user object
             user = User(*dbf.user_auth(email, new_password))
 
             # Create session to login
             flask_global.user = user
-            if bool(dbf.retrieve_failed_login(user.user_id[1])):
-                dbf.delete_failed_logins(user.user_id)
-            if bool(dbf.retrieve_lockout_time):
-                dbf.delete_lockout_time(user.user_id)
+
+            print(user)
+            user_username = user.username
+            print(user_username)
+            if bool(dbf.retrieve_failed_login(user_username)):
+                print("Check 1")
+                dbf.delete_failed_logins(user_username)
+            if bool(dbf.retrieve_lockout_time(user_username)):
+                print("Check 2")
+                dbf.delete_lockout_time(user_username)
             # Flash message and redirect to account page
             flash("Password has been successfully set")
             return redirect(url_for("account"))
@@ -616,7 +646,9 @@ def password_change():
 
     return render_template("user/password/password_change.html", form=change_password_form)
 
+
 """ View account page """
+
 
 @app.route("/user/account", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -691,20 +723,28 @@ def account():
 
 
 @app.route("/admin/dashboard", methods=["GET"])
-@role_check(["admin"])
+@roles_required(["admin", "staff"])
 def dashboard():
     customers = dbf.number_of_customers()
     orders = dbf.number_of_orders()
-    books = dbf.number_of_books()
-    return render_template("admin/admin_dashboard.html",
-                           customer_count=customers,
-                           order_count=orders,
-                           book_count=books)
+    book_count = dbf.number_of_books()
+    staff = dbf.number_of_staff()
+    if flask_global.user.role == "admin":
+        return render_template("admin/admin_dashboard.html",
+                               customer_count=customers,
+                               order_count=orders,
+                               book_count=book_count,
+                               staff_count=staff)
+
+    elif flask_global.user.role == "staff":
+        return render_template("admin/staff_dashboard.html",
+                               order_count=orders,
+                               book_count=book_count)
 
 
 # Manage accounts page
 @app.route("/admin/manage-users", methods=["GET", "POST"])
-@role_check(["admin"])
+@roles_required(["admin"])
 def manage_users():
     # Flask global error variable for css
     flask_global.errors = {}
@@ -823,7 +863,7 @@ def manage_users():
 
 
 @app.route('/admin/manage-staff', methods=["GET", "POST"])
-@role_check(["admin"])
+@roles_required(["admin"])
 def manage_staff():
     # Flask global error variable for css
     flask_global.errors = {}
@@ -898,7 +938,6 @@ def manage_staff():
 
     # Get total number of customers
     staff_count = dbf.number_of_staff()
-    print(staff_count)
 
     # Set page number
     last_page = ceil(staff_count / ACCOUNTS_PER_PAGE) or 1
@@ -943,7 +982,7 @@ def manage_staff():
 
 
 @app.route('/admin/inventory')
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def inventory():
     inventory_data = dbf.retrieve_inventory()
 
@@ -953,7 +992,7 @@ def inventory():
 
 
 @app.route('/admin/book/<book_id>')
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def view_book(book_id):
     book_data = dbf.retrieve_book(book_id)
 
@@ -970,7 +1009,7 @@ category_list = [('', 'Select'), ('Action & Adventure', 'Action & Adventure'), (
 
 
 @app.route('/admin/add-book', methods=['GET', 'POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def add_book():
     add_book_form = AddBookForm(request.form)
     add_book_form.language.choices = lang_list
@@ -1018,7 +1057,7 @@ def add_book():
 
 
 @app.route('/admin/update-book/<book_id>/', methods=['GET', 'POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def update_book(book_id):
     # Get specified book
     if not dbf.retrieve_book(book_id):
@@ -1070,7 +1109,7 @@ def update_book(book_id):
 
 
 @app.route('/admin/delete-book/<book_id>/', methods=['POST'])
-@role_check(["admin", "staff"])
+@roles_required(["admin", "staff"])
 def delete_book(book_id):
     # Deletes book and its cover image
     selected_book = Book(*dbf.retrieve_book(book_id)[0])
@@ -1085,13 +1124,13 @@ def delete_book(book_id):
 
 
 @app.route("/admin/manage-orders")
-@role_check(["staff"])
+@roles_required(["staff"])
 def manage_orders():
     return "sorry for removing your code"
 
 
 @app.route("/staff/manage-reviews")
-@role_check(["staff"])
+@roles_required(["staff"])
 def manage_reviews():
     dbf.retrieve_inventory()
 
@@ -1112,14 +1151,15 @@ def book_info(book_id):
     if book_data is None:
         abort(404)
 
+    book_id = book_data[0]
     book = Book(*book_data)
 
-    return render_template("book_info.html", book=book)
+    return render_template("book_info.html", book=book, book_id=book_id)
 
 
 # TODO: @Miku @SpeedFox198 work on this (perhaps we not using this?)
-@app.route("/my-orders/review/<order_id>", methods=["GET", "POST"])
-def book_review(id, reviewPageNumber):
+@app.route("/book/<book_id>/book_review", methods=["GET", "POST"])
+def book_review(book_id):
     # Get current user
     user: User = flask_global.user
 
@@ -1130,7 +1170,24 @@ def book_review(id, reviewPageNumber):
     if user.role == "admin":
         abort(404)
 
+    # Get book details
+    book_data = dbf.retrieve_book(book_id)
+
+    if book_data is None:
+        abort(404)
+
+    book_id  = book_data[0]
+    book = Book(*book_data)
     createReview = CreateReviewText(request.form)
+    if request.method == "POST":
+        if createReview.validate():
+            dbf.add_review(book_id, user.user_id, request.form.get("rate"), createReview.review.data)
+            flash("Review successfully added!")
+            return redirect(url_for("book_info", book_id=book_id))
+        else:
+            flash("Review not added!")
+            return redirect(url_for("book_info", book_id=book_id))
+    return render_template("book_review.html", book=book, form=createReview, book_id = book_id)
 
 
 """ Search Results Page """
@@ -1263,10 +1320,37 @@ def price_high_to_low(inventory_data):
     return sort_dict
 
 
-"""    Start of Cart Pages    """
+"""  View Shopping Cart  """
 
 
-# TODO: SpeedFox198 Marence: maybe shldn't abort 400, and shld reply with {"error":1}
+@app.route('/cart')
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def cart():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.role == "admin":
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity)
+                  for items, quantity in dbf.get_shopping_cart(user_id)]
+    buy_count = len(cart_items)
+
+    # Get total price
+    total_price = 0
+    for book, quantity in cart_items:
+        total_price += book.price * quantity
+
+    return render_template('cart.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items)
+
+
+"""    Add to Shopping Cart    """
+
+
 # Add to cart
 @app.route("/add-to-cart", methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
@@ -1325,32 +1409,6 @@ def add_to_cart():
 
     return redirect(request.referrer)  # Return to catalogue if book_id is not in inventory
 
-
-""" View Shopping Cart"""
-
-
-@app.route('/cart')
-@limiter.limit("10/second", override_defaults=False)
-@login_required
-def cart():
-    # User is a Class
-    user: User = flask_global.user
-
-    if user.role == "admin":
-        abort(404)
-
-    user_id = user.user_id
-
-    # Get cart items as a list of tuples, [(Book object, quantity)]
-    cart_items = [(Book(*dbf.retrieve_book(items)), quantity) for items, quantity in dbf.get_shopping_cart(user_id)]
-    buy_count = len(cart_items)
-
-    # Get total price
-    total_price = 0
-    for book, quantity in cart_items:
-        total_price += book.price * quantity
-
-    return render_template('cart.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items)
 
 
 """ Update Shopping Cart """
@@ -1426,7 +1484,6 @@ def my_orders():
         elif orders.order_pending == "Cancelled":
             canceled_order.append(orders)
 
-
     return render_template('my-orders.html')
 
 
@@ -1468,11 +1525,11 @@ def checkout():
     for book, quantity in cart_items:
         total_price += book.price * quantity
     total_price = float(total_price)
-    
+
     if request.method == 'POST':
         Orderform = OrderForm.OrderForm(request.form)
 
-    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items)
+    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items, subtotal=subtotal)
 
 
 # Create Check out session with Stripe
@@ -1506,7 +1563,8 @@ def create_checkout_session():
         if ship_method == 'Standard Delivery':  # Standard Delivery
             total_price += 5
 
-        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data, str(Orderform.contact_num.data),
+        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data,
+                                           str(Orderform.contact_num.data),
                                            Orderform.address.data, ship_method, user_cart, total_price)
 
         total_price *= 100
@@ -1536,9 +1594,8 @@ def create_checkout_session():
         return redirect(request.referrer)
 
     return render_template('checkout.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items,
-                           stripe_public_key=stripe_public_key)
+                           stripe_public_key=stripe_public_key, subtotal=subtotal)
 
-    
 
 #
 # show confirmation page upon successful payment
@@ -1641,25 +1698,53 @@ def api_login():
         print("Check 1")
         if bool(dbf.retrieve_user_by_username(username)):
             print("Check 2")
-            if dbf.retrieve_failed_login(username)[1] >= 5:
-                create_lockout_time(username, time_check)
-                delete_failed_logins(username)
-                print("Your account has been locked for 5 minutes")
+            if bool(dbf.retrieve_failed_login(username)) == False:
+                print("Check 3")
+                dbf.create_failed_login(username, 1)
                 return jsonify(status=1)
-            elif dbf.retrieve_failed_login(username)[1] < 5:
+            if dbf.retrieve_failed_login(username)[1] == 5:
+                print("Check 4")
+                year = datetime.datetime.now().year
+                month = datetime.datetime.now().month
+                day = datetime.datetime.now().day
+                hour = datetime.datetime.now().hour
+                minute = datetime.datetime.now().minute
+                second = datetime.datetime.now().second
+                create_lockout_time(username, year, month, day, hour, minute, second)
+                delete_failed_logins(username)
+                print("Your account has been locked for 30 minutes")
+                email = dbf.retrieve_email_by_username(username)
+                subject = "ALERT - Account Locked"
+                message = "Your account has been locked for 30 minutes, someone has tried to login to your account 5 times. If this was not you, change your password immediately."
+                gmail_send(email, subject, message)
+                return jsonify(status=1)
+            if dbf.retrieve_failed_login(username)[1] < 5 and dbf.retrieve_failed_login(username)[1] > 0:
+                print("Check 5")
                 dbf.update_failed_login(username, dbf.retrieve_failed_login(username)[1] + 1)
                 return jsonify(status=1)
         else:
-            dbf.create_failed_login(username, 1)
-            return jsonify(status=1)           
+            print("Check 6")
+            return jsonify(status=1)
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
-    if dbf.retrieve_lockout_time(user.user_id) is not None:
-        if time_check > dbf.retrieve_lockout_time(user.user_id):
+    if dbf.retrieve_lockout_time(username) is not None:
+        year = dbf.retrieve_lockout_time(username)[1]
+        month = dbf.retrieve_lockout_time(username)[2]
+        day = dbf.retrieve_lockout_time(username)[3]
+        hour = dbf.retrieve_lockout_time(username)[4]
+        minute = dbf.retrieve_lockout_time(username)[5]
+        second = dbf.retrieve_lockout_time(username)[6]
+        lockout_time = datetime.datetime(year, month, day, hour, minute, second)
+        print(time_check)
+        print(lockout_time)
+        difference_time = time_check - lockout_time
+        print(difference_time)
+        print(difference_time.seconds)
+        if difference_time.seconds < 1800:
             print("Your account is still locked")
             return jsonify(status=1)
         else:
-            dbf.delete_lockout_time(user.user_id)
+            dbf.delete_lockout_time(username)
             print("Your account is unlocked")
     if not enable_2FA:
         # Log user in
@@ -1724,7 +1809,7 @@ def api_single_book(book_id):
 @app.route('/api/admin/users', methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 @expects_json(CREATE_USER_SCHEMA, ignore_for=["GET"])
-@role_check(["admin"], "api")
+@roles_required(["admin"], "api")
 def api_users():
     if request.method == "GET":
 
@@ -1765,7 +1850,7 @@ def api_users():
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["admin"], "api")
+@roles_required(["admin"], "api")
 def api_single_user(user_id):
     if request.method == "GET":
         user_data = dbf.retrieve_customer_detail(user_id)
@@ -1787,7 +1872,7 @@ def api_single_user(user_id):
 
         return jsonify(output)
 
-    #elif request.method == "DELETE":
+    # elif request.method == "DELETE":
     #    if admin_check("api"):
     #        return admin_check("api")
     #
@@ -1819,25 +1904,31 @@ def api_reviews(book_id):
 
 @app.route('/api/reviews/<book_id>', methods=["DELETE"])
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_delete_reviews(book_id):  # created delete route bc staff only can delete but everyone can read reviews
-    if not dbf.retrieve_book(book_id):
-        return jsonify(status=1, message="Book does not exist"), 404
+    user_id = request.args.get("user_id")
+    deleted_review = dbf.retrieve_selected_review(book_id=book_id, user_id=user_id)
 
-    dbf.delete_book(book_id)
-    return jsonify(status=0)
+    if user_id is None:
+        return jsonify(status=1, error="Parameter 'user_id' is required."), 400
+
+    if not deleted_review:
+        return jsonify(status=1, error="Review does not exist"), 404
+
+    dbf.delete_review(book_id=book_id, user_id=user_id)
+    return jsonify(status=0, message="Review deleted!")
 
 
 @app.route('/api/orders')
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_orders():
     return "asdf"
 
 
 @app.route('/api/orders/<user_id>')
 @limiter.limit("10/second", override_defaults=False)
-@role_check(["staff"], "api")
+@roles_required(["staff"], "api")
 def api_delete_orders(user_id):
     return "zxcv"
 
