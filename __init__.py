@@ -25,6 +25,8 @@ from flask_expects_json import expects_json
 from jsonschema import ValidationError
 from functools import wraps
 from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
+import wtforms.validators
 from urllib.parse import unquote
 import pyotp
 import datetime
@@ -1965,6 +1967,12 @@ def bad_request(error):
         #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
         return jsonify(status=1, error=original_error.message), 400
     return render_template("error/400.html"), 400
+
+
+@app.errorhandler(wtforms.validators.ValidationError)
+@app.errorhandler(CSRFError)
+def csrf_error(e):
+    return render_template("error/csrf.html", error=e.description), 400
 
 
 """    Main    """
