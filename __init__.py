@@ -5,7 +5,7 @@ from flask import (
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
-from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
+from SecurityFunctions import AWS_encrypt, AWS_decrypt, generate_uuid4, generate_uuid5, pw_hash, pw_rehash, pw_verify
 from db_fetch.customer import create_lockout_time, delete_failed_logins
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
     USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
@@ -25,6 +25,8 @@ from flask_expects_json import expects_json
 from jsonschema import ValidationError
 from functools import wraps
 from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
+import wtforms.validators
 from urllib.parse import unquote
 import pyotp
 import datetime
@@ -1965,6 +1967,12 @@ def bad_request(error):
         #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
         return jsonify(status=1, error=original_error.message), 400
     return render_template("error/400.html"), 400
+
+
+@app.errorhandler(wtforms.validators.ValidationError)
+@app.errorhandler(CSRFError)
+def csrf_error(e):
+    return render_template("error/csrf.html", error=e.description), 400
 
 
 """    Main    """
