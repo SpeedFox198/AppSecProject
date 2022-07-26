@@ -691,7 +691,7 @@ def account():
             if "picture" in request.files:
                 profile_pic = request.files["picture"]
                 if profile_pic and allowed_file(profile_pic.filename):
-                    profile_pic_filename = f"{user.user_id}_{profile_pic.filename}"
+                    profile_pic_filename = f"{user.user_id}.png"
                     profile_pic.save(os.path.join(PROFILE_PIC_UPLOAD_FOLDER, profile_pic_filename))
 
             # Apparently account details were needed to be split because profile picture is in user table
@@ -1030,7 +1030,7 @@ def add_book():
 
         if book_img and allowed_file(book_img.filename):
             book_id = generate_uuid4()
-            book_img_filename = f"{book_id}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            book_img_filename = f"{book_id}.png"  # Generate unique name string for files
             path = os.path.join(BOOK_UPLOAD_FOLDER, book_img_filename)
             book_img.save(path)
             image = Image.open(path)
@@ -1077,7 +1077,7 @@ def update_book(book_id):
         book_img_filename = selected_book._cover_img
 
         if book_img and allowed_file(book_img.filename):
-            book_img_filename = f"{generate_uuid4()}_{secure_filename(book_img.filename)}"  # Generate unique name string for files
+            book_img_filename = f"{generate_uuid4()}.png"  # Generate unique name string for files
             path = os.path.join(BOOK_UPLOAD_FOLDER, book_img_filename)
             book_img.save(path)
             image = Image.open(path)
@@ -1112,7 +1112,7 @@ def update_book(book_id):
 @roles_required(["admin", "staff"])
 def delete_book(book_id):
     # Deletes book and its cover image
-    selected_book = Book(*dbf.retrieve_book(book_id)[0])
+    selected_book = Book(*dbf.retrieve_book(book_id))
     book_cover_img = selected_book.cover_img[1:]  # Strip the leading slash for relative path
     print(book_cover_img)
     if os.path.isfile(book_cover_img):
@@ -1132,7 +1132,9 @@ def manage_orders():
 @app.route("/staff/manage-reviews")
 @roles_required(["staff"])
 def manage_reviews():
-    dbf.retrieve_inventory()
+    books_list = [Book(*rows) for rows in dbf.retrieve_inventory()]
+    reviews_count_list = []
+    return render_template('staff/manage_reviews.html', books_list=books_list)
 
 
 """    Books Pages    """
@@ -1144,6 +1146,9 @@ def manage_reviews():
 @app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
 def book_info(book_id):
+    if flask_global.user and flask_global.user.role in ["admin", "staff"]:
+        return redirect(url_for('dashboard'))
+
     # Get book details
     book_data = dbf.retrieve_book(book_id)
 
