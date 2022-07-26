@@ -3,16 +3,20 @@ from base64 import b64encode, b64decode
 from hmac import digest, compare_digest
 from typing import Union, Any
 from os import environ
-# import logging
+import logging
 
 # Logging
-# logging.basicConfig(
-#     filename="log/monitor_deserialisation.log",
-#     filemode="a",
-#     format="%(asctime)s [%(levelname)s]: %(message)s",
-#     datefmt="%Y-%m-%d %H:%M:%S",
-#     level=logging.WARNING
-# )
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
+# File Handler
+_LOG_FILE = "log/monitor_deserialisation.log"
+_LOG_FORMAT = "%(asctime)s [%(levelname)s]: %(message)s"
+_fh = logging.FileHandler(_LOG_FILE)
+_fh.setLevel(logging.WARNING)
+_fh.setFormatter(logging.Formatter(_LOG_FORMAT))
+
+logger.addHandler(_fh)
 
 # Get secret key (you ain't gonna see it in plain text lol)
 _SECRET_KEY = environ.get("VERY_SECRET_KEY")
@@ -31,8 +35,8 @@ def create_session(data) -> bytes:
         # Serialise data
         session = b64encode(dumps(data))
     except Exception as e:
-        # logging.critical(f"Error while serialising: {e}")
-        # logging.critical(f"Bad data: {data}")
+        logger.critical(f"Error while serialising: {e}")
+        logger.critical(f"Bad data: {data}")
         return b""
     else:
         # Generate signature
@@ -56,8 +60,7 @@ def retrieve_session(session:str) -> Union[Any, None]:
         # If error occurs when comparing/decoding
         # Bad session was provided, return None
         except Exception as e:
-            ...
-            # logging.warning(f"Invalid session: {session}")
+            logger.warning(f"Invalid session: {session}")
 
         else:
 
@@ -67,9 +70,8 @@ def retrieve_session(session:str) -> Union[Any, None]:
                     # Returns user session object if session is valid
                     return loads(b64decode(values[0]))
             except Exception as e:
-                ...
-                # logging.critical(f"Error while deserialising: {e}")
-                # logging.critical(f"Malicious session: {session}")
+                logger.critical(f"Error while deserialising: {e}")
+                logger.critical(f"Malicious session: {session}")
 
 
 def get_cookie_value(request, name:str) -> Union[Any, None]:
