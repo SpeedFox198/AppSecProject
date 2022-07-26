@@ -33,3 +33,15 @@ def retrieve_user_by_username(username: str) -> Union[str, None]:
     data = retrieve_db("Users",username=username, fetchone=True)
     if data:
         return data[0]
+
+def retrieve_email_by_username(username: str) -> Union[str, None]:
+    """ Returns email using username """
+    data = retrieve_db("Users",username=username, fetchone=True)
+    if data:
+        return data[2]
+
+def retrieve_username_by_user_id(user_id: str) -> Union[str, None]:
+    """ Returns username using user_id """
+    data = retrieve_db("Users",user_id=user_id, fetchone=True)
+    if data:
+        return data[1]

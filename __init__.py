@@ -311,6 +311,7 @@ def sign_up():
         second = datetime.datetime.now().second
         print(one_time_pass)
         if dbf.retrieve_otp(user_id):
+            print("deleted")
             dbf.delete_otp(user_id)
         dbf.create_otp(user_id, one_time_pass, year, month, day, hour, minute, second)
         # Send email with OTP
@@ -349,6 +350,7 @@ def OTPverification():
     hour = temporary_data[5]
     minute = temporary_data[6]
     second = temporary_data[7]
+    print(one_time_pass)
     dateregister = datetime.datetime(year, month, day, hour, minute, second)
     time_check = datetime.datetime.now() - dateregister
     if time_check.seconds > 300:
@@ -570,10 +572,16 @@ def password_reset(token):
 
             # Create session to login
             flask_global.user = user
-            if bool(dbf.retrieve_failed_login(user.user_id[1])):
-                dbf.delete_failed_logins(user.user_id)
-            if bool(dbf.retrieve_lockout_time):
-                dbf.delete_lockout_time(user.user_id)
+
+            print(user)
+            user_username = user.username
+            print(user_username)
+            if bool(dbf.retrieve_failed_login(user_username)):
+                print("Check 1")
+                dbf.delete_failed_logins(user_username)
+            if bool(dbf.retrieve_lockout_time(user_username)):
+                print("Check 2")
+                dbf.delete_lockout_time(user_username)
             # Flash message and redirect to account page
             flash("Password has been successfully set")
             return redirect(url_for("account"))
@@ -1670,9 +1678,57 @@ def api_login():
     user_data = dbf.user_auth(username, password)
     time_check = datetime.datetime.now()
     if user_data is None:
-        return jsonify(status=1)
+        print("Check 1")
+        if bool(dbf.retrieve_user_by_username(username)):
+            print("Check 2")
+            if bool(dbf.retrieve_failed_login(username)) == False:
+                print("Check 3")
+                dbf.create_failed_login(username, 1)
+                return jsonify(status=1)
+            if dbf.retrieve_failed_login(username)[1] == 5:
+                print("Check 4")
+                year = datetime.datetime.now().year
+                month = datetime.datetime.now().month
+                day = datetime.datetime.now().day
+                hour = datetime.datetime.now().hour
+                minute = datetime.datetime.now().minute
+                second = datetime.datetime.now().second
+                create_lockout_time(username, year, month, day, hour, minute, second)
+                delete_failed_logins(username)
+                print("Your account has been locked for 30 minutes")
+                email = dbf.retrieve_email_by_username(username)
+                subject = "ALERT - Account Locked"
+                message = "Your account has been locked for 30 minutes, someone has tried to login to your account 5 times. If this was not you, change your password immediately."
+                gmail_send(email, subject, message)
+                return jsonify(status=1)
+            if dbf.retrieve_failed_login(username)[1] < 5 and dbf.retrieve_failed_login(username)[1] > 0:
+                print("Check 5")
+                dbf.update_failed_login(username, dbf.retrieve_failed_login(username)[1] + 1)
+                return jsonify(status=1)
+        else:
+            print("Check 6")
+            return jsonify(status=1)
     user = User(*user_data)
     enable_2FA = bool(dbf.retrieve_2FA_token(user.user_id))
+    if dbf.retrieve_lockout_time(username) is not None:
+        year = dbf.retrieve_lockout_time(username)[1]
+        month = dbf.retrieve_lockout_time(username)[2]
+        day = dbf.retrieve_lockout_time(username)[3]
+        hour = dbf.retrieve_lockout_time(username)[4]
+        minute = dbf.retrieve_lockout_time(username)[5]
+        second = dbf.retrieve_lockout_time(username)[6]
+        lockout_time = datetime.datetime(year, month, day, hour, minute, second)
+        print(time_check)
+        print(lockout_time)
+        difference_time = time_check - lockout_time
+        print(difference_time)
+        print(difference_time.seconds)
+        if difference_time.seconds < 1800:
+            print("Your account is still locked")
+            return jsonify(status=1)
+        else:
+            dbf.delete_lockout_time(username)
+            print("Your account is unlocked")
     if not enable_2FA:
         # Log user in
         flask_global.user = User(*user_data)

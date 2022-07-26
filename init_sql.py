@@ -7,15 +7,14 @@ con = sqlite3.connect("database.db")
 #     con.executescript(f.read())
 
 cur = con.cursor()
-cur.execute("""CREATE TABLE OTP (
+cur.execute("""CREATE TABLE Timeout (
     user_id TEXT NOT NULL,
-    otp TEXT NOT NULL,
-    otp_year INTEGER NOT NULL,
-    otp_month INTEGER NOT NULL,
-    otp_day INTEGER NOT NULL,
-    otp_hour INTEGER NOT NULL,
-    otp_minute INTEGER NOT NULL,
-    otp_second INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    day INTEGER NOT NULL,
+    hour INTEGER NOT NULL,
+    minute INTEGER NOT NULL,
+    second INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 """)
