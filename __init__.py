@@ -5,7 +5,7 @@ from flask import (
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
-from SecurityFunctions import encrypt_info, decrypt_info, generate_uuid4, generate_uuid5, sign, verify
+from SecurityFunctions import AWS_encrypt, AWS_decrypt, generate_uuid4, generate_uuid5, pw_hash, pw_rehash, pw_verify
 from db_fetch.customer import create_lockout_time, delete_failed_logins
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
     USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
