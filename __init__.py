@@ -1152,14 +1152,15 @@ def book_info(book_id):
     if book_data is None:
         abort(404)
 
+    book_id = book_data[0]
     book = Book(*book_data)
 
-    return render_template("book_info.html", book=book)
+    return render_template("book_info.html", book=book, book_id=book_id)
 
 
 # TODO: @Miku @SpeedFox198 work on this (perhaps we not using this?)
-@app.route("/my-orders/review/<order_id>", methods=["GET", "POST"])
-def book_review(id, reviewPageNumber):
+@app.route("/book/<book_id>/book_review", methods=["GET", "POST"])
+def book_review(book_id):
     # Get current user
     user: User = flask_global.user
 
@@ -1170,7 +1171,24 @@ def book_review(id, reviewPageNumber):
     if user.role == "admin":
         abort(404)
 
+    # Get book details
+    book_data = dbf.retrieve_book(book_id)
+
+    if book_data is None:
+        abort(404)
+
+    book_id  = book_data[0]
+    book = Book(*book_data)
     createReview = CreateReviewText(request.form)
+    if request.method == "POST":
+        if createReview.validate():
+            dbf.add_review(book_id, user.user_id, request.form.get("rate"), createReview.review.data)
+            flash("Review successfully added!")
+            return redirect(url_for("book_info", book_id=book_id))
+        else:
+            flash("Review not added!")
+            return redirect(url_for("book_info", book_id=book_id))
+    return render_template("book_review.html", book=book, form=createReview, book_id = book_id)
 
 
 """ Search Results Page """

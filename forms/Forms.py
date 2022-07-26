@@ -108,7 +108,6 @@ class ResetPasswordForm(Form):
 
 class CreateReviewText(Form):
     review = TextAreaField("Review:", [validators.Length(min=20, max=2000), validators.DataRequired()])
-    title = StringField("Title:", [validators.Length(min=20, max=100), validators.DataRequired()])
 
 
 class AccountPageForm(Form):
