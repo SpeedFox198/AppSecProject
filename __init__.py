@@ -1133,8 +1133,8 @@ def manage_orders():
 @roles_required(["staff"])
 def manage_reviews():
     books_list = [Book(*rows) for rows in dbf.retrieve_inventory()]
-    reviews_count_list = []
-    return render_template('staff/manage_reviews.html', books_list=books_list)
+    books_and_reviews_list = [(book, dbf.no_of_reviews(book.book_id)) for book in books_list]
+    return render_template('staff/manage_reviews.html', books_list=books_and_reviews_list)
 
 
 """    Books Pages    """
@@ -1181,7 +1181,7 @@ def book_review(book_id):
     if book_data is None:
         abort(404)
 
-    book_id  = book_data[0]
+    book_id = book_data[0]
     book = Book(*book_data)
     createReview = CreateReviewText(request.form)
     if request.method == "POST":
