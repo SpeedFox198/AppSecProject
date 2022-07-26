@@ -3,16 +3,16 @@ from base64 import b64encode, b64decode
 from hmac import digest, compare_digest
 from typing import Union, Any
 from os import environ
-import logging
+# import logging
 
 # Logging
-logging.basicConfig(
-    filename="log/monitor_deserialisation.log",
-    filemode="a",
-    format="%(asctime)s [%(levelname)s]: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.WARNING
-)
+# logging.basicConfig(
+#     filename="log/monitor_deserialisation.log",
+#     filemode="a",
+#     format="%(asctime)s [%(levelname)s]: %(message)s",
+#     datefmt="%Y-%m-%d %H:%M:%S",
+#     level=logging.WARNING
+# )
 
 # Get secret key (you ain't gonna see it in plain text lol)
 _SECRET_KEY = environ.get("VERY_SECRET_KEY")
@@ -31,8 +31,8 @@ def create_session(data) -> bytes:
         # Serialise data
         session = b64encode(dumps(data))
     except Exception as e:
-        logging.critical(f"Error while serialising: {e}")
-        logging.critical(f"Bad data: {data}")
+        # logging.critical(f"Error while serialising: {e}")
+        # logging.critical(f"Bad data: {data}")
         return b""
     else:
         # Generate signature
@@ -56,7 +56,8 @@ def retrieve_session(session:str) -> Union[Any, None]:
         # If error occurs when comparing/decoding
         # Bad session was provided, return None
         except Exception as e:
-            logging.warning(f"Invalid session: {session}")
+            ...
+            # logging.warning(f"Invalid session: {session}")
 
         else:
 
@@ -66,8 +67,9 @@ def retrieve_session(session:str) -> Union[Any, None]:
                     # Returns user session object if session is valid
                     return loads(b64decode(values[0]))
             except Exception as e:
-                logging.critical(f"Error while deserialising: {e}")
-                logging.critical(f"Malicious session: {session}")
+                ...
+                # logging.critical(f"Error while deserialising: {e}")
+                # logging.critical(f"Malicious session: {session}")
 
 
 def get_cookie_value(request, name:str) -> Union[Any, None]:
