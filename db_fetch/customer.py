@@ -34,31 +34,106 @@ def delete_2FA_token(user_id: str) -> None:
 
 def create_failed_login(username: str, attempt_no: str) -> None:
     """ Creates failed login entry """
-    insert_row("FailedAttempts", (username, attempt_no))
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query1 = """SELECT user_id FROM Users WHERE username = ?;"""
+    query2 = """INSERT INTO FailedAttempts (user_id, attempts) VALUES (?, ?);"""
+    user_id = cur.execute(query1, [username]).fetchone()
+    # check if user_id exists
+    if user_id is None:
+        return None
+    user_id = user_id[0]
+    cur.execute(query2, [user_id, attempt_no])
+    con.commit()
+    con.close()
 
 def retrieve_failed_login(username: str) -> Union[tuple, None]:
     """ Retrieves and returns failed login from database """
-    return retrieve_db("FailedAttempts", username=username, fetchone=True)
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = """SELECT user_id FROM Users WHERE username = ?;"""
+    query2 = """SELECT * FROM FailedAttempts WHERE user_id = ?;"""
+    user_id = cur.execute(query, [username]).fetchone()
+    if user_id is None:
+        return None
+    user_id = user_id[0]
+    failed_login_data = cur.execute(query2, [user_id]).fetchone()
+    con.commit()
+    con.close()
+    return failed_login_data
 
 def update_failed_login(username: str, attempt_no: str) -> None:
     """ Updates failed login entry """
-    update_rows("FailedAttempts", ("attempts",), (attempt_no,), username=username)
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query1 = """SELECT user_id FROM Users WHERE username = ?;"""
+    query2 = """UPDATE FailedAttempts SET attempts = ? WHERE user_id = ?;"""
+    user_id = cur.execute(query1, [username]).fetchone()
+    # check if user_id exists
+    if user_id is None:
+        return None
+    user_id = user_id[0]
+    cur.execute(query2, [attempt_no, user_id])
+    con.commit()
+    con.close()
 
 def delete_failed_logins(username: str) -> None:
     """ Deletes and returns failed login from database """
-    delete_rows("FailedAttempts", username=username)
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = """SELECT user_id FROM Users WHERE username = ?;"""
+    query2 = """DELETE FROM FailedAttempts WHERE user_id = ?;"""
+    user_id = cur.execute(query, [username]).fetchone()
+    if user_id is None:
+        return None
+    user_id = user_id[0]
+    cur.execute(query2, [user_id])
+    con.commit()
+    con.close()
 
 def create_lockout_time(username, year, month, day, hour, minute, second) -> None:
     """ Creates a timeout time """
-    insert_row("Timeout", (username, year, month, day, hour, minute, second))
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query1 = """SELECT user_id FROM Users WHERE username = ?;"""
+    query2 = """INSERT INTO Timeout (user_id, year, month, day, hour, minute, second) VALUES (?, ?, ?, ?, ?, ?, ?);"""
+    user_id = cur.execute(query1, [username]).fetchone()
+    # check if user_id exists
+    if user_id is None:
+        return None
+    user_id = user_id[0]
+    cur.execute(query2, [user_id, year, month, day, hour, minute, second])
+    con.commit()
+    con.close()
 
 def retrieve_lockout_time(username: str) -> Union[tuple, None]:
     """ Retrieves and returns lockout time from database """
-    return retrieve_db("Timeout", username=username , fetchone=True)
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = """SELECT user_id FROM Users WHERE username = ?;"""
+    query2 = """SELECT * FROM Timeout WHERE user_id = ?;"""
+    user_id = cur.execute(query, [username]).fetchone()
+    if user_id is None:
+        return None
+    user_id = user_id[0]
+    lockout_data = cur.execute(query2, [user_id]).fetchone()
+    con.commit()
+    con.close()
+    return lockout_data
 
 def delete_lockout_time(username: str) -> None:
     """ Deletes and returns lockout time from database """
-    delete_rows("Timeout", username_id=username)
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    query = """SELECT user_id FROM Users WHERE username = ?;"""
+    query2 = """DELETE FROM Timeout WHERE user_id = ?;"""
+    user_id = cur.execute(query, [username]).fetchone()
+    if user_id is None:
+        return None
+    user_id = user_id[0]
+    cur.execute(query2, [user_id])
+    con.commit()
+    con.close()
 
 def retrieve_customer_details(user_id: str) -> Union[tuple, None]:
     """ Returns details of customer """
