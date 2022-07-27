@@ -12,9 +12,10 @@ logger.setLevel(logging.WARNING)
 # File Handler
 _LOG_FILE = "log/monitor_deserialisation.log"
 _LOG_FORMAT = "%(asctime)s [%(levelname)s]: %(message)s"
+_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 _fh = logging.FileHandler(_LOG_FILE)
 _fh.setLevel(logging.WARNING)
-_fh.setFormatter(logging.Formatter(_LOG_FORMAT))
+_fh.setFormatter(logging.Formatter(_LOG_FORMAT, _DATE_FORMAT))
 
 logger.addHandler(_fh)
 
