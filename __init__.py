@@ -17,7 +17,7 @@ from PIL import Image
 from math import ceil
 from itsdangerous import URLSafeTimedSerializer, BadData
 from OTP import generateOTP
-from GoogleEmailSend import gmail_send
+from google_authenticator import gmail_send
 from csp import get_csp
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from flask_expects_json import expects_json
@@ -322,15 +322,15 @@ def sign_up():
         gmail_send(email, subject, message)
         add_cookie({"Temp_User_ID": user_id, "Temp_User_Email": email, "Temp_User_Password": password, "Temp_User_Username": username})
 
-        return redirect(url_for("OTPverification"))
+        return redirect(url_for("otp_verification"))
 
     # Render sign up page
     return render_template("user/sign_up.html", form=sign_up_form)
 
 
-@app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
+@app.route("/user/sign-up/otp_verification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-def OTPverification():
+def otp_verification():
     temp_user_id = get_cookie_value(request, "Temp_User_ID")
     username = get_cookie_value(request, "Temp_User_Username")
     email = get_cookie_value(request, "Temp_User_Email")
