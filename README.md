@@ -25,25 +25,7 @@ Our web application is an online bookstore. It provides the service of purchasin
 
 **Python Version:** 3.8 and above required.
 
-## Required libraries for project
-
-**1. Flask** | `pip install flask `  
-**2. Flask-Mail** | `pip install flask-mail`  
-**3. Flask-Limiter** | `pip install Flask-Limiter`  
-**4. email-validator** | `pip install email-validator`  
-**5. WTForms** | `pip install wtforms`  
-**6. Flask-WTF** | `pip install flask-wtf`  
-**7. argon2-cffi** | `pip install argon2-cffi`  
-**8. stripe** | `pip install stripe`  
-**9. Pillow** | `pip install pillow`  
-**10. flask-expects-json** | `pip install flask-expects-json`
-**11. google-api-python-client** | `pip install google-api-python-client`  
-**12. google-auth-httplib2** | `pip install google-auth-httplib2`  
-**13. google-auth-oauthlib** | `pip install google-auth-oauthlib`  
-**14. google-auth** | `pip install google-auth`  
-**15. pyotp** | `pip install pyotp`
-
-You may install all using: `pip3 install -r requirements.txt`
+Install requirements using: `pip3 install -r requirements.txt`
 
 ## Task Allocation
 

@@ -16,10 +16,9 @@ from PIL import Image
 from math import ceil
 from itsdangerous import URLSafeTimedSerializer, BadData
 from OTP import generateOTP
-from GoogleEmailSend import gmail_send
+from google_authenticator import gmail_send
 from csp import get_csp
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
-from sanitize import sanitize
 from flask_expects_json import expects_json
 import jsonschema
 from functools import wraps
@@ -37,7 +36,7 @@ import stripe
 
 # CONSTANTS
 # TODO @everyone: set to False when deploying
-DEBUG = True  # Debug flag (True when debugging)
+DEBUG = False  # Debug flag (True when debugging)
 TOKEN_MAX_AGE = 900  # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 DOMAIN_NAME = "https://localhost:5000/"
@@ -215,7 +214,7 @@ def after_request(response):
     # Only renew session if login
     if isinstance(user, User):
         renewed_user_session = create_user_session(user.user_id, user.role)
-        response.set_cookie(USER_SESSION_NAME, renewed_user_session, httponly=True, secure=True)
+        response.set_cookie(USER_SESSION_NAME, renewed_user_session, httponly=True, secure=True, samesite="Lax")
 
     # Default log user out
     else:
@@ -224,11 +223,11 @@ def after_request(response):
 
     # Delete expired cookies
     for delete_this in expired_cookies:
-        response.set_cookie(delete_this, "", expires=0, httponly=True, secure=True)
+        response.set_cookie(delete_this, "", expires=0, httponly=True, secure=True, samesite="Lax")
 
     # Set new cookies
     for name, value in new_cookies.items():
-        response.set_cookie(name, create_session(value), httponly=True, secure=True)
+        response.set_cookie(name, create_session(value), httponly=True, secure=True, samesite="Lax")
 
     # Set CSP to prevent XSS
     allow_blob = flask_global.get("allow_blob", default=False)
@@ -322,15 +321,15 @@ def sign_up():
         gmail_send(email, subject, message)
         add_cookie({"Temp_User_ID": user_id, "Temp_User_Email": email, "Temp_User_Password": password, "Temp_User_Username": username})
 
-        return redirect(url_for("OTPverification"))
+        return redirect(url_for("otp_verification"))
 
     # Render sign up page
     return render_template("user/sign_up.html", form=sign_up_form)
 
 
-@app.route("/user/sign-up/OTPverification", methods=["GET", "POST"])
+@app.route("/user/sign-up/otp_verification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-def OTPverification():
+def otp_verification():
     temp_user_id = get_cookie_value(request, "Temp_User_ID")
     username = get_cookie_value(request, "Temp_User_Username")
     email = get_cookie_value(request, "Temp_User_Email")
@@ -1490,7 +1489,7 @@ def my_orders():
         elif orders.order_pending == "Cancelled":
             canceled_order.append(orders)
 
-    return render_template('my-orders.html')
+    return render_template("user/my_orders.html")
 
 
 #     # display from most recent to the least
@@ -1829,7 +1828,7 @@ def api_users():
                        username=row[1],
                        email=row[2],
                        profile_pic=row[4],
-                       is_admin=row[5],
+                       role=row[5],
                        name=row[6],
                        )
                   for row in users_data]
@@ -1869,7 +1868,7 @@ def api_single_user(user_id):
                       email=user_data[2],
                       # password=user_data[3],
                       profile_pic=user_data[4],
-                      is_admin=user_data[5],
+                      role=user_data[5],
                       name=user_data[6],
                       # credit_card_no=user_data[7],
                       # address=user_data[8],

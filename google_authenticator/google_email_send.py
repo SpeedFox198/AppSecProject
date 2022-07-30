@@ -1,5 +1,5 @@
 import base64
-from Google import get_service
+from google_authenticator import get_service
 from email.message import EmailMessage
 
 from googleapiclient.errors import HttpError
