@@ -48,8 +48,6 @@ app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
 PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
-app.config["SECRET_KEY"] = os.environ.get("VERY_SECRET_KEY")
-app.config["WTF_CSRF_CHECK_DEFAULT"] = False
 
 limiter = Limiter(
     app,
@@ -1966,10 +1964,12 @@ def bad_request(error):
         return jsonify(status=1, error=original_error.message), 400
     return render_template("error/400.html"), 400
 
+
 @app.errorhandler(CSRFError)
 def csrf_error(error):
     return render_template("error/csrf.html", error=error), 400
-"""    Main    """
 
+
+"""    Main    """
 if __name__ == "__main__":
-    app.run(debug=DEBUG, ssl_context=('cert.pem', 'key.pem'), port=443)  # Run app
+    app.run(debug=DEBUG, ssl_context=('cert.pem', 'key.pem'))  # Run app
