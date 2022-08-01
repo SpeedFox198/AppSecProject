@@ -4,7 +4,6 @@ from flask import (
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from werkzeug.utils import secure_filename
 from SecurityFunctions import AWS_encrypt, AWS_decrypt, generate_uuid4, generate_uuid5, pw_hash, pw_rehash, pw_verify
 from db_fetch.customer import create_lockout_time, delete_failed_logins
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
@@ -21,11 +20,9 @@ from google_authenticator import gmail_send
 from csp import get_csp
 from api_schema import LOGIN_SCHEMA, CREATE_USER_SCHEMA
 from flask_expects_json import expects_json
-from jsonschema import ValidationError
+import jsonschema
 from functools import wraps
-from flask_wtf import CSRFProtect
-from flask_wtf.csrf import CSRFError
-import wtforms.validators
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from urllib.parse import unquote
 import pyotp
 import datetime
@@ -51,7 +48,6 @@ app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
 PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
-app.config["SECRET_KEY"] = os.environ.get("VERY_SECRET_KEY")
 
 limiter = Limiter(
     app,
@@ -191,6 +187,7 @@ def before_first_request():
 @app.before_request
 def before_request():
     flask_global.user = get_user()  # Get user
+    csrf.protect()
 
 
 """ After request """  ##TODO: add SECURE in header
@@ -1960,7 +1957,7 @@ def too_many_request(e):
 
 @app.errorhandler(400)
 def bad_request(error):
-    if isinstance(error.description, ValidationError):
+    if isinstance(error.description, jsonschema.ValidationError):
         original_error = error.description
         # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
         #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
@@ -1968,13 +1965,11 @@ def bad_request(error):
     return render_template("error/400.html"), 400
 
 
-@app.errorhandler(wtforms.validators.ValidationError)
 @app.errorhandler(CSRFError)
-def csrf_error(e):
-    return render_template("error/csrf.html", error=e.description), 400
+def csrf_error(error):
+    return render_template("error/csrf.html", error=error), 400
 
 
 """    Main    """
-
 if __name__ == "__main__":
     app.run(debug=DEBUG, ssl_context=('cert.pem', 'key.pem'))  # Run app
