@@ -322,15 +322,15 @@ def sign_up():
         gmail_send(email, subject, message)
         add_cookie({"Temp_User_ID": user_id, "Temp_User_Email": email, "Temp_User_Password": password, "Temp_User_Username": username})
 
-        return redirect(url_for("otp_verification"))
+        return redirect(url_for("otpverification"))
 
     # Render sign up page
     return render_template("user/sign_up.html", form=sign_up_form)
 
 
-@app.route("/user/sign-up/otp_verification", methods=["GET", "POST"])
+@app.route("/user/sign-up/otpverification", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-def otp_verification():
+def otpverification():
     temp_user_id = get_cookie_value(request, "Temp_User_ID")
     username = get_cookie_value(request, "Temp_User_Username")
     email = get_cookie_value(request, "Temp_User_Email")
@@ -376,7 +376,7 @@ def otp_verification():
 
         else:
             flash("Invalid OTP Entered! Please try again!")
-            return redirect(url_for("OTPverification"))
+            return redirect(url_for("otpverification"))
     else:
         return render_template("user/OTP.html", form=OTPformat)
 
