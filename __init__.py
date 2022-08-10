@@ -1900,7 +1900,10 @@ def api_reviews(book_id):
     """ Returns a list of customer reviews in json format """
     # TODO: allow only a max len for book_id (just in case)
     # Retrieve customer reviews
-    reviews = [Review(*review).to_dict() for review in dbf.retrieve_reviews(book_id)]
+    if flask_global.user and flask_global.user.role == "staff":
+        reviews = [Review(*review).to_staff_dict() for review in dbf.retrieve_reviews(book_id)]
+    else:
+        reviews = [Review(*review).to_customer_dict() for review in dbf.retrieve_reviews(book_id)]
     ratings = dbf.retrieve_reviews_ratings(book_id)
     return jsonify(reviews=reviews, ratings=ratings)
 
