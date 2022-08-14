@@ -34,7 +34,7 @@ def get_cart_item(user_id: str, book_id: str) -> Union[tuple, None]:
     return retrieve_db("CartItems", or_and=1, user_id=user_id, book_id=book_id, fetchone=True)
 
 
-def delete_shopping_cart(user_id, book_id):
+def delete_shopping_cart_item(user_id, book_id):
     """ Deletes user's shopping cart"""
     # con = sqlite3.connect(DATABASE)
     # cur = con.cursor()

@@ -147,13 +147,29 @@ class AccountPageForm(Form):
                                                  validators.Length(min=8, max=8, message="Phone number should be 8 characters long")])
 
 
-class CreateUserForm(SignUpForm):
+class CreateUserForm(Form):
     """ Create user form used when creating new users """
+    # Username
+    username = StringField("Username", [validators.InputRequired(message=""),
+                                        validators.Length(min=3, max=20, message=""),
+                                        ValidUsername(message="Username can only contain letters, numbers, and underscores")])
 
-    # User Type
-    role = SelectField("User Type", validators=[validators.InputRequired(message="")],
-                       choices=[("", "Select User Type"), ("customer", "Customer"), ("staff", "Staff")],
-                       default="")
+    # Email
+    email = EmailField("Email", [validators.InputRequired(message=""),
+                                 validators.Email(message=""),
+                                 validators.Length(max=320, message="")])
+
+    # Password
+    password = PasswordField("Password", [validators.InputRequired(message=""),
+                                          validators.Length(min=8, max=80, message=""),
+                                          ContainsLower(message="Password must contain at least one lowercase letter"),
+                                          ContainsUpper(message="Password must contain at least one uppercase letter"),
+                                          ContainsNumSymbol(message="Password must contain at least one symbol or number")])
+
+    # Confirm password
+    confirm = PasswordField("Confirm Password", [validators.InputRequired(message=""),
+                                                 validators.Length(min=8, max=80, message=""),
+                                                 validators.EqualTo("password", message="Password entered is different")])
 
 
 class DeleteUserForm(Form):

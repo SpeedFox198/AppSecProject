@@ -54,7 +54,7 @@
             <li><a class="dropdown-item">No books at the moment</a></li>
             {% else %}
             {% for language in language_list %}
-          <li><a class="dropdown-item" href="{{ url_for('books', sort_this='language') }}">{{ language }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('books', sort_this=language) }}">{{ language }}</a></li>
             {% endfor %}
             {% endif %}
         </ul>

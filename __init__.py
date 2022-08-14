@@ -854,7 +854,7 @@ def manage_users():
                 flash("Customer does not exist", "warning")
 
             # Redirect to prevent form resubmission
-            return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+            return redirect(f"{url_for('manage_users')}?page={active_page}")
 
         # If action is to create user (and POST request is valid)
         elif create_user_form.validate():
@@ -919,6 +919,7 @@ def manage_users():
     return render_template(
         "admin/manage_accounts.html",
         display_users=display_users,
+        aws_decrypt=aws_decrypt,
         active_page=active_page, page_list=page_list,
         prev_page=prev_page, next_page=next_page,
         first_page=1, last_page=last_page,
@@ -951,7 +952,6 @@ def manage_staff():
 
     # Else, POST request to delete/create user
     else:
-
         # If action is to delete user (and POST request is valid)
         if delete_staff_form.validate() and delete_staff_form.user_id.data:
 
@@ -1038,6 +1038,7 @@ def manage_staff():
     return render_template(
         "admin/manage_staff.html",
         display_users=display_users,
+        aws_decrypt=aws_decrypt,
         active_page=active_page, page_list=page_list,
         prev_page=prev_page, next_page=next_page,
         first_page=1, last_page=last_page,
@@ -1193,7 +1194,13 @@ def delete_book(book_id):
 @app.route("/staff/manage-orders")
 @roles_required(["staff"])
 def manage_orders():
-    return "sorry for removing your code"
+    orders = [Order(*data) for data in dbf.get_all_orders()]
+    print(orders)
+    return render_template('staff/manage_orders.html',
+                           orders=orders,
+                           get_order_items=dbf.get_order_items,
+                           retrieve_book=dbf.retrieve_book,
+                           Book=Book)
 
 
 @app.route("/staff/manage-reviews")
@@ -1205,7 +1212,6 @@ def manage_reviews():
 
 
 """    Books Pages    """
-
 
 
 @app.route("/book/<book_id>", methods=["GET", "POST"])
@@ -1299,7 +1305,10 @@ def books(sort_this):
         elif sort_this == 'price_high_to_low':
             sort_dict = price_high_to_low(books_dict)
         elif sort_this.capitalize() in language_list:
-            sort_dict = filter_language(sort_this)
+            sort_dict = {}
+            for book_id, book in books_dict.items():
+                if book.language == sort_this.capitalize():
+                    sort_dict[book_id] = book
         else:
             sort_dict = books_dict
 
@@ -1311,17 +1320,6 @@ def books(sort_this):
                 sort_dict.pop(book_id, None)
 
     return render_template("books.html", query=q, books_list=sort_dict.values(), language_list=language_list)
-
-
-def filter_language(language):
-    books = {}
-    books_dict = {}
-    inventory_data = dbf.retrieve_inventory()
-
-    for book in inventory_data:
-        if inventory_data[book].language == language:
-            books.update({book: inventory_data[book]})
-    return books
 
 
 # Sort name from a to z
@@ -1520,7 +1518,7 @@ def delete_buying_cart(book_id):
     user: User = flask_global.user
     # Get User ID
     user_id = user.user_id
-    dbf.delete_shopping_cart(user_id, book_id)
+    dbf.delete_shopping_cart_item(user_id, book_id)
     return redirect(url_for('cart'))
 
 
@@ -1545,7 +1543,7 @@ def my_orders():
 
     user_id = user.user_id
 
-    # Get order details as a list of tuples(order_id, book_id, shipping option, order pending)
+    # Get order details as a list of tuples(order_id, book_id, shipping option, order status)
     order_details = [Order(*item) for item in dbf.get_order_details(user_id)]
 
     for orders in order_details:
@@ -1559,14 +1557,10 @@ def my_orders():
             deliver_order.append(orders)
         elif orders.order_pending == "Cancelled":
             canceled_order.append(orders)
+    print(order_details)
 
     return render_template("user/my_orders.html")
 
-#     print("canceled_order: ", canceled_order)
-#     return render_template('user/my_orders.html', all_order=db_order, new_order=new_order, \
-#                            confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
-#                            canceled_order=canceled_order, \
-#                            books_dict=books_dict)
 
 """ Checkout Pages """
 
@@ -1661,7 +1655,41 @@ def create_checkout_session():
 # show confirmation page upon successful payment
 #
 @app.route("/order-confirm")
+@login_required
 def orderconfirm():
+    # User is a Class
+    flask_global.user = get_user()
+    user: User = flask_global.user
+
+    if user.role == "admin":
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity)
+                  for items, quantity in dbf.get_shopping_cart(user_id)]
+    
+    # Generate order id
+    order_id = generate_uuid4()
+
+    # Shipping Option
+    shipping_option = 'Standard Delivery'
+
+    # Order pending
+    order_pending = 'Ordered'
+
+    # Create order
+    dbf.create_order_details(order_id, user_id, shipping_option, order_pending)
+
+    # Create order items
+    for item, quantity in cart_items:
+        dbf.create_order_items(order_id, item.book_id, quantity)
+        
+        # Delete cart items
+        dbf.delete_shopping_cart_item(user_id, item.book_id)
+    
+
     return render_template("order_confirmation.html")
 
 

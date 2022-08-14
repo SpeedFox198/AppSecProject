@@ -51,7 +51,7 @@
               <div class="user-details-user-id d-none">{{ user.user_id }}</div>
               <td class="user-details-username">{{ user.username }}</td>
               <td class="user-details-name">{{ user.name or "-" }}</td>
-              <td class="user-details-email">{{ user.email }}</td>
+              <td class="user-details-email">{{ aws_decrypt(user.email) }}</td>
               <td class="account-actions d-flex">
                 <button class="view-button btn me-auto p-0" data-bs-toggle="tooltip" title="View">
                   <i class="fa fa-eye"></i>

@@ -1,0 +1,3 @@
+.order-details.collapsed + tr {
+    display: none;
+}
