@@ -26,7 +26,7 @@
     {{ admin_sidebar("Manage Staff") }}
     <div class="d-flex flex-column col-lg-10 py-3 px-5">
       <div class="d-flex">
-        <h2 class="me-auto">User account overview</h2>
+        <h2 class="me-auto">Staff account overview</h2>
         <button type="button" class="btn btn-primary" id="addUserButton" data-bs-toggle="modal" data-bs-target="#addUser">
           Add New Staff
         </button>
@@ -51,7 +51,7 @@
               <div class="user-details-user-id d-none">{{ user.user_id }}</div>
               <td class="user-details-username">{{ user.username }}</td>
               <td class="user-details-name">{{ user.name or "-" }}</td>
-              <td class="user-details-email">{{ user.email }}</td>
+              <td class="user-details-email">{{ aws_decrypt(user.email) }}</td>
               <td class="account-actions d-flex">
                 <button class="view-button btn me-auto p-0" data-bs-toggle="tooltip" title="View">
                   <i class="fa fa-eye"></i>
@@ -153,7 +153,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button id="submitAddUserButton" type="button" class="btn btn-primary">Create Customer</button>
+        <button id="submitAddUserButton" type="button" class="btn btn-primary">Create Staff</button>
       </div>
     </div>
   </div>
@@ -165,7 +165,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="viewUserLabel">View Customer</h5>
+        <h5 class="modal-title" id="viewUserLabel">View Staff</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -205,7 +205,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="deleteUserLabel">Delete Customer</h5>
+        <h5 class="modal-title" id="deleteUserLabel">Delete Staff</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -214,7 +214,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         {# Very long name but it's cuz i don't want conflicts lmao #}
-        <button id="submitDeleteUserButton" type="button" class="btn btn-danger">Delete Customer</button>
+        <button id="submitDeleteUserButton" type="button" class="btn btn-danger">Delete Staff</button>
       </div>
     </div>
   </div>

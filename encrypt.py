@@ -4,13 +4,14 @@ import os
 
 AWS_KEY = b"NEqIjI1CsQfKQjJXITyC6tLOj_to_YOx-005CMwibVk="
 
+
 def aws_encrypt(string):
     """Encryption will return a ciphertext"""
     key = AWS_KEY
     fernet = Fernet(key)
 
     encrypted = fernet.encrypt(string.encode())
-    return encrypted
+    return encrypted.decode()
 
 
 def aws_decrypt(ciphertext:bytes):
