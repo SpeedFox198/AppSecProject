@@ -35,5 +35,9 @@ def get_order_items(book_id):
     return retrieve_db("OrderItems", ["quantity"], book_id=book_id, fetchone=True)
 
 
+def get_all_orders():
+    return retrieve_db("OrderDetails")
+
+
 def number_of_orders():
     return retrieve_db("OrderDetails", columns=["COUNT(*)"])[0][0]

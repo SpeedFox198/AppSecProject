@@ -1193,7 +1193,9 @@ def delete_book(book_id):
 @app.route("/staff/manage-orders")
 @roles_required(["staff"])
 def manage_orders():
-    return "sorry for removing your code"
+    orders = [Order(*data) for data in dbf.get_all_orders()]
+    print(orders)
+    return render_template('staff/manage_orders.html', orders=orders)
 
 
 @app.route("/staff/manage-reviews")
