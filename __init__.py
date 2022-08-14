@@ -1655,6 +1655,7 @@ def create_checkout_session():
 # show confirmation page upon successful payment
 #
 @app.route("/order-confirm")
+@login_required
 def orderconfirm():
     # User is a Class
     flask_global.user = get_user()

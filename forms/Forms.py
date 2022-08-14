@@ -52,7 +52,7 @@ class OTPForm(Form):
 
 class TwoFAForm(Form):
     twoFAOTP = StringField("Enter 2FA OTP:", [validators.Length(min=6, max=6), validators.DataRequired()])
-
+    
 
 class LoginForm(Form):
     """ Login form used for logging in """
