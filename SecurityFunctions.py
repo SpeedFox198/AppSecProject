@@ -84,9 +84,3 @@ def pw_rehash(hashed, pw):
     """ Rehashes a password """
     if ph.check_needs_rehash(hashed):
         return ph.hash(pw)
-
-
-# Testing
-# print(pw_verify(pw_hash("lmao"), "lmao"))
-# print(pw_verify(pw_hash("lmao"), "lmao2"))
-# print(pw_hash("lmao"))

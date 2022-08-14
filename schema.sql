@@ -25,6 +25,18 @@ CREATE TABLE TwoFA (
     twoFA_secret_token TEXT,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
+
+CREATE TABLE BackUpCodes (
+    user_id TEXT NOT NULL,
+    backupcode1 TEXT NOT NULL,
+    backupcode2 TEXT NOT NULL,
+    backupcode3 TEXT NOT NULL,
+    backupcode4 TEXT NOT NULL,
+    backupcode5 TEXT NOT NULL,
+    backupcode6 TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+
 CREATE TABLE FailedAttempts (
     user_id TEXT NOT NULL,
     attempts INTEGER,
