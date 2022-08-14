@@ -33,10 +33,7 @@
           {{ render_field(form.otp, "Please enter your one-time password", class="form-control", placeholder="OTP") }}
         </div>
         <input type="submit" value="SUBMIT" class="input-group btn"/>
-      </form>
-      {% if twoFA_code %}
-        <a href="{{ url_for('backup_codes_login') }}">Lost access to 2FA?</a>
-      {% endif %}      
+      </form>     
     </div>
   </div>
 </div>

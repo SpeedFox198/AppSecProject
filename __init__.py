@@ -528,10 +528,6 @@ def backup_codes():
 
     if user.role == "admin":
         abort(403)
-
-    code_check = dbf.retrieve_backup_code(user.user_id)
-    if code_check:
-        dbf.delete_backup_code(user.user_id)
     code1 = generateOTP()
     code2 = generateOTP()
     code3 = generateOTP()
@@ -543,7 +539,6 @@ def backup_codes():
 
 @app.route("/user/login/twoFA/backup_codes", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
-@login_required
 def backup_codes_login():
     # User is a Class
     user_id = get_cookie_value(request, "user_id")
@@ -573,8 +568,11 @@ def backup_codes_login():
                 dbf.delete_failed_logins(user.user_id)
             remove_cookies(["user_id", "user_data"])
             return redirect(url_for("home"))
+        else:
+            flash("Invalid Backup Codes Entered! Please try again!")
+            return redirect(url_for("backup_codes_login"))
             
-    return render_template("user/lost_2FA.html", code1=code1, code2=code2, code3=code3, code4=code4, code5=code5, code6=code6)
+    return render_template("user/lost_2FA.html", form=back_up_form, code1=code1, code2=code2, code3=code3, code4=code4, code5=code5, code6=code6)
 
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
@@ -588,6 +586,7 @@ def google_authenticator_disable():
         abort(403)
 
     dbf.delete_2FA_token(user.user_id)
+    dbf.delete_backup_codes(user.user_id)
     flash("2FA has been disabled")
     return redirect(url_for("account"))
 
