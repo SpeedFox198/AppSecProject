@@ -1551,15 +1551,15 @@ def my_orders():
     order_details = [Order(*item) for item in dbf.get_order_details(user_id)]
 
     for orders in order_details:
-        if orders.order_status == "Ordered":
+        if orders.order_pending == "Ordered":
             new_order.append(orders)
-        elif orders.order_status == "Confirmed":
+        elif orders.order_pending == "Confirmed":
             confirm_order.append(orders)
-        elif orders.order_status == "Shipped":
+        elif orders.order_pending == "Shipped":
             ship_order.append(orders)
-        elif orders.order_status == "Delivered":
+        elif orders.order_pending == "Delivered":
             deliver_order.append(orders)
-        elif orders.order_status == "Cancelled":
+        elif orders.order_pending == "Cancelled":
             canceled_order.append(orders)
     print(order_details)
 
@@ -1678,11 +1678,11 @@ def orderconfirm():
     # Shipping Option
     shipping_option = 'Standard Delivery'
 
-    # Order status
-    order_status = 'Ordered'
+    # Order pending
+    order_pending = 'Ordered'
 
     # Create order
-    dbf.create_order_details(order_id, user_id, shipping_option, order_status)
+    dbf.create_order_details(order_id, user_id, shipping_option, order_pending)
 
     # Create order items
     for item, quantity in cart_items:
