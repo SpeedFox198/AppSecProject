@@ -7,14 +7,15 @@ con = sqlite3.connect("database.db")
 #     con.executescript(f.read())
 
 cur = con.cursor()
-cur.execute("""CREATE TABLE BackUpCodes (
+cur.execute("""CREATE TABLE OTP (
     user_id TEXT NOT NULL,
-    backupcode1 TEXT NOT NULL,
-    backupcode2 TEXT NOT NULL,
-    backupcode3 TEXT NOT NULL,
-    backupcode4 TEXT NOT NULL,
-    backupcode5 TEXT NOT NULL,
-    backupcode6 TEXT NOT NULL,
+    otp TEXT NOT NULL,
+    otp_year INTEGER NOT NULL,
+    otp_month INTEGER NOT NULL,
+    otp_day INTEGER NOT NULL,
+    otp_hour INTEGER NOT NULL,
+    otp_minute INTEGER NOT NULL,
+    otp_second INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 """)

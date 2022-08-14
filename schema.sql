@@ -9,6 +9,7 @@
 -- DROP TABLE IF EXISTS TwoFA;
 -- DROP TABLE IF EXISTS Timeout;
 -- DROP TABLE IF EXISTS FailedAttempts;
+-- DROP TABLE IF EXISTS BackUpCodes;
 
 CREATE TABLE Users (
     user_id TEXT NOT NULL,
