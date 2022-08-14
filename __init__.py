@@ -177,7 +177,7 @@ def before_first_request():
         admin_id = generate_uuid5("admin")
         username = "admin"
         email = aws_encrypt("admin@vsecurebookstore.com")
-        password = pw_hash("PASS{uNh@5h3d}")
+        password = pw_hash("PASS{h@5H3d}")
 
         # Create admin
         dbf.create_admin(admin_id, username, email, password)
