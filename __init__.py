@@ -779,7 +779,7 @@ def account():
                            form=account_page_form,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=aws_decrypt(user.email),
+                           email=aws_decrypt(user.email.encode()),
                            phone_no=user.phone_no,
                            twoFA_enabled=twoFA_enabled)
 
@@ -1607,7 +1607,7 @@ def checkout():
 
 
 # Create Check out session with Stripe
-@app.route('/create-checkout-session', methods=['GET', 'POST'])
+@app.route('/create-checkout-session', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
 @login_required
 def create_checkout_session():

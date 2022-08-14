@@ -35,7 +35,7 @@ _csp = {
     ],
     "form-action": [
         "\'self\'",
-        "https://localhost:5000/"
+        "https://checkout.stripe.com/"  # For Stripe checkout
     ],
     "base-uri": [
         "\'self\'"
