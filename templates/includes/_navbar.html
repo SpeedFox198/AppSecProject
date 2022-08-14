@@ -26,10 +26,10 @@
           <a class="nav-link" href="{{ url_for('home') }}" id="first-nav-item">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/all_books/English">English Books</a>
+          <a class="nav-link" href="{{ url_for('books', sort_this='English') }}">English Books</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/all_books/Chinese">Chinese Books</a>
+          <a class="nav-link" href="{{ url_for('books', sort_this='Chinese') }}">Chinese Books</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('books', sort_this='all') }}">All Books</a>

@@ -1301,7 +1301,10 @@ def books(sort_this):
         elif sort_this == 'price_high_to_low':
             sort_dict = price_high_to_low(books_dict)
         elif sort_this.capitalize() in language_list:
-            sort_dict = filter_language(sort_this)
+            sort_dict = {}
+            for book_id, book in books_dict.items():
+                if book.language == sort_this.capitalize():
+                    sort_dict[book_id] = book
         else:
             sort_dict = books_dict
 
@@ -1313,17 +1316,6 @@ def books(sort_this):
                 sort_dict.pop(book_id, None)
 
     return render_template("books.html", query=q, books_list=sort_dict.values(), language_list=language_list)
-
-
-def filter_language(language):
-    books = {}
-    books_dict = {}
-    inventory_data = dbf.retrieve_inventory()
-
-    for book in inventory_data:
-        if inventory_data[book].language == language:
-            books.update({book: inventory_data[book]})
-    return books
 
 
 # Sort name from a to z
