@@ -1518,7 +1518,7 @@ def delete_buying_cart(book_id):
     user: User = flask_global.user
     # Get User ID
     user_id = user.user_id
-    dbf.delete_shopping_cart(user_id, book_id)
+    dbf.delete_shopping_cart_item(user_id, book_id)
     return redirect(url_for('cart'))
 
 
@@ -1543,28 +1543,24 @@ def my_orders():
 
     user_id = user.user_id
 
-    # Get order details as a list of tuples(order_id, book_id, shipping option, order pending)
+    # Get order details as a list of tuples(order_id, book_id, shipping option, order status)
     order_details = [Order(*item) for item in dbf.get_order_details(user_id)]
 
     for orders in order_details:
-        if orders.order_pending == "Ordered":
+        if orders.order_status == "Ordered":
             new_order.append(orders)
-        elif orders.order_pending == "Confirmed":
+        elif orders.order_status == "Confirmed":
             confirm_order.append(orders)
-        elif orders.order_pending == "Shipped":
+        elif orders.order_status == "Shipped":
             ship_order.append(orders)
-        elif orders.order_pending == "Delivered":
+        elif orders.order_status == "Delivered":
             deliver_order.append(orders)
-        elif orders.order_pending == "Cancelled":
+        elif orders.order_status == "Cancelled":
             canceled_order.append(orders)
+    print(order_details)
 
     return render_template("user/my_orders.html")
 
-#     print("canceled_order: ", canceled_order)
-#     return render_template('user/my_orders.html', all_order=db_order, new_order=new_order, \
-#                            confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
-#                            canceled_order=canceled_order, \
-#                            books_dict=books_dict)
 
 """ Checkout Pages """
 
@@ -1660,6 +1656,38 @@ def create_checkout_session():
 #
 @app.route("/order-confirm")
 def orderconfirm():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.role == "admin":
+        abort(404)
+
+    user_id = user.user_id
+
+    # Get cart items as a list of tuples, [(Book object, quantity)]
+    cart_items = [(Book(*dbf.retrieve_book(items)), quantity)
+                  for items, quantity in dbf.get_shopping_cart(user_id)]
+    
+    # Generate order id
+    order_id = generate_uuid4()
+
+    # Shipping Option
+    shipping_option = 'Standard Delivery'
+
+    # Order status
+    order_status = 'Ordered'
+
+    # Create order
+    dbf.create_order_details(order_id, user_id, shipping_option, order_status)
+
+    # Create order items
+    for item, quantity in cart_items:
+        dbf.create_order_items(order_id, item.book_id, quantity)
+        
+        # Delete cart items
+        dbf.delete_shopping_cart_item(user_id, item.book_id)
+    
+
     return render_template("order_confirmation.html")
 
 
