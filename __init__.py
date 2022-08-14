@@ -26,6 +26,7 @@ import jsonschema
 from functools import wraps
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from urllib.parse import unquote
+from typing import Union
 import pyotp
 import datetime
 
@@ -92,6 +93,31 @@ def get_user():
 
             # Return user object
             return User(*user_data)
+
+
+def user_authenticate(username: str, password: str) -> Union[tuple, None]:
+    """ Authenticates password for username/email """
+
+    if "@" in username:  # Authenticate by email
+        user_emails = dbf.retrieve_user_ids_and_emails()
+        user_id = None
+        for i in user_emails:
+            the_email = i[1]  # Email is in index 0 of tuple
+            if aws_decrypt(the_email) == username:
+                user_id = i[0]
+                break
+    else:                # Authenticate by username
+        user_id = dbf.retrieve_user_by_username(username)
+
+    user = None
+    if user_id is not None:
+        hashed_pass = dbf.retrieve_password(user_id)
+        if hashed_pass is None:
+            raise ValueError(f"Critical: {user_id} user's password is empty!")
+        elif pw_verify(hashed_pass, password):
+            user = dbf.retrieve_user(user_id)
+
+    return user
 
 
 def add_cookie(cookies: dict):
@@ -164,23 +190,6 @@ def roles_required(roles: list[str], mode="regular"):
             return func(*args, **kwargs)
         return decorated_function
     return decorator
-
-
-""" Before first request """
-
-
-@app.before_first_request
-def before_first_request():
-    # Create admin if not in database
-    if not dbf.admin_exists():
-        # Admin details
-        admin_id = generate_uuid5("admin")
-        username = "admin"
-        email = aws_encrypt("admin@vsecurebookstore.com")
-        password = pw_hash("PASS{h@5H3d}")
-
-        # Create admin
-        dbf.create_admin(admin_id, username, email, password)
 
 
 """ Before request """
@@ -557,14 +566,14 @@ def password_reset(token):
             session["DisplayFieldError"] = True
         else:
             # Extract password
-            new_password = pw_hash(reset_password_form.new_password.data)
+            new_password = reset_password_form.new_password.data
 
             # Reset Password
             print(user_check)
-            dbf.change_password(user_check, new_password)
+            dbf.change_password(user_check, pw_hash(new_password))
 
             # Get user object
-            user = User(*dbf.user_auth(aws_encrypt(email), new_password))
+            user = User(*user_authenticate(email, new_password))
 
             # Create session to login
             flask_global.user = user
@@ -614,7 +623,7 @@ def password_change():
             new_password = change_password_form.new_password.data
 
             # Password (current) was incorrect, disallow change
-            if not dbf.user_auth(user.username, current_password):
+            if not user_authenticate(user.username, current_password):
                 errors["DisplayFieldError"] = errors["CurrentPasswordError"] = True
                 flash("Your password is incorrect, please try again", "current-password-error")
 
@@ -1182,11 +1191,13 @@ def book_review(book_id):
     createReview = CreateReviewText(request.form)
     if request.method == "POST":
         if createReview.validate():
-            dbf.add_review(book_id, user.user_id, request.form.get("rate"), createReview.review.data)
+            data:str = createReview.review.data
+            data = data.strip()
+            dbf.add_review(book_id, user.user_id, request.form.get("rate"), data)
             flash("Review successfully added!")
             return redirect(url_for("book_info", book_id=book_id))
         else:
-            flash("Review not added!")
+            flash("An error occured, review not added!", category="error")
             return redirect(url_for("book_info", book_id=book_id))
     return render_template("review.html", book=book, form=createReview, book_id = book_id)
 
@@ -1693,7 +1704,7 @@ def about():
 def api_login():
     username = flask_global.data["username"]
     password = flask_global.data["password"]
-    user_data = dbf.user_auth(username, pw_hash(password))
+    user_data = user_authenticate(username, password)
     time_check = datetime.datetime.now()
     if user_data is None:
         print("Check 1")

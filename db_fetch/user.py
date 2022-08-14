@@ -8,13 +8,15 @@ Contains functions that interacts with users in database
 from .general import *
 
 
-def user_auth(username: str, password: str) -> Union[tuple, None]:
-    """ Authenticates password for username/email """
-    return execute_db(
-        """SELECT * FROM Users WHERE (username = ? OR email = ?) AND password = ?;""",
-        (username, username, password),  # 2 usernames looks odd, but it's needed for username and email lol
-        fetchone=True
-    )
+def retrieve_password(user_id: str) -> Union[str, None]:
+    """ Returns the hashed password for user with user_id """
+    password = retrieve_db("Users", columns=["password"], user_id=user_id, fetchone=True)
+    if password:
+        return password[0]
+
+def retrieve_user_ids_and_emails() -> list[tuple[str, str]]:
+    """ Returns list of all userids and emails in database """
+    return retrieve_db("Users", columns=["user_id", "email"])
 
 
 def retrieve_user(user_id: str) -> Union[tuple, None]:

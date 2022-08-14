@@ -34,7 +34,8 @@ _csp = {
         "https://use.fontawesome.com"   # For Font Awesome
     ],
     "form-action": [
-        "\'self\'"
+        "\'self\'",
+        "https://localhost:5000/"
     ],
     "base-uri": [
         "\'self\'"
