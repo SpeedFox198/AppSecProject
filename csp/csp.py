@@ -15,7 +15,10 @@ _csp = {
         "\'self\'",
         "https://cdn.jsdelivr.net",     # For Bootstrap
         "https://code.jquery.com",      # For jQuery
-        "https://apis.google.com"       # For Google API
+        "https://apis.google.com",      # For Google API
+        "https://www.google.com/recaptcha/*", # For Google reCAPTCHA
+        "https://www.gstatic.com/recaptcha/releases/mq0-U1BHZ5YTcoDC-CvsLPNc/recaptcha__en.js" # For Google reCAPTCHA
+
     ],
     "style-src": [
         "\'self\'",
