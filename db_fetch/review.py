@@ -13,7 +13,7 @@ def retrieve_reviews(book_id: str) -> list[tuple]:
     """ Retrieve all customer reviews for book """
     return retrieve_db(
         "Reviews NATURAL JOIN Users",
-        ("username", "profile_pic", "stars", r"STRFTIME('%Y-%m-%d %H:%M', DATETIME(time, 'localtime'))", "content"),
+        ("user_id", "username", "profile_pic", "stars", r"STRFTIME('%Y-%m-%d %H:%M', DATETIME(time, 'localtime'))", "content"),
         limit=0, offset=0,  # TODO currently at default values, to be changed when creating API
         book_id=book_id
     )
