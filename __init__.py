@@ -4,7 +4,12 @@ from flask import (
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+<<<<<<< Updated upstream
 from SecurityFunctions import AWS_encrypt, AWS_decrypt, generate_uuid4, generate_uuid5, pw_hash, pw_rehash, pw_verify
+=======
+from werkzeug.utils import secure_filename
+from SecurityFunctions import generate_uuid4, generate_uuid5, pw_hash, pw_verify, pw_rehash
+>>>>>>> Stashed changes
 from db_fetch.customer import create_lockout_time, delete_failed_logins
 from session_handler import create_session, create_user_session, get_cookie_value, retrieve_user_session, \
     USER_SESSION_NAME, NEW_COOKIES, EXPIRED_COOKIES
@@ -15,6 +20,7 @@ import os  # For saving and deleting images
 from PIL import Image
 from math import ceil
 from itsdangerous import URLSafeTimedSerializer, BadData
+from encrypt import aws_encrypt, aws_decrypt
 from OTP import generateOTP
 from google_authenticator import gmail_send
 from csp import get_csp
@@ -36,7 +42,7 @@ import stripe
 
 # CONSTANTS
 # TODO @everyone: set to False when deploying
-DEBUG = True  # Debug flag (True when debugging)
+DEBUG = False  # Debug flag (True when debugging)
 TOKEN_MAX_AGE = 900  # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 DOMAIN_NAME = "https://localhost:5000/"
@@ -174,8 +180,8 @@ def before_first_request():
         # Admin details
         admin_id = generate_uuid5("admin")
         username = "admin"
-        email = "admin@vsecurebookstore.com"
-        password = "PASS{uNh@5h3d}"
+        email = aws_encrypt("admin@vsecurebookstore.com")
+        password = pw_hash("PASS{uNh@5h3d}")
 
         # Create admin
         dbf.create_admin(admin_id, username, email, password)
@@ -362,7 +368,7 @@ def otpverification():
         if one_time_pass == OTPinput:
             # Create new customer
             user_id = generate_uuid5(username)  # Generate new unique user id for customer
-            dbf.create_customer(user_id, username, email, password)
+            dbf.create_customer(user_id, username, aws_encrypt(email), pw_hash(password))
 
             # Create new user session to login (placeholder values were used to create user object)
             flask_global.user = User(user_id, "", "", "", "", "customer")
@@ -437,7 +443,7 @@ def twoFA():
         return render_template("user/2FA.html", form=OTPformat)
 
 
-""" Forgot password page """  ### TODO: work on this SpeedFox198
+""" Forgot password page """
 
 
 @app.route("/user/password/forget", methods=["GET", "POST"])
@@ -458,7 +464,7 @@ def password_forget():
             # Get email
             email = forget_password_form.email.data.lower()
 
-            if dbf.email_exists(email):
+            if dbf.email_exists(aws_encrypt(email)):
                 # Generate token
                 token = url_serialiser.dumps(email, salt=app.config["PASSWORD_FORGET_SALT"])
 
@@ -468,10 +474,6 @@ def password_forget():
                     "password_reset", token=token, _external=True)
 
                 gmail_send(email, subject, message)
-
-                if DEBUG: print(f"Sent email to {email}")
-            else:
-                if DEBUG: print(f"No user with email: {email}")
 
             flash(f"Verification email sent to {email}")
             return redirect(url_for("login"))
@@ -524,7 +526,7 @@ def google_authenticator_disable():
     flash("2FA has been disabled")
     return redirect(url_for("account"))
 
-""" Reset password page """  ### TODO: work on this SpeedFox198
+""" Reset password page """
 
 
 @app.route("/user/password/reset/<token>", methods=["GET", "POST"])
@@ -547,7 +549,7 @@ def password_reset(token):
 
     # Get user
     try:
-        user_check = dbf.retrieve_user_id(email)
+        user_check = dbf.retrieve_user_id(aws_encrypt(email))
     except:
         flash("Token expired or invalid")
         return redirect(url_for("home"))
@@ -559,14 +561,14 @@ def password_reset(token):
             session["DisplayFieldError"] = True
         else:
             # Extract password
-            new_password = reset_password_form.new_password.data
+            new_password = pw_hash(reset_password_form.new_password.data)
 
             # Reset Password
             print(user_check)
             dbf.change_password(user_check, new_password)
 
             # Get user object
-            user = User(*dbf.user_auth(email, new_password))
+            user = User(*dbf.user_auth(aws_encrypt(email), new_password))
 
             # Create session to login
             flask_global.user = user
@@ -633,7 +635,7 @@ def password_change():
             # Password (current) was correct, change to new password
             else:
                 # Change user password
-                dbf.change_password(user.user_id, new_password)
+                dbf.change_password(user.user_id, pw_hash(new_password))
 
                 # Sign user out (proccess will be done in @app.after_request)
                 flask_global.user = None
@@ -712,7 +714,7 @@ def account():
                            form=account_page_form,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=user.email,
+                           email=aws_decrypt(user.email),
                            phone_no=user.phone_no,
                            twoFA_enabled=twoFA_enabled)
 
@@ -800,14 +802,14 @@ def manage_users():
                 flash("Username taken", "create-user-username-error")
 
             # Ensure that email is not registered yet
-            elif dbf.email_exists(email):
+            elif dbf.email_exists(aws_encrypt(email)):
                 errors["DisplayFieldError"] = errors["CreateUserEmailError"] = True
                 flash("Email already registered", "create-user-email-error")
 
             # If username and email are not used, create customer
             else:
                 user_id = generate_uuid5(username)  # Generate new unique user id for customer
-                dbf.create_customer(user_id, username, email, password)
+                dbf.create_customer(user_id, username, aws_encrypt(email), pw_hash(password))
                 flash(f"Created new customer: {username}")
                 return redirect(f"{url_for('manage_users')}?page={active_page}")
 
@@ -919,14 +921,14 @@ def manage_staff():
                 flash("Username taken", "create-user-username-error")
 
             # Ensure that email is not registered yet
-            elif dbf.email_exists(email):
+            elif dbf.email_exists(aws_encrypt(email)):
                 errors["DisplayFieldError"] = errors["CreateUserEmailError"] = True
                 flash("Email already registered", "create-user-email-error")
 
             # If username and email are not used, create customer
             else:
                 user_id = generate_uuid5(username)  # Generate new unique user id for customer
-                dbf.create_staff(user_id, username, email, password)
+                dbf.create_staff(user_id, username, aws_encrypt(email), pw_hash(password))
                 flash(f"Created new staff: {username}")
                 return redirect(f"{url_for('manage_staff')}?page={active_page}")
 
@@ -1695,7 +1697,7 @@ def about():
 def api_login():
     username = flask_global.data["username"]
     password = flask_global.data["password"]
-    user_data = dbf.user_auth(username, password)
+    user_data = dbf.user_auth(username, pw_hash(password))
     time_check = datetime.datetime.now()
     if user_data is None:
         print("Check 1")
@@ -1824,7 +1826,7 @@ def api_users():
         # Comment out personal info in case of excessive data exposure
         output = [dict(user_id=row[0],
                        username=row[1],
-                       email=row[2],
+                       email=aws_decrypt(row[2]),
                        profile_pic=row[4],
                        role=row[5],
                        name=row[6],
