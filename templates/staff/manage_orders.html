@@ -48,16 +48,26 @@
                         <tr>
                             <td colspan="6">
                                 <div class="collapse" id="collapse{{ order.order_id }}">
-                                    <div class="row">
                                     {% for book_id, quantity in get_order_items(order.order_id) %}
                                         {% set book = Book(*retrieve_book(book_id)) %}
-                                        <div class="col">
-                                            <img src="{{ book.cover_img }}" alt="book cover image">
-                                            {{ book.title }}
-                                            {{ quantity }}
+                                        <div class="row">
+                                            <div class="col-2">
+                                                <img src="{{ book.cover_img }}" alt="book cover image" height="200px" class="p-2">
+                                            </div>
+                                            <div class="col-6">
+                                                <span class="d-block py-2 fw-bold">Title</span>
+                                                {{ book.title }}
+                                            </div>
+                                            <div class="col-2">
+                                                <span class="d-block py-2 fw-bold">Author</span>
+                                                {{ book.author }}
+                                            </div>
+                                            <div class="col-2">
+                                                <span class="d-block py-2 fw-bold">Quantity</span>
+                                                {{ quantity }}
+                                            </div>
                                         </div>
                                     {% endfor %}
-                                    </div>
                                 </div>
                             </td>
                         </tr>

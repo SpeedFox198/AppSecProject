@@ -1195,7 +1195,6 @@ def delete_book(book_id):
 @roles_required(["staff"])
 def manage_orders():
     orders = [Order(*data) for data in dbf.get_all_orders()]
-    print(orders)
     return render_template('staff/manage_orders.html',
                            orders=orders,
                            get_order_items=dbf.get_order_items,
