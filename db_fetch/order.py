@@ -7,14 +7,12 @@ Contains functions that interact with orders table
 from .general import *
 
 
-def create_order_details(order_id, user_id, shipping_option, order_pending):
-    # con = sqlite3.connect(DATABASE)
-    # cur = con.cursor()
-    # query = f"""INSERT INTO OrderDetails VALUES('{order_id}', '{user_id}', '{shipping_option}', '{order_pending}');"""
-    # cur.execute(query)
-    # con.commit()
-    # con.close()
-    insert_row("OrderDetails", [order_id, user_id, shipping_option, order_pending])
+def create_order_details(order_id, user_id, shipping_option, order_status):
+    """ Create order details """
+    insert_row("OrderDetails", [order_id, user_id, shipping_option, order_status], ['order_id', 'user_id', 'shipping_option', 'order_pending'])
+
+def create_order_items(order_id, book_id, quantity):
+    insert_row("OrderItems", [order_id, book_id, quantity])
 
 
 def get_order_details(user_id):
