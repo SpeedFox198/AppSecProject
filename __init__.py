@@ -782,6 +782,7 @@ def dashboard():
     orders = dbf.number_of_orders()
     book_count = dbf.number_of_books()
     staff = dbf.number_of_staff()
+    reviews = dbf.no_of_all_reviews()
     if flask_global.user.role == "admin":
         return render_template("admin/admin_dashboard.html",
                                customer_count=customers,
@@ -792,7 +793,8 @@ def dashboard():
     elif flask_global.user.role == "staff":
         return render_template("admin/staff_dashboard.html",
                                order_count=orders,
-                               book_count=book_count)
+                               book_count=book_count,
+                               review_count=reviews)
 
 
 # Manage accounts page
@@ -1176,7 +1178,7 @@ def delete_book(book_id):
     return redirect(url_for('inventory'))
 
 
-@app.route("/admin/manage-orders")
+@app.route("/staff/manage-orders")
 @roles_required(["staff"])
 def manage_orders():
     return "sorry for removing your code"
@@ -1186,7 +1188,7 @@ def manage_orders():
 @roles_required(["staff"])
 def manage_reviews():
     books_list = [Book(*rows) for rows in dbf.retrieve_inventory()]
-    books_and_reviews_list = [(book, dbf.no_of_reviews(book.book_id)) for book in books_list]
+    books_and_reviews_list = [(book, dbf.no_of_reviews_from_book(book.book_id)) for book in books_list]
     return render_template('staff/manage_reviews.html', books_list=books_and_reviews_list)
 
 
@@ -1931,6 +1933,7 @@ def api_reviews(book_id):
 def api_delete_reviews(book_id):  # created delete route bc staff only can delete but everyone can read reviews
     user_id = request.args.get("user_id")
     deleted_review = dbf.retrieve_selected_review(book_id=book_id, user_id=user_id)
+    deleted_review_username = dbf.retrieve_username_by_user_id(user_id)
 
     if user_id is None:
         return jsonify(status=1, error="Parameter 'user_id' is required."), 400
@@ -1939,21 +1942,7 @@ def api_delete_reviews(book_id):  # created delete route bc staff only can delet
         return jsonify(status=1, error="Review does not exist"), 404
 
     dbf.delete_review(book_id=book_id, user_id=user_id)
-    return jsonify(status=0, message="Review deleted!")
-
-
-@app.route('/api/orders')
-@limiter.limit("10/second", override_defaults=False)
-@roles_required(["staff"], "api")
-def api_orders():
-    return "asdf"
-
-
-@app.route('/api/orders/<user_id>')
-@limiter.limit("10/second", override_defaults=False)
-@roles_required(["staff"], "api")
-def api_delete_orders(user_id):
-    return "zxcv"
+    return jsonify(status=0, message=f"Review by {deleted_review_username} deleted!")
 
 
 """    Error Handlers    """
