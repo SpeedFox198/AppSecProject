@@ -854,7 +854,7 @@ def manage_users():
                 flash("Customer does not exist", "warning")
 
             # Redirect to prevent form resubmission
-            return redirect(f"{url_for('manage_accounts')}?page={active_page}")
+            return redirect(f"{url_for('manage_users')}?page={active_page}")
 
         # If action is to create user (and POST request is valid)
         elif create_user_form.validate():
@@ -919,6 +919,7 @@ def manage_users():
     return render_template(
         "admin/manage_accounts.html",
         display_users=display_users,
+        aws_decrypt=aws_decrypt,
         active_page=active_page, page_list=page_list,
         prev_page=prev_page, next_page=next_page,
         first_page=1, last_page=last_page,
@@ -951,7 +952,6 @@ def manage_staff():
 
     # Else, POST request to delete/create user
     else:
-
         # If action is to delete user (and POST request is valid)
         if delete_staff_form.validate() and delete_staff_form.user_id.data:
 
@@ -1038,6 +1038,7 @@ def manage_staff():
     return render_template(
         "admin/manage_staff.html",
         display_users=display_users,
+        aws_decrypt=aws_decrypt,
         active_page=active_page, page_list=page_list,
         prev_page=prev_page, next_page=next_page,
         first_page=1, last_page=last_page,
@@ -1195,7 +1196,11 @@ def delete_book(book_id):
 def manage_orders():
     orders = [Order(*data) for data in dbf.get_all_orders()]
     print(orders)
-    return render_template('staff/manage_orders.html', orders=orders)
+    return render_template('staff/manage_orders.html',
+                           orders=orders,
+                           get_order_items=dbf.get_order_items,
+                           retrieve_book=dbf.retrieve_book,
+                           Book=Book)
 
 
 @app.route("/staff/manage-reviews")
@@ -1207,7 +1212,6 @@ def manage_reviews():
 
 
 """    Books Pages    """
-
 
 
 @app.route("/book/<book_id>", methods=["GET", "POST"])
@@ -1653,6 +1657,7 @@ def create_checkout_session():
 @app.route("/order-confirm")
 def orderconfirm():
     # User is a Class
+    flask_global.user = get_user()
     user: User = flask_global.user
 
     if user.role == "admin":
