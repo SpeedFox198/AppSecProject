@@ -50,7 +50,8 @@ app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
 PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
-
+app.config['RECAPTCHA_PUBLIC_KEY'] = '6LeQjnQhAAAAAIoKpHeMKbuw2CXxYbyC3r6SV0DD'
+app.config['RECAPTCHA_PRIVATE_KEY'] = '6LeQjnQhAAAAAEunWYM_3EnqW6MO76su5GmyhG9Z'
 limiter = Limiter(
     app,
     key_func=get_remote_address,

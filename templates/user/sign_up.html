@@ -56,6 +56,9 @@
         <input type="submit" value="SIGN UP" class="input-group btn"/>
       </form>
     </div>
+    <div>
+      {{ form.recaptcha }}
+    </div>
     <div class="card-footer">
       <div class="d-flex justify-content-center links">
         Already have an account?&nbsp<a href="{{ url_for('login') }}">Login</a>
