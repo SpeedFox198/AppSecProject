@@ -60,8 +60,10 @@ limiter = Limiter(
 url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 # testing mode
-stripe.api_key = 'sk_test_51LNFSvLeIrXIJDLVEVQ8XVgIIhIWcKy0d7WVM5mM7TIBTxNLNMFUcN5Gx3zcmTKHyxJkrxiB98qZzdt5qYYrPM55002ARsY3yC'
+app.config['STRIPE_PUBLIC_KEY'] = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
+app.config['STRIPE_SECRET_KEY'] = 'sk_test_51LNFSvLeIrXIJDLVEVQ8XVgIIhIWcKy0d7WVM5mM7TIBTxNLNMFUcN5Gx3zcmTKHyxJkrxiB98qZzdt5qYYrPM55002ARsY3yC'
 
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 def allowed_file(filename):
     # Return true if there is an extension in file, and its extension is in the allowed extensions
@@ -1530,7 +1532,7 @@ def checkout():
     if request.method == 'POST':
         Orderform = OrderForm.OrderForm(request.form)
 
-    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items, subtotal=subtotal)
+    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items)
 
 
 # Create Check out session with Stripe
@@ -1555,7 +1557,7 @@ def create_checkout_session():
     for book, quantity in cart_items:
         total_price += book.price * quantity
 
-    ship_method = request.form['ship-method']
+    ship_method = 'Standard Delivery'
     print("creating checkout session...")
 
     Orderform = OrderForm.OrderForm(request.form)
@@ -1563,10 +1565,6 @@ def create_checkout_session():
     if request.method == 'POST' and Orderform.validate():
         if ship_method == 'Standard Delivery':  # Standard Delivery
             total_price += 5
-
-        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data,
-                                           str(Orderform.contact_num.data),
-                                           Orderform.address.data, ship_method, user_cart, total_price)
 
         total_price *= 100
         total_price = int(total_price)
@@ -1588,88 +1586,18 @@ def create_checkout_session():
             success_url='http://127.0.0.1:5000/orderconfirm',
             cancel_url=request.referrer,
         )
-
+        print(checkout_session.url)
         return redirect(checkout_session.url)
     else:
         flash(list(Orderform.errors.values())[0][0], 'warning')
         return redirect(request.referrer)
 
-    return render_template('checkout.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items,
-                           stripe_public_key=stripe_public_key, subtotal=subtotal)
-
 
 #
 # show confirmation page upon successful payment
 #
-
-
 @app.route("/orderconfirm")
 def orderconfirm():
-    user_id = get_user().get_user_id()
-    db_order = []
-    books_dict = {}
-    db = shelve.open('database')
-    cart_dict = db['Cart']
-    db_pending = db['Pending_Order']
-    books_dict = db['Books']
-    # in case user hand itchy go and reload the page, bring them back to home page
-    try:
-        new_order = db_pending[user_id]
-        cartvalue = cart_dict[user_id]
-
-        try:
-            db_order = db['Order']
-        except:
-            print("Error while loading data from database")
-            # return redirect(url_for("home"))
-
-        db_order.append(new_order)
-
-        print("cartvalue:", cartvalue)
-        try:
-            cartbuy = cartvalue[0]
-            print("cartbuy:", cartbuy)
-        except:
-            pass
-        if cartbuy != "":
-            for i in books_dict:
-                for x, y in zip(list(cartbuy.keys()), list(cartbuy.values())):
-                    if i == x:
-                        book = books_dict.get(i)
-                        print("qty b4", book.get_qty())
-                        newqty = int(book.get_qty()) - int(y)
-                        book.set_qty(newqty)
-                        print("qty aft", book.get_qty())
-
-        try:
-            cartrent = cartvalue[1]
-            print("cartrent:", cartrent)
-            if cartrent != "":
-                for i in books_dict:
-                    for x in cartrent:
-                        if i == x:
-                            book = books_dict.get(i)
-                            print("rent qty b4:", book.get_rented())
-                            newrented = int(book.get_rented()) + int(1)
-                            book.set_rented(newrented)
-                            print("rent qty aft:", book.get_rented())
-
-        except:
-            pass
-
-        del cart_dict[user_id]
-        del db_pending[user_id]
-        db['Books'] = books_dict
-        db['Pending_Order'] = db_pending
-        db['Order'] = db_order
-        db['Cart'] = cart_dict
-        print(db_pending, 'should not have pending order as user already check out')
-        print(cart_dict, 'updated database[cart]')
-        print(db_order, 'updated databas[order]')
-    except KeyError:
-        return redirect(url_for("home"))
-
-    db.close()
     return render_template("order_confirmation.html")
 
 

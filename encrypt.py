@@ -1,4 +1,3 @@
-from Crypto.Cipher import AES
 import base64
 from cryptography.fernet import Fernet
 import os
@@ -41,21 +40,21 @@ def aws_decrypt(ciphertext):
 #     return ciphertext, tag, nonce
 
 # def decryption(ciphertext):
-    key = os.environ.get('AWS_KEY')
-    key = key.encode("utf-8")
+    # key = os.environ.get('AWS_KEY')
+    # key = key.encode("utf-8")
 
-    # Create a cipher object to decrypt data
-    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
-    plaintext = cipher.decrypt(ciphertext)
+    # # Create a cipher object to decrypt data
+    # cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    # plaintext = cipher.decrypt(ciphertext)
 
-    try:
-        cipher.verify(tag)  # Verify the tag
-        print("The message is authentic: {}".format(plaintext))
-    except ValueError:
-        print("Key is incorrect or message is corrupted.")
-        print("plaintext is: " + str(plaintext))
+    # try:
+    #     cipher.verify(tag)  # Verify the tag
+    #     print("The message is authentic: {}".format(plaintext))
+    # except ValueError:
+    #     print("Key is incorrect or message is corrupted.")
+    #     print("plaintext is: " + str(plaintext))
 
-    return plaintext.decode()
+    # return plaintext.decode()
 
 # Test cases
 # cipher = aws_encrypt("password")

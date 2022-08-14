@@ -146,3 +146,7 @@ th{
 .quantity-selector{
     width: 100%;
 }
+
+#title{
+  text-align: left;
+}

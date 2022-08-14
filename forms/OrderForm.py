@@ -3,12 +3,11 @@ import datetime
 from wtforms import Form, StringField, IntegerField, TextAreaField, EmailField, validators
 
 
-def contact_num_check(field):
+def contact_num_check(form, field):
     if len(str(field.data)) != 8:
         raise validators.ValidationError('Please enter a valid mobile number!')
     elif str((field.data))[0] != '9' and str((field.data))[0] != '8':
-        raise validators.ValidationError(
-            'Please make sure your phone number starts with 8 or 9!')
+        raise validators.ValidationError('Please make sure your phone number starts with 8 or 9!')
 
 
 class OrderForm(Form):
