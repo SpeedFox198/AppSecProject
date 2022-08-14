@@ -23,6 +23,18 @@ VALUES (
 );
 
 
+-- Staff
+INSERT INTO Users
+VALUES (
+    "d1aab8c1-31fc-5c81-a321-d6fab96452f3",
+    "ChungWaiDaStaff",
+    "gAAAAABi-Py3ZoV_J9QWXC1-1tGJzbV7aI4kA6XVRHPUQac6wKHxgy_i5cDI4LRJTmjOlsczwhlTPPAj7Kjuzt9YHbn0NkPwuC7hcOoilrOhmKSOq3oRwk8=",
+    "$argon2id$v=19$m=65536,t=3,p=4$r8jVM+hGIdYaKlfENiO31A$5ereppjplUQ1+IN5kpDoSpBLGTLsekTJ67dOjgGko6Y",
+    NULL,
+    "staff"
+);
+
+
 -- Customers
 INSERT INTO Users
 VALUES (
