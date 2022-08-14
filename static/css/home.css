@@ -85,3 +85,8 @@ img:hover{
 .booklang {
     padding-top: 30px;
 }
+
+.carousel-control-prev:focus, .carousel-control-next:focus {
+    border: none !important;
+    box-shadow: none !important;
+}
