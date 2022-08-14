@@ -15,7 +15,10 @@ _csp = {
         "\'self\'",
         "https://cdn.jsdelivr.net",     # For Bootstrap
         "https://code.jquery.com",      # For jQuery
-        "https://apis.google.com"       # For Google API
+        "https://apis.google.com",      # For Google API
+        "https://www.google.com/recaptcha/api.js", # For Google reCAPTCHA
+        "https://www.gstatic.com/recaptcha/releases/mq0-U1BHZ5YTcoDC-CvsLPNc/recaptcha__en.js" # For Google reCAPTCHA
+
     ],
     "style-src": [
         "\'self\'",
@@ -32,6 +35,10 @@ _csp = {
     "font-src": [
         "\'self\'",
         "https://use.fontawesome.com"   # For Font Awesome
+    ],
+    "frame-src": [
+        "\'self\'",
+        "https://www.google.com"
     ],
     "form-action": [
         "\'self\'",
