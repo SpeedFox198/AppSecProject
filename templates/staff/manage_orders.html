@@ -30,7 +30,7 @@
                             <th>Order Date</th>
                             <th>Shipping Option</th>
                             <th>Status</th>
-                            <th>Show details</th>
+                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,9 +48,16 @@
                         <tr>
                             <td colspan="6">
                                 <div class="collapse" id="collapse{{ order.order_id }}">
-                                    {# for item in order_details #}
-                                    hello
-                                    {# endfor #}
+                                    <div class="row">
+                                    {% for book_id, quantity in get_order_items(order.order_id) %}
+                                        {% set book = Book(*retrieve_book(book_id)) %}
+                                        <div class="col">
+                                            <img src="{{ book.cover_img }}" alt="book cover image">
+                                            {{ book.title }}
+                                            {{ quantity }}
+                                        </div>
+                                    {% endfor %}
+                                    </div>
                                 </div>
                             </td>
                         </tr>

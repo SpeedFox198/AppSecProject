@@ -1196,7 +1196,11 @@ def delete_book(book_id):
 def manage_orders():
     orders = [Order(*data) for data in dbf.get_all_orders()]
     print(orders)
-    return render_template('staff/manage_orders.html', orders=orders)
+    return render_template('staff/manage_orders.html',
+                           orders=orders,
+                           get_order_items=dbf.get_order_items,
+                           retrieve_book=dbf.retrieve_book,
+                           Book=Book)
 
 
 @app.route("/staff/manage-reviews")
@@ -1661,6 +1665,7 @@ def create_checkout_session():
 @app.route("/order-confirm")
 def orderconfirm():
     # User is a Class
+    flask_global.user = get_user()
     user: User = flask_global.user
 
     if user.role == "admin":

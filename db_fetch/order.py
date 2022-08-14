@@ -25,14 +25,14 @@ def get_order_details(user_id):
     return retrieve_db("OrderDetails", user_id=user_id)
 
 
-def get_order_items(book_id):
+def get_order_items(order_id):
     """ Returns book's order items using book_id"""
     # con = sqlite3.connect(DATABASE)
     # cur = con.cursor()
     # query = f"""SELECT quantity FROM OrderItems WHERE book_id = '{book_id}';"""
     # order_items = cur.execute(query).fetchone()
     # con.close()
-    return retrieve_db("OrderItems", ["quantity"], book_id=book_id, fetchone=True)
+    return retrieve_db("OrderItems", ["book_id", "quantity"], order_id=order_id)
 
 
 def get_all_orders():
