@@ -50,26 +50,49 @@ function displayContents(review) {
     return contentsContainer
 }
 
-function deleteButton(review) {
+function deleteButton(review, book_id) {
     let deleteButtonDiv = createElementWithClasses("div", "col-1")
-    let deleteButton = createElementWithClasses("i", "fa fa-trash")
+    let deleteIcon = createElementWithClasses("i", "fa fa-trash actions-button")
+    let button = createElementWithClasses("button", "btn")
+    let csrf_token = document.getElementById(`csrf_token_${book_id}`).value
+
     let userID = document.createElement("input")
     userID.setAttribute("type", "hidden")
     userID.setAttribute("value", review.user_id)
     userID.className = "review_user_id"
-    deleteButtonDiv.append(userID, deleteButton)
+
+    let deleteButtonForm = document.createElement("form")
+    deleteButtonForm.addEventListener("submit", (e) => {
+        result = deleteReview(book_id, userID.value, csrf_token)
+    })
+    
+
+    button.appendChild(deleteIcon)
+    deleteButtonForm.appendChild(button)
+    deleteButtonDiv.append(userID, deleteButtonForm)
     return deleteButtonDiv
 }
 
-function deleteReview(book_id, user_id) {
+function deleteReview(book_id, user_id, csrf_token) {
     const url = `/api/reviews/${book_id}?user_id=${user_id}`
-    let response = fetch(url, { method: 'DELETE'})
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            "X-CSRF-TOKEN": csrf_token,
+            "Content-Type": "application/json",
+        } 
+    }).then((response) => {
+        if (! response.ok) {
+            throw new Error('API response not OK.')
+        }
+        return response.json
+    })
 }
 
-function displayReview(review) {
+function displayReview(review, book_id) {
     let reviewDiv = document.createElement("div")
     reviewDiv.className = "row p-3"
-    reviewDiv.append(displayProfilePic(review), displayContents(review), deleteButton(review))
+    reviewDiv.append(displayProfilePic(review), displayContents(review), deleteButton(review, book_id))
     return reviewDiv
 }
 
@@ -89,7 +112,7 @@ buttonsArray.forEach(element => {
         let reviews = reviewData.reviews
         clearReviews(modalBody)
         reviews.forEach(review => {
-            modalBody.appendChild(displayReview(review))
+            modalBody.appendChild(displayReview(review, book_id))
         })
     });
 });
