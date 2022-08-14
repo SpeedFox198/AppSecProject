@@ -61,6 +61,23 @@ class LoginForm(Form):
     # Password
     password = PasswordField("Password", [validators.InputRequired(message="")])
 
+class BackUpCodeForm(Form):
+    """ Form used for entering backup code """
+
+    # Backup code
+    code1 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code2 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code3 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code4 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code5 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code6 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+
 
 class ChangePasswordForm(Form):
     """ Changing password form used for changing password """

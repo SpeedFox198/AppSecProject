@@ -29,7 +29,7 @@ import datetime
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
-    AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm, CreateReviewText
+    AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm, CreateReviewText, BackUpCodeForm
 )
 
 import stripe
@@ -434,7 +434,7 @@ def twoFA():
             remove_cookies(["user_id", "user_data"])
             return redirect(url_for("login"))
     else:
-        return render_template("user/2FA.html", form=OTPformat)
+        return render_template("user/2FA.html", form=OTPformat, twoFA_code=twoFA_code)
 
 
 """ Forgot password page """  ### TODO: work on this SpeedFox198
@@ -502,12 +502,69 @@ def google_authenticator():
             flash("2FA setup Complete")
             dbf.create_2FA_token(user.user_id, secret_token)
             remove_cookies(["token"])
-            return redirect(url_for("account"))
+            return redirect(url_for("backup_codes"))
         else:
             flash("Invalid OTP Entered! Please try again!")
             return redirect(url_for("google_authenticator"))
     else:
         return render_template("user/google_authenticator.html", form=OTP_Test, secret_token=secret_token)
+
+@app.route("/user/account/google_authenticator/backup_codes", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def backup_codes():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.role == "admin":
+        abort(403)
+
+    code_check = dbf.retrieve_backup_code(user.user_id)
+    if code_check:
+        dbf.delete_backup_code(user.user_id)
+    code1 = generateOTP()
+    code2 = generateOTP()
+    code3 = generateOTP()
+    code4 = generateOTP()
+    code5 = generateOTP()
+    code6 = generateOTP()
+    dbf.create_backup_codes(user.user_id, code1, code2, code3, code4, code5, code6)
+    return render_template("user/backup_codes.html", code1=code1, code2=code2, code3=code3, code4=code4, code5=code5, code6=code6)
+
+@app.route("/user/login/twoFA/backup_codes", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def backup_codes_login():
+    # User is a Class
+    user_id = get_cookie_value(request, "user_id")
+    user_data = get_cookie_value(request, "user_data")
+
+    back_up_form = BackUpCodeForm(request.form)
+    codes = dbf.retrieve_backup_codes(user_id)
+    code1 = codes[1]
+    code2 = codes[2]
+    code3 = codes[3]
+    code4 = codes[4]
+    code5 = codes[5]
+    code6 = codes[6]
+    if request.method == "POST":
+        codecheck1 = back_up_form.code1.data
+        codecheck2 = back_up_form.code2.data
+        codecheck3 = back_up_form.code3.data
+        codecheck4 = back_up_form.code4.data
+        codecheck5 = back_up_form.code5.data
+        codecheck6 = back_up_form.code6.data
+        if codecheck1 == code1 and codecheck2 == code2 and codecheck3 == code3 and codecheck4 == code4 and codecheck5 == code5 and codecheck6 == code6:
+            user = User(*user_data)
+
+            # Create session to login
+            flask_global.user = user
+            if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                dbf.delete_failed_logins(user.user_id)
+            remove_cookies(["user_id", "user_data"])
+            return redirect(url_for("home"))
+            
+    return render_template("user/lost_2FA.html", code1=code1, code2=code2, code3=code3, code4=code4, code5=code5, code6=code6)
 
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
