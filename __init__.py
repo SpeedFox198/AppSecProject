@@ -1208,8 +1208,6 @@ def manage_reviews():
 """    Books Pages    """
 
 
-# Wei Ren was here. hello.
-# ?? wtf
 
 @app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
