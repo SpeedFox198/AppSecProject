@@ -14,10 +14,12 @@
 <div class="d-flex justify-content-center align-items-center h-100">
   <div class="card">
     <div class="card-header">
-      <h2 class="m-0">One-Time Password</h2>
+      <h2 class="m-0">Back up codes:</h2>
+      <p>Please record all of these codes down in the event that u lose access to your 2FA</p>
+      <br>
+      <p>These codes will not be appeared again, so please store these codes somewhere safe.</p>
     </div>
     <div class="card-body">
-      <form class="needs-validation" method="POST" action="" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         {# Flash login error message #}
         {% with messages = get_flashed_messages(category_filter=("form-error")) %}
@@ -30,18 +32,15 @@
           {% endif %}
         {% endwith %}
         <div class="mb-4">
-          {{ render_field(form.otp, "Please enter your one-time password", class="form-control", placeholder="OTP") }}
+          {{ code1 }}
+          {{ code2 }}
+          {{ code3 }}
+          {{ code4 }}
+          {{ code5 }}
+          {{ code6 }}
         </div>
-        <input type="submit" value="SUBMIT" class="input-group btn"/>
-      </form>
-      {% if twoFA_code %}
-        <a href="{{ url_for('backup_codes_login') }}">Lost access to 2FA?</a>
-      {% endif %}      
+        <a href="{{ url_for('account') }}">Back to Account</a>
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="https://apis.google.com/js/platform.js" async defer></script>
 {% endblock %}

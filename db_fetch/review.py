@@ -45,5 +45,9 @@ def delete_review(book_id, user_id):
     delete_rows("Reviews", book_id=book_id, or_and=1, user_id=user_id)
 
 
-def no_of_reviews(book_id):
+def no_of_reviews_from_book(book_id):
     return retrieve_db("Reviews", ["COUNT(*)"], fetchone=True, book_id=book_id)[0]
+
+
+def no_of_all_reviews():
+    return retrieve_db("Reviews", ["COUNT(*)"])[0][0]

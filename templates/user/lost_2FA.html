@@ -14,7 +14,7 @@
 <div class="d-flex justify-content-center align-items-center h-100">
   <div class="card">
     <div class="card-header">
-      <h2 class="m-0">One-Time Password</h2>
+      <h2 class="m-0">Enter the backup codes u have in sequential order</h2>
     </div>
     <div class="card-body">
       <form class="needs-validation" method="POST" action="" novalidate>
@@ -30,18 +30,16 @@
           {% endif %}
         {% endwith %}
         <div class="mb-4">
-          {{ render_field(form.otp, "Please enter your one-time password", class="form-control", placeholder="OTP") }}
+          {{ render_field(form.code1, "Please enter your backup code", class="form-control", placeholder="code number 1") }}
+          {{ render_field(form.code2, "Please enter your backup code", class="form-control", placeholder="code number 2") }}
+          {{ render_field(form.code3, "Please enter your backup code", class="form-control", placeholder="code number 3") }}
+          {{ render_field(form.code4, "Please enter your backup code", class="form-control", placeholder="code number 4") }}
+          {{ render_field(form.code5, "Please enter your backup code", class="form-control", placeholder="code number 5") }}
+          {{ render_field(form.code6, "Please enter your backup code", class="form-control", placeholder="code number 6") }}
         </div>
         <input type="submit" value="SUBMIT" class="input-group btn"/>
-      </form>
-      {% if twoFA_code %}
-        <a href="{{ url_for('backup_codes_login') }}">Lost access to 2FA?</a>
-      {% endif %}      
+      </form>   
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="https://apis.google.com/js/platform.js" async defer></script>
 {% endblock %}

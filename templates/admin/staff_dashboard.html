@@ -46,6 +46,18 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-sm">
+                    <div class="border">
+                        <div class="text-center">
+                            <i class="fas fa-user-edit dashboard-icon"></i>
+                            <h1>{{ review_count }}</h1>
+                            <p>Review(s)</p>
+                        </div>
+                        <div class="dashboard-link d-flex justify-content-end px-3 py-3">
+                            <a href="{{ url_for('manage_reviews') }}" class="btn defaultbtn">Manage Reviews</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

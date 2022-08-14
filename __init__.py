@@ -32,7 +32,7 @@ import datetime
 
 from forms import (
     SignUpForm, LoginForm, ChangePasswordForm, ResetPasswordForm, ForgetPasswordForm,
-    AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm, CreateReviewText
+    AccountPageForm, CreateUserForm, DeleteUserForm, AddBookForm, OrderForm, OTPForm, CreateReviewText, BackUpCodeForm
 )
 
 import stripe
@@ -51,7 +51,8 @@ app.config.from_pyfile("config/app.cfg")  # Load config file
 app.jinja_env.add_extension("jinja2.ext.do")  # Add do extension to jinja environment
 BOOK_UPLOAD_FOLDER = _BOOK_IMG_PATH[1:]  # Book image upload folder
 PROFILE_PIC_UPLOAD_FOLDER = _PROFILE_PIC_PATH[1:]  # Profile pic upload folder
-
+app.config['RECAPTCHA_PUBLIC_KEY'] = '6LeQjnQhAAAAAIoKpHeMKbuw2CXxYbyC3r6SV0DD'
+app.config['RECAPTCHA_PRIVATE_KEY'] = '6LeQjnQhAAAAAEunWYM_3EnqW6MO76su5GmyhG9Z'
 limiter = Limiter(
     app,
     key_func=get_remote_address,
@@ -445,7 +446,7 @@ def twoFA():
             remove_cookies(["user_id", "user_data"])
             return redirect(url_for("login"))
     else:
-        return render_template("user/2FA.html", form=OTPformat)
+        return render_template("user/2FA.html", form=OTPformat, twoFA_code=twoFA_code)
 
 
 """ Forgot password page """
@@ -509,12 +510,69 @@ def google_authenticator():
             flash("2FA setup Complete")
             dbf.create_2FA_token(user.user_id, secret_token)
             remove_cookies(["token"])
-            return redirect(url_for("account"))
+            return redirect(url_for("backup_codes"))
         else:
             flash("Invalid OTP Entered! Please try again!")
             return redirect(url_for("google_authenticator"))
     else:
         return render_template("user/google_authenticator.html", form=OTP_Test, secret_token=secret_token)
+
+@app.route("/user/account/google_authenticator/backup_codes", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def backup_codes():
+    # User is a Class
+    user: User = flask_global.user
+
+    if user.role == "admin":
+        abort(403)
+
+    code_check = dbf.retrieve_backup_code(user.user_id)
+    if code_check:
+        dbf.delete_backup_code(user.user_id)
+    code1 = generateOTP()
+    code2 = generateOTP()
+    code3 = generateOTP()
+    code4 = generateOTP()
+    code5 = generateOTP()
+    code6 = generateOTP()
+    dbf.create_backup_codes(user.user_id, code1, code2, code3, code4, code5, code6)
+    return render_template("user/backup_codes.html", code1=code1, code2=code2, code3=code3, code4=code4, code5=code5, code6=code6)
+
+@app.route("/user/login/twoFA/backup_codes", methods=["GET", "POST"])
+@limiter.limit("10/second", override_defaults=False)
+@login_required
+def backup_codes_login():
+    # User is a Class
+    user_id = get_cookie_value(request, "user_id")
+    user_data = get_cookie_value(request, "user_data")
+
+    back_up_form = BackUpCodeForm(request.form)
+    codes = dbf.retrieve_backup_codes(user_id)
+    code1 = codes[1]
+    code2 = codes[2]
+    code3 = codes[3]
+    code4 = codes[4]
+    code5 = codes[5]
+    code6 = codes[6]
+    if request.method == "POST":
+        codecheck1 = back_up_form.code1.data
+        codecheck2 = back_up_form.code2.data
+        codecheck3 = back_up_form.code3.data
+        codecheck4 = back_up_form.code4.data
+        codecheck5 = back_up_form.code5.data
+        codecheck6 = back_up_form.code6.data
+        if codecheck1 == code1 and codecheck2 == code2 and codecheck3 == code3 and codecheck4 == code4 and codecheck5 == code5 and codecheck6 == code6:
+            user = User(*user_data)
+
+            # Create session to login
+            flask_global.user = user
+            if bool(dbf.retrieve_failed_login(user.user_id[1])):
+                dbf.delete_failed_logins(user.user_id)
+            remove_cookies(["user_id", "user_data"])
+            return redirect(url_for("home"))
+            
+    return render_template("user/lost_2FA.html", code1=code1, code2=code2, code3=code3, code4=code4, code5=code5, code6=code6)
 
 
 @app.route("/user/account/google_authenticator_disable", methods=["GET", "POST"])
@@ -734,6 +792,7 @@ def dashboard():
     orders = dbf.number_of_orders()
     book_count = dbf.number_of_books()
     staff = dbf.number_of_staff()
+    reviews = dbf.no_of_all_reviews()
     if flask_global.user.role == "admin":
         return render_template("admin/admin_dashboard.html",
                                customer_count=customers,
@@ -744,7 +803,8 @@ def dashboard():
     elif flask_global.user.role == "staff":
         return render_template("admin/staff_dashboard.html",
                                order_count=orders,
-                               book_count=book_count)
+                               book_count=book_count,
+                               review_count=reviews)
 
 
 # Manage accounts page
@@ -1128,7 +1188,7 @@ def delete_book(book_id):
     return redirect(url_for('inventory'))
 
 
-@app.route("/admin/manage-orders")
+@app.route("/staff/manage-orders")
 @roles_required(["staff"])
 def manage_orders():
     return "sorry for removing your code"
@@ -1138,7 +1198,7 @@ def manage_orders():
 @roles_required(["staff"])
 def manage_reviews():
     books_list = [Book(*rows) for rows in dbf.retrieve_inventory()]
-    books_and_reviews_list = [(book, dbf.no_of_reviews(book.book_id)) for book in books_list]
+    books_and_reviews_list = [(book, dbf.no_of_reviews_from_book(book.book_id)) for book in books_list]
     return render_template('staff/manage_reviews.html', books_list=books_and_reviews_list)
 
 
@@ -1842,23 +1902,6 @@ def api_users():
 
         return jsonify(output)
 
-    # elif request.method == "POST":
-    #     if admin_check("api"):
-    #         return admin_check("api")
-
-    #     username = flask_global.data['username']
-    #     email = flask_global.data['email']
-    #     password = flask_global.data['password']
-
-    #     if dbf.username_exists(username):
-    #         return jsonify(message="The username you entered already exists. Please enter another username."), 400
-
-    #     if dbf.email_exists(email):
-    #         return jsonify(message="The email already been registered. Please enter another email."), 400
-
-    #     dbf.create_customer(generate_uuid5(username), username, email, password)
-    #     return jsonify("User created!"), 200
-
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
@@ -1873,33 +1916,12 @@ def api_single_user(user_id):
         output = dict(user_id=user_data[0],
                       username=user_data[1],
                       email=user_data[2],
-                      # password=user_data[3],
                       profile_pic=user_data[4],
                       role=user_data[5],
                       name=user_data[6],
-                      # credit_card_no=user_data[7],
-                      # address=user_data[8],
-                      # phone_no=user_data[9],
                       )
 
         return jsonify(output)
-
-    # elif request.method == "DELETE":
-    #    if admin_check("api"):
-    #        return admin_check("api")
-    #
-    #    deleted_customer = dbf.delete_customer(user_id)
-    #    if deleted_customer:
-    #        deleted_customer = User(*deleted_customer)
-    #        customer_profile_pic = deleted_customer.profile_pic[1:]
-    #        print(customer_profile_pic)
-    #        if os.path.isfile(customer_profile_pic):
-    #            os.remove(customer_profile_pic)
-    #        else:
-    #            print("Profile pic does not exist")
-    #        return jsonify(message=f"Deleted customer: {deleted_customer.username}")
-    #    else:
-    #        return jsonify(error="Customer does not exist")
 
 
 # TODO: @SpeedFox198 @Miku add limit
@@ -1923,6 +1945,7 @@ def api_reviews(book_id):
 def api_delete_reviews(book_id):  # created delete route bc staff only can delete but everyone can read reviews
     user_id = request.args.get("user_id")
     deleted_review = dbf.retrieve_selected_review(book_id=book_id, user_id=user_id)
+    deleted_review_username = dbf.retrieve_username_by_user_id(user_id)
 
     if user_id is None:
         return jsonify(status=1, error="Parameter 'user_id' is required."), 400
@@ -1931,21 +1954,7 @@ def api_delete_reviews(book_id):  # created delete route bc staff only can delet
         return jsonify(status=1, error="Review does not exist"), 404
 
     dbf.delete_review(book_id=book_id, user_id=user_id)
-    return jsonify(status=0, message="Review deleted!")
-
-
-@app.route('/api/orders')
-@limiter.limit("10/second", override_defaults=False)
-@roles_required(["staff"], "api")
-def api_orders():
-    return "asdf"
-
-
-@app.route('/api/orders/<user_id>')
-@limiter.limit("10/second", override_defaults=False)
-@roles_required(["staff"], "api")
-def api_delete_orders(user_id):
-    return "zxcv"
+    return jsonify(status=0, message=f"Review by {deleted_review_username} deleted!")
 
 
 """    Error Handlers    """
@@ -1971,8 +1980,6 @@ def too_many_request(e):
 def bad_request(error):
     if isinstance(error.description, jsonschema.ValidationError):
         original_error = error.description
-        # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
-        #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
         return jsonify(status=1, error=original_error.message), 400
     return render_template("error/400.html"), 400
 
