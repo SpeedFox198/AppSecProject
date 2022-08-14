@@ -54,44 +54,43 @@ function deleteButton(review, book_id) {
     let deleteButtonDiv = createElementWithClasses("div", "col-1")
     let deleteIcon = createElementWithClasses("i", "fa fa-trash actions-button")
     let button = createElementWithClasses("button", "btn")
-    let csrf_token = document.getElementById(`csrf_token_${book_id}`).value
-
-    let userID = document.createElement("input")
-    userID.setAttribute("type", "hidden")
-    userID.setAttribute("value", review.user_id)
-    userID.className = "review_user_id"
+    let csrfToken = document.getElementById(`csrf_token_${book_id}`).value
 
     let deleteButtonForm = document.createElement("form")
-    deleteButtonForm.addEventListener("submit", (e) => {
-        result = deleteReview(book_id, userID.value, csrf_token)
+    deleteButtonForm.addEventListener("submit", async (e) => {
+        let {message} = await deleteReview(book_id, review.user_id, csrfToken)
+        alert(message)
     })
     
 
     button.appendChild(deleteIcon)
     deleteButtonForm.appendChild(button)
-    deleteButtonDiv.append(userID, deleteButtonForm)
+    deleteButtonDiv.append(deleteButtonForm)
     return deleteButtonDiv
 }
 
-function deleteReview(book_id, user_id, csrf_token) {
+function deleteReview(book_id, user_id, csrfToken) {
     const url = `/api/reviews/${book_id}?user_id=${user_id}`
-    fetch(url, {
+    res = fetch(url, {
         method: 'DELETE',
         headers: {
-            "X-CSRF-TOKEN": csrf_token,
+            "X-CSRF-TOKEN": csrfToken,
             "Content-Type": "application/json",
         } 
-    }).then((response) => {
-        if (! response.ok) {
-            throw new Error('API response not OK.')
-        }
-        return response.json
+    }).then(response => {
+    if (! response.ok) {                           
+        throw new Error('API response not OK.')
+    } else {
+        return response.json()
+    }
     })
+    return res 
 }
 
 function displayReview(review, book_id) {
     let reviewDiv = document.createElement("div")
     reviewDiv.className = "row p-3"
+    reviewDiv.id = `user_${review.user_id}`
     reviewDiv.append(displayProfilePic(review), displayContents(review), deleteButton(review, book_id))
     return reviewDiv
 }

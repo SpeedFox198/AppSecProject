@@ -1888,23 +1888,6 @@ def api_users():
 
         return jsonify(output)
 
-    # elif request.method == "POST":
-    #     if admin_check("api"):
-    #         return admin_check("api")
-
-    #     username = flask_global.data['username']
-    #     email = flask_global.data['email']
-    #     password = flask_global.data['password']
-
-    #     if dbf.username_exists(username):
-    #         return jsonify(message="The username you entered already exists. Please enter another username."), 400
-
-    #     if dbf.email_exists(email):
-    #         return jsonify(message="The email already been registered. Please enter another email."), 400
-
-    #     dbf.create_customer(generate_uuid5(username), username, email, password)
-    #     return jsonify("User created!"), 200
-
 
 @app.route('/api/admin/users/<user_id>', methods=["GET"])
 @limiter.limit("10/second", override_defaults=False)
@@ -1919,33 +1902,12 @@ def api_single_user(user_id):
         output = dict(user_id=user_data[0],
                       username=user_data[1],
                       email=user_data[2],
-                      # password=user_data[3],
                       profile_pic=user_data[4],
                       role=user_data[5],
                       name=user_data[6],
-                      # credit_card_no=user_data[7],
-                      # address=user_data[8],
-                      # phone_no=user_data[9],
                       )
 
         return jsonify(output)
-
-    # elif request.method == "DELETE":
-    #    if admin_check("api"):
-    #        return admin_check("api")
-    #
-    #    deleted_customer = dbf.delete_customer(user_id)
-    #    if deleted_customer:
-    #        deleted_customer = User(*deleted_customer)
-    #        customer_profile_pic = deleted_customer.profile_pic[1:]
-    #        print(customer_profile_pic)
-    #        if os.path.isfile(customer_profile_pic):
-    #            os.remove(customer_profile_pic)
-    #        else:
-    #            print("Profile pic does not exist")
-    #        return jsonify(message=f"Deleted customer: {deleted_customer.username}")
-    #    else:
-    #        return jsonify(error="Customer does not exist")
 
 
 # TODO: @SpeedFox198 @Miku add limit
@@ -2017,8 +1979,6 @@ def too_many_request(e):
 def bad_request(error):
     if isinstance(error.description, jsonschema.ValidationError):
         original_error = error.description
-        # if '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])$' in original_error.message:  # Hacky custom message lol
-        #     return jsonify(error="The password does not match the password complexity policy (At least 1 upper case letter, 1 lower case letter, 1 digit and 1 symbol)")
         return jsonify(status=1, error=original_error.message), 400
     return render_template("error/400.html"), 400
 
