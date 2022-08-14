@@ -1736,7 +1736,7 @@ def api_login():
                 email = dbf.retrieve_email_by_username(username)
                 subject = "ALERT - Account Locked"
                 message = "Your account has been locked for 30 minutes, someone has tried to login to your account 5 times. If this was not you, change your password immediately."
-                gmail_send(email, subject, message)
+                gmail_send(aws_decrypt(email), subject, message)
                 return jsonify(status=1)
             if dbf.retrieve_failed_login(username)[1] < 5 and dbf.retrieve_failed_login(username)[1] > 0:
                 print("Check 5")
