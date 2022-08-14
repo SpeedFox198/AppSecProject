@@ -161,6 +161,18 @@ def delete_otp(user_id) -> Union[tuple, None]:
     """ Deletes and returns OTP from database """
     return delete_rows("OTP", user_id=user_id)
 
+def create_backup_codes(user_id, code1, code2, code3, code4, code5, code6) -> None:
+    """ Creates backup codes for user_id """
+    insert_row("BackUpCodes", (user_id, code1, code2, code3, code4, code5, code6))
+
+def retrieve_backup_codes(user_id) -> Union[tuple, None]:
+    """ Retrieves and returns backup codes for user_id """
+    return retrieve_db("BackUpCodes", user_id=user_id, fetchone=True)
+
+def delete_backup_codes(user_id) -> Union[tuple, None]:
+    """ Deletes and returns backup codes for user_id """
+    return delete_rows("BackUpCodes", user_id=user_id)
+
 def update_customer_account(details1, details2):
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()

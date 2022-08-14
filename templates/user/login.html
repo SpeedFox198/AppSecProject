@@ -37,6 +37,9 @@
         <input id="loginSubmitButton" type="submit" value="LOG IN" class="input-group btn disabled"/>
       </form>
     </div>
+    <div>
+      {{ form.recaptcha }}
+    </div>
     <div class="card-footer">
       <div class="d-flex justify-content-center links">
         Don't have an account?&nbsp<a href="{{ url_for('sign_up') }}">Sign Up</a>

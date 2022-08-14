@@ -13,6 +13,7 @@ from .Validations import ContainsLower, ContainsUpper, ContainsNumSymbol, ValidU
 # Import validation for file upload
 from flask_wtf.file import FileAllowed
 
+from flask_wtf import RecaptchaField
 
 class SignUpForm(Form):
     """ Sign up form used when signing up """
@@ -39,6 +40,7 @@ class SignUpForm(Form):
                                                  validators.Length(min=8, max=80, message=""),
                                                  validators.EqualTo("password", message="Password entered is different")])
 
+    recaptcha = RecaptchaField()
 
 class OTPForm(Form):
     """ OTP form used when signing up """
@@ -60,6 +62,24 @@ class LoginForm(Form):
 
     # Password
     password = PasswordField("Password", [validators.InputRequired(message="")])
+
+    recaptcha = RecaptchaField()
+class BackUpCodeForm(Form):
+    """ Form used for entering backup code """
+
+    # Backup code
+    code1 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code2 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code3 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code4 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code5 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
+    code6 = StringField("Enter your backup code", [validators.InputRequired(message=""),
+                                                validators.Length(min=6, max=6, message="")])
 
 
 class ChangePasswordForm(Form):
