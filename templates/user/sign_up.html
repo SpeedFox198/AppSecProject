@@ -54,7 +54,7 @@
           {{ render_field(form.confirm, "Please confirm your password", class="form-control", placeholder="Confirm Password") }}
         </div>
         <div class="mb-4">
-          {{ form.recaptcha }}
+          {{ render_field(form.recaptcha, "Please complete this verification", class="form-control", placeholder="ReCaptcha" ) }}
         </div>
         <input type="submit" value="SIGN UP" class="input-group btn"/>
       </form>
