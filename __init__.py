@@ -779,7 +779,7 @@ def account():
                            form=account_page_form,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=aws_decrypt(user.email.encode()),
+                           email=aws_decrypt(user.email),
                            phone_no=user.phone_no,
                            twoFA_enabled=twoFA_enabled)
 
@@ -1560,15 +1560,6 @@ def my_orders():
 
     return render_template("user/my_orders.html")
 
-
-#     # display from most recent to the least
-#     db_order = list(reversed(db_order))
-#     new_order = list(reversed(new_order))
-#     confirm_order = list(reversed(confirm_order))
-#     ship_order = list(reversed(ship_order))
-#     deliver_order = list(reversed(deliver_order))
-#     canceled_order = list(reversed(canceled_order))
-
 #     print("canceled_order: ", canceled_order)
 #     return render_template('user/my_orders.html', all_order=db_order, new_order=new_order, \
 #                            confirm_order=confirm_order, ship_order=ship_order, deliver_order=deliver_order,
@@ -1654,7 +1645,7 @@ def create_checkout_session():
             ],
             payment_method_types=['card'],
             mode='payment',
-            success_url='http://127.0.0.1:5000/order-confirm',
+            success_url='https://127.0.0.1:5000/order-confirm',
             cancel_url=request.referrer,
         )
         print(checkout_session.url)
