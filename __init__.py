@@ -26,6 +26,7 @@ import jsonschema
 from functools import wraps
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from urllib.parse import unquote
+from typing import Union
 import pyotp
 import datetime
 
@@ -61,8 +62,10 @@ limiter = Limiter(
 url_serialiser = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 # testing mode
-stripe.api_key = 'sk_test_51LNFSvLeIrXIJDLVEVQ8XVgIIhIWcKy0d7WVM5mM7TIBTxNLNMFUcN5Gx3zcmTKHyxJkrxiB98qZzdt5qYYrPM55002ARsY3yC'
+app.config['STRIPE_PUBLIC_KEY'] = 'pk_test_51LNFSvLeIrXIJDLVMtA0cZuNhFl3fFrgE6fjUAgSEzhs9SHLF5alwOVK8Cu1XZcF7NF9GBEinYI9nY8WuRw7c7ee00qzmDKaVq'
+app.config['STRIPE_SECRET_KEY'] = 'sk_test_51LNFSvLeIrXIJDLVEVQ8XVgIIhIWcKy0d7WVM5mM7TIBTxNLNMFUcN5Gx3zcmTKHyxJkrxiB98qZzdt5qYYrPM55002ARsY3yC'
 
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 def allowed_file(filename):
     # Return true if there is an extension in file, and its extension is in the allowed extensions
@@ -93,6 +96,31 @@ def get_user():
 
             # Return user object
             return User(*user_data)
+
+
+def user_authenticate(username: str, password: str) -> Union[tuple, None]:
+    """ Authenticates password for username/email """
+
+    if "@" in username:  # Authenticate by email
+        user_emails = dbf.retrieve_user_ids_and_emails()
+        user_id = None
+        for i in user_emails:
+            the_email = i[1]  # Email is in index 0 of tuple
+            if aws_decrypt(the_email) == username:
+                user_id = i[0]
+                break
+    else:                # Authenticate by username
+        user_id = dbf.retrieve_user_by_username(username)
+
+    user = None
+    if user_id is not None:
+        hashed_pass = dbf.retrieve_password(user_id)
+        if hashed_pass is None:
+            raise ValueError(f"Critical: {user_id} user's password is empty!")
+        elif pw_verify(hashed_pass, password):
+            user = dbf.retrieve_user(user_id)
+
+    return user
 
 
 def add_cookie(cookies: dict):
@@ -165,23 +193,6 @@ def roles_required(roles: list[str], mode="regular"):
             return func(*args, **kwargs)
         return decorated_function
     return decorator
-
-
-""" Before first request """
-
-
-@app.before_first_request
-def before_first_request():
-    # Create admin if not in database
-    if not dbf.admin_exists():
-        # Admin details
-        admin_id = generate_uuid5("admin")
-        username = "admin"
-        email = aws_encrypt("admin@vsecurebookstore.com")
-        password = pw_hash("PASS{h@5H3d}")
-
-        # Create admin
-        dbf.create_admin(admin_id, username, email, password)
 
 
 """ Before request """
@@ -615,14 +626,14 @@ def password_reset(token):
             session["DisplayFieldError"] = True
         else:
             # Extract password
-            new_password = pw_hash(reset_password_form.new_password.data)
+            new_password = reset_password_form.new_password.data
 
             # Reset Password
             print(user_check)
-            dbf.change_password(user_check, new_password)
+            dbf.change_password(user_check, pw_hash(new_password))
 
             # Get user object
-            user = User(*dbf.user_auth(aws_encrypt(email), new_password))
+            user = User(*user_authenticate(email, new_password))
 
             # Create session to login
             flask_global.user = user
@@ -672,7 +683,7 @@ def password_change():
             new_password = change_password_form.new_password.data
 
             # Password (current) was incorrect, disallow change
-            if not dbf.user_auth(user.username, current_password):
+            if not user_authenticate(user.username, current_password):
                 errors["DisplayFieldError"] = errors["CurrentPasswordError"] = True
                 flash("Your password is incorrect, please try again", "current-password-error")
 
@@ -768,7 +779,7 @@ def account():
                            form=account_page_form,
                            picture_path=user.profile_pic,
                            username=user.username,
-                           email=aws_decrypt(user.email),
+                           email=aws_decrypt(user.email.encode()),
                            phone_no=user.phone_no,
                            twoFA_enabled=twoFA_enabled)
 
@@ -1242,11 +1253,13 @@ def book_review(book_id):
     createReview = CreateReviewText(request.form)
     if request.method == "POST":
         if createReview.validate():
-            dbf.add_review(book_id, user.user_id, request.form.get("rate"), createReview.review.data)
+            data:str = createReview.review.data
+            data = data.strip()
+            dbf.add_review(book_id, user.user_id, request.form.get("rate"), data)
             flash("Review successfully added!")
             return redirect(url_for("book_info", book_id=book_id))
         else:
-            flash("Review not added!")
+            flash("An error occured, review not added!", category="error")
             return redirect(url_for("book_info", book_id=book_id))
     return render_template("review.html", book=book, form=createReview, book_id = book_id)
 
@@ -1590,11 +1603,11 @@ def checkout():
     if request.method == 'POST':
         Orderform = OrderForm.OrderForm(request.form)
 
-    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items, subtotal=subtotal)
+    return render_template("checkout.html", form=Orderform, total_price=total_price, buy_count=buy_count, cart_items=cart_items)
 
 
 # Create Check out session with Stripe
-@app.route('/create-checkout-session', methods=['GET', 'POST'])
+@app.route('/create-checkout-session', methods=['POST'])
 @limiter.limit("10/second", override_defaults=False)
 @login_required
 def create_checkout_session():
@@ -1615,7 +1628,7 @@ def create_checkout_session():
     for book, quantity in cart_items:
         total_price += book.price * quantity
 
-    ship_method = request.form['ship-method']
+    ship_method = 'Standard Delivery'
     print("creating checkout session...")
 
     Orderform = OrderForm.OrderForm(request.form)
@@ -1623,10 +1636,6 @@ def create_checkout_session():
     if request.method == 'POST' and Orderform.validate():
         if ship_method == 'Standard Delivery':  # Standard Delivery
             total_price += 5
-
-        new_order = OrderForm.Order_Detail(user_id, Orderform.name.data, Orderform.email.data,
-                                           str(Orderform.contact_num.data),
-                                           Orderform.address.data, ship_method, user_cart, total_price)
 
         total_price *= 100
         total_price = int(total_price)
@@ -1645,91 +1654,21 @@ def create_checkout_session():
             ],
             payment_method_types=['card'],
             mode='payment',
-            success_url='http://127.0.0.1:5000/orderconfirm',
+            success_url='http://127.0.0.1:5000/order-confirm',
             cancel_url=request.referrer,
         )
-
+        print(checkout_session.url)
         return redirect(checkout_session.url)
     else:
         flash(list(Orderform.errors.values())[0][0], 'warning')
         return redirect(request.referrer)
 
-    return render_template('checkout.html', buy_count=buy_count, total_price=total_price, cart_items=cart_items,
-                           stripe_public_key=stripe_public_key, subtotal=subtotal)
-
 
 #
 # show confirmation page upon successful payment
 #
-
-
-@app.route("/orderconfirm")
+@app.route("/order-confirm")
 def orderconfirm():
-    user_id = get_user().get_user_id()
-    db_order = []
-    books_dict = {}
-    db = shelve.open('database')
-    cart_dict = db['Cart']
-    db_pending = db['Pending_Order']
-    books_dict = db['Books']
-    # in case user hand itchy go and reload the page, bring them back to home page
-    try:
-        new_order = db_pending[user_id]
-        cartvalue = cart_dict[user_id]
-
-        try:
-            db_order = db['Order']
-        except:
-            print("Error while loading data from database")
-            # return redirect(url_for("home"))
-
-        db_order.append(new_order)
-
-        print("cartvalue:", cartvalue)
-        try:
-            cartbuy = cartvalue[0]
-            print("cartbuy:", cartbuy)
-        except:
-            pass
-        if cartbuy != "":
-            for i in books_dict:
-                for x, y in zip(list(cartbuy.keys()), list(cartbuy.values())):
-                    if i == x:
-                        book = books_dict.get(i)
-                        print("qty b4", book.get_qty())
-                        newqty = int(book.get_qty()) - int(y)
-                        book.set_qty(newqty)
-                        print("qty aft", book.get_qty())
-
-        try:
-            cartrent = cartvalue[1]
-            print("cartrent:", cartrent)
-            if cartrent != "":
-                for i in books_dict:
-                    for x in cartrent:
-                        if i == x:
-                            book = books_dict.get(i)
-                            print("rent qty b4:", book.get_rented())
-                            newrented = int(book.get_rented()) + int(1)
-                            book.set_rented(newrented)
-                            print("rent qty aft:", book.get_rented())
-
-        except:
-            pass
-
-        del cart_dict[user_id]
-        del db_pending[user_id]
-        db['Books'] = books_dict
-        db['Pending_Order'] = db_pending
-        db['Order'] = db_order
-        db['Cart'] = cart_dict
-        print(db_pending, 'should not have pending order as user already check out')
-        print(cart_dict, 'updated database[cart]')
-        print(db_order, 'updated databas[order]')
-    except KeyError:
-        return redirect(url_for("home"))
-
-    db.close()
     return render_template("order_confirmation.html")
 
 
@@ -1753,7 +1692,7 @@ def about():
 def api_login():
     username = flask_global.data["username"]
     password = flask_global.data["password"]
-    user_data = dbf.user_auth(username, pw_hash(password))
+    user_data = user_authenticate(username, password)
     time_check = datetime.datetime.now()
     if user_data is None:
         print("Check 1")

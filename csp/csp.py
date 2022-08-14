@@ -37,7 +37,8 @@ _csp = {
         "https://use.fontawesome.com"   # For Font Awesome
     ],
     "form-action": [
-        "\'self\'"
+        "\'self\'",
+        "https://checkout.stripe.com/"  # For Stripe checkout
     ],
     "base-uri": [
         "\'self\'"

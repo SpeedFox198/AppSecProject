@@ -9,4 +9,4 @@ with open("seed.sql") as f:
 con.commit()
 con.close()
 
-print("\033[0;31mScript executed!\033[0m")
+print("\033[0;31mSCRIPT EXECUTED!\033[0m")

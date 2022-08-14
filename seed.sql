@@ -1,3 +1,15 @@
+DELETE FROM Users;
+DELETE FROM OTP;
+DELETE FROM Customers;
+DELETE FROM Books;
+DELETE FROM OrderDetails;
+DELETE FROM OrderItems;
+DELETE FROM CartItems;
+DELETE FROM Reviews;
+DELETE FROM TwoFA;
+DELETE FROM Timeout;
+DELETE FROM FailedAttempts;
+
 -- Books
 INSERT INTO Books
 VALUES (
@@ -62,8 +74,10 @@ INSERT INTO OTP VALUES (
 INSERT INTO Reviews (book_id, user_id, stars, content)
 VALUES (
     '19a4cc17-117a-4a20-8ad6-cc3c243e68a7', '5a851b9e-48dc-5c81-9039-720c9f0b41a6',
-    2, 'This book did not make me prepare for recursion during my Data Structures test.');
+    2, 'This book did not make me prepare for recursion during my Data Structures test.'
+);
 INSERT INTO Reviews (book_id, user_id, stars, content)
 VALUES (
-    '19a4cc17-117a-4a20-8ad6-cc3c243e68a7', 'cce58bbf-eb0d-59e4-a7e0-484a94943c63',
-    5, 'Learn a lot and got a job at Google with this book!');
+    '19a4cc17-117a-4a20-8ad6-cc3c243e68a7', '5764d848-a0dc-5857-b4fd-31102dc764dc',
+    5, 'Learn a lot and got a job at Google with this book!'
+);

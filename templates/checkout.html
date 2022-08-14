@@ -13,7 +13,7 @@
 <div class="row">
     <div class="col-lg-9 col-12">
         <h3>Shipping Information</h3>
-        <form method="POST" class="row checkout-form" id="checkout" action="/create-checkout-session/{{ total_price }}">
+        <form method="POST" class="row checkout-form" id="checkout" action="/create-checkout-session">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <h5>Shipping Address</h5>
             <div class="form-group col-12">
@@ -50,15 +50,13 @@
             {% for item, quantity in cart_items %}
             <tr class="products">
                 <td><a href="{{  url_for('book_info', book_id=item.book_id)  }}"><img src="{{ item.cover_img }}" alt="book cover" class="img-fluid"></a></td>
-                (&#%@()#&%!(*)&$)
-                <td id="title" style="text-align:left;">{{ item.title }}</td>
-                <td>X{{ item }}</td>
+                <td id="title"">{{ item.title }}</td>
+                <td>X{{ quantity }}</td>
                 <td>${{ "%.2f"|format(item.price|float) }}</td>
             {% endfor %}
         {% endif %}
           <tr class="bottom-sticky">
               <td colspan="4">
-                  <h6>Subtotal <span class="float_right">${{ "%.2f"|format(subtotal|float) }}</span></h6>
                   <h6>Shipping <span class="float_right" id="shipping_fee">$5.00</span></h6>
                   <h4>Total To Pay <span class="float_right" id="total_pay">${{ "%.2f"|format((total_price|float)+5) }}</span></h4>
               </td>
@@ -90,8 +88,7 @@
                             <td class="col-3"><img src="{{ item.cover_img }}" alt="book cover"></td>
                             <td class="col-7">
                                 <h4 class="d-none d-lg-block">{{ item.title }}</h4>
-                                <p class="d-block d-lg-none">{{ item.title }}</p> <!-- #{{ key }}
-                                #{{ key }} -->
+                                <p class="d-block d-lg-none">{{ item.title }}</p>
                             </td>
                             <td class="col-1">
                                 <h5 class="d-none d-lg-block">${{ "%.2f"|format(item.price|float) }}</h5>
@@ -122,29 +119,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-
-    function get_radio_value(method) {
-        if (method.value == 'Standard Delivery'){
-            shipping_fee = 5;
-            display = '$5.00';
-
-            document.getElementById('address_text').style.display = 'block';
-        }else{
-            shipping_fee = 0;
-            display = 'FREE';
-            document.getElementById('address_text').style.display = 'none';
-        };
-        document.getElementById('shipping_fee').innerHTML = display;
-        total = {{ total_price }};
-        var total_price = shipping_fee + total
-        total_price = total_price.toFixed(2)
-        total_price = total_price.toString()
-        displayT = '$' + total_price
-        document.getElementById('total_pay').innerHTML = displayT;
-      }
-
-
-</script>
 {% endblock %}
 

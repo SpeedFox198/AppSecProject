@@ -1,4 +1,3 @@
-from Crypto.Cipher import AES
 import base64
 from cryptography.fernet import Fernet
 import os
@@ -14,8 +13,10 @@ def aws_encrypt(string):
     return encrypted
 
 
-def aws_decrypt(ciphertext):
+def aws_decrypt(ciphertext:bytes):
     """Decryption will return the plaintext string"""
+    if not isinstance(ciphertext, bytes):
+        raise TypeError("ciphertext be bytes")
     key = AWS_KEY
     fernet = Fernet(key)
 
