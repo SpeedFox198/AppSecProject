@@ -15,6 +15,8 @@ def aws_encrypt(string):
 
 def aws_decrypt(ciphertext:bytes):
     """Decryption will return the plaintext string"""
+    if isinstance(ciphertext, str):
+        ciphertext = ciphertext.encode()
     if not isinstance(ciphertext, bytes):
         raise TypeError("ciphertext be bytes")
     key = AWS_KEY
