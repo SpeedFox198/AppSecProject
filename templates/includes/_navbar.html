@@ -69,7 +69,7 @@
               <a href="{{ url_for('my_orders') }}">Orders</a>
               {% endif %}
               <div id="csrf_token" class="d-none">{{ csrf_token() }}</div>
-              <button type="button" id="logoutButton">Logout</a>
+              <button type="button" id="logoutButton">Logout</button>
             {% else %}
               <a class="login-link" href="{{ url_for('login') }}">Login</a>
               <a href="{{ url_for('sign_up') }}">Sign Up</a>

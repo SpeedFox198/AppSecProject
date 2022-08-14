@@ -3,7 +3,9 @@
 
 {% block stylesheets %}
 <link rel="stylesheet" href="/static/css/user.css">
-<link rel="stylesheet" href="/static/css/adm_dashboard.css">
+<link rel="stylesheet" href="/static/css/standard.css">
+<link rel="stylesheet" href="/static/css/manage_reviews.css">
+<link rel="stylesheet" href="/static/css/books.css">
 {% endblock %}
 
 {% block content %}
@@ -45,9 +47,28 @@
                       <td>{{ book.author }}</td>
                       <td>
                           {{ reviews_count }}
-                          <a href="">
+                          <!-- Button trigger modal -->
+                          <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#viewReviews-{{ book.book_id }}" id="btn_{{ book.book_id }}">
                               <i class="fas fa-eye"></i>
-                          </a>
+                          </button>
+
+                          <!-- Modal -->
+                          <div class="modal fade" id="viewReviews-{{ book.book_id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-scrollable modal-xl">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title" id="exampleModalLabel">Reviews for {{ book.title }}</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" id="reviewContents_{{ book.book_id }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                       </td>
                     </tr>
                   {% endfor %}
@@ -61,4 +82,5 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/manage_reviews.js"></script>
 {% endblock %}
