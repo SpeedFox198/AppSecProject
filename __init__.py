@@ -1654,7 +1654,7 @@ def create_checkout_session():
             ],
             payment_method_types=['card'],
             mode='payment',
-            success_url='http://127.0.0.1:5000/orderconfirm',
+            success_url='http://127.0.0.1:5000/order-confirm',
             cancel_url=request.referrer,
         )
         print(checkout_session.url)
@@ -1667,7 +1667,7 @@ def create_checkout_session():
 #
 # show confirmation page upon successful payment
 #
-@app.route("/orderconfirm")
+@app.route("/order-confirm")
 def orderconfirm():
     return render_template("order_confirmation.html")
 
