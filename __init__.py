@@ -39,7 +39,7 @@ import stripe
 
 # CONSTANTS
 # TODO @everyone: set to False when deploying
-DEBUG = True  # Debug flag (True when debugging)
+DEBUG = False  # Debug flag (True when debugging)
 TOKEN_MAX_AGE = 900  # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 DOMAIN_NAME = "https://localhost:5000/"
@@ -205,7 +205,7 @@ def before_request():
     csrf.protect()
 
 
-""" After request """  ##TODO: add SECURE in header
+""" After request """
 
 
 @app.after_request

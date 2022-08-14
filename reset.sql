@@ -64,23 +64,6 @@ VALUES (
 
 
 -- Books
-INSERT INTO Books
-VALUES (
-    "19a4cc17-117a-4a20-8ad6-cc3c243e68a7",
-    "English", "Classic", "Jabriel's Python Manifesto",
-    30, 25, "Jabriel Seah",
-    "This 3rd edition features decorators, TimSorts, awesome stacks and queues, and async/await. Definitely, one of the python books of all time. Ultra Poggers.",
-    "19a4cc17-117a-4a20-8ad6-cc3c243e68a7_python2.jpg"
-);
-INSERT INTO Books
-VALUES (
-    "e97850e7-a345-4d5c-8863-12654b08b64c",
-    "English", "Classic", "To Kill a Mockingbird",
-    100, 20, "Harper Lee",
-    'The unforgettable novel of a childhood in a sleepy Southern town and the crisis of conscience that rocked it. "To Kill A Mockingbird" became both an instant bestseller and a critical success when it was first published in 1960. It went on to win the Pulitzer Prize in 1961 and was later made into an Academy Award-winning film, also a classic.',
-    "e97850e7-a345-4d5c-8863-12654b08b64c.jpg"
-);
-
 INSERT INTO Books VALUES(
     "19a4cc17-117a-4a20-8ad6-cc3c243e68a7",
     "English", "Classic", "Jabriel's Python Manifesto",
@@ -123,4 +106,10 @@ INSERT INTO Books VALUES(
     "In a fictional world in the riot games universe. This is not a real book lmao. Very the good. I made this cause it's funny. Anyone who played VALORANT should recognise this lol.",
     'c62ab25e-dd1a-4131-aa34-7a14e77e8cc8.png'
 );
-
+INSERT INTO Books VALUES(
+    "950e0494-5e20-425f-9cac-40db6c4f0f31",
+    "Chinese", "Classic", '小王子',
+    5, 12, '安托万·圣埃克苏佩里',
+    "一位先生回忆起自己小时候，在与大人交流中一直找不到一个能够阐述自己的价值观的人，因为大人们都太讲实际了。 先生长大后，成为一名飞行员，不过因飞机故障而迫降在撒哈拉沙漠，途中遇见小王子。 小王子告诉飞行员自己来自另一颗名为B612的星球，而小王子也告诉他为什么离开自己的星球，在抵达地球之前，途中又到访了其他星球，他访问了国王、爱虚荣的人、酒鬼、商人、点灯人、地理学家、蛇、三枚花瓣的沙漠花、玫瑰园、扳道工、商贩、狐狸以及这位飞行员。 飞行员和小王子在沙漠中共同拥有过一段极为珍贵的友谊。当小王子要离开地球时，飞行员非常的悲伤。他一直非常怀念他们共度的时光。 此后，他为了纪念小王子所以写了这部小说。source:https://zh.m.wikipedia.org/zh-sg/%E5%B0%8F%E7%8E%8B%E5%AD%90",
+    '950e0494-5e20-425f-9cac-40db6c4f0f31.png'
+);

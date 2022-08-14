@@ -3,7 +3,7 @@ import sqlite3
 con = sqlite3.connect("database.db")
 
 # Seed the database
-with open("reset.sql") as f:
+with open("reset.sql", encoding="UTF-8") as f:
     con.executescript(f.read())
 
 con.commit()
