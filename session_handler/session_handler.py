@@ -70,6 +70,8 @@ def retrieve_session(session:str) -> Union[Any, None]:
                 if compare_digest(a, b):
                     # Returns user session object if session is valid
                     return loads(b64decode(values[0]))
+                else:
+                    logger.warning(f"Invalid session: {session}")
             except Exception as e:
                 logger.critical(f"Error while deserialising: {e}")
                 logger.critical(f"Malicious session: {session}")
