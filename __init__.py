@@ -39,11 +39,12 @@ import stripe
 
 # CONSTANTS
 # TODO @everyone: set to False when deploying
-DEBUG = False  # Debug flag (True when debugging)
+DEBUG = True  # Debug flag (True when debugging)
 TOKEN_MAX_AGE = 900  # Max age of token (15 mins)
 ACCOUNTS_PER_PAGE = 10  # Number of accounts to display per page (manage account page)
 DOMAIN_NAME = "https://localhost:5000/"
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+DISALLOWED_CHARA_DICT = str.maketrans("", "", r"<>{}")
 
 app = Flask(__name__)
 csrf = CSRFProtect(app)
@@ -1206,8 +1207,6 @@ def manage_reviews():
 """    Books Pages    """
 
 
-# Wei Ren was here. hello.
-# ?? wtf
 
 @app.route("/book/<book_id>", methods=["GET", "POST"])
 @limiter.limit("10/second", override_defaults=False)
@@ -1251,15 +1250,19 @@ def book_review(book_id):
     book = Book(*book_data)
     createReview = CreateReviewText(request.form)
     if request.method == "POST":
+        error_occured = True
         if createReview.validate():
-            data:str = createReview.review.data
-            data = data.strip()
-            dbf.add_review(book_id, user.user_id, request.form.get("rate"), data)
-            flash("Review successfully added!")
-            return redirect(url_for("book_info", book_id=book_id))
-        else:
+            error_occured = False
+            data:str = " ".join(createReview.review.data.split())
+            data = data.translate(DISALLOWED_CHARA_DICT)
+            if len(data) < 20 or len(data) > 200:
+                error_occured = True
+            else:
+                dbf.add_review(book_id, user.user_id, request.form.get("rate"), data)
+                flash("Review successfully added!")
+        if error_occured:
             flash("An error occured, review not added!", category="error")
-            return redirect(url_for("book_info", book_id=book_id))
+        return redirect(url_for("book_info", book_id=book_id))
     return render_template("review.html", book=book, form=createReview, book_id = book_id)
 
 
